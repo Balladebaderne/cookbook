@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Recipe Cookbook - Home{% endblock %}
+
+{% block content %}
+<center>
+    <h2>
+        <font face="Comic Sans MS" color="#FF0066">
+            📖 Browse Our Amazing Recipes! 📖
+        </font>
+    </h2>
+</center>
+
+<hr color="#FF00FF" size="5">
+
+{% for recipe in recipes %}
+<table width="100%" border="3" cellpadding="10" cellspacing="0" bgcolor="#FFFF99" style="margin-bottom: 20px;">
+    <tr>
+        <td width="70%">
+            <font face="Arial" size="5" color="#0000FF">
+                <b>{{ recipe.title }}</b>
+            </font>
+            <br><br>
+            <font face="Arial" size="3" color="#000000">
+                ⏰ <b>Time:</b> {{ recipe.time_minutes }} minutes<br>
+                💰 <b>Price:</b> ${{ recipe.price }}<br>
+                🏷️ <b>Tags:</b>
+                {% for tag in recipe.tags %}
+                    <font color="#FF0066">{{ tag.name }}</font>{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </font>
+        </td>
+        <td width="30%" align="center" valign="middle">
+            <a href="/recipes/{{ recipe.id }}/">
+                <font face="Arial" size="4" color="#FFFFFF">
+                    <table border="2" cellpadding="10" bgcolor="#FF0066">
+                        <tr>
+                            <td>
+                                <b>VIEW RECIPE</b>
+                            </td>
+                        </tr>
+                    </table>
+                </font>
+            </a>
+        </td>
+    </tr>
+</table>
+{% endfor %}
+
+{% if not recipes %}
+<center>
+    <font face="Comic Sans MS" size="4" color="#FF0000">
+        <b>No recipes found! 😢</b>
+    </font>
+</center>
+{% endif %}
+
+{% endblock %}
