@@ -1,4 +1,5 @@
 # Awsome recipe cookbook
+Demo DevOps repository for use in teachings in It-architechture, cloud and agil udvikling at EK ITA Spring 2026
 
 This is the "Awsome recipe cookbook" repository. It is not meant for production as it contains several security vulnerabilities and problematic parts on purpose. 
 
@@ -21,7 +22,6 @@ One way to follow along is by:
 ## Pull requests
 
 If you have any suggestions or improvements to the tutorials, feel free to open a pull request.
-Demo DevOps repository for use in teachings in It-architechture, cloud and agil udvikling at EK ITA Spring 2026
 
 ---
 ## ⚠️  SECURITY VULNERABILITIES - EDUCATIONAL PURPOSE ONLY ⚠️
