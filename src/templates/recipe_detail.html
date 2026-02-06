@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}{{ recipe.title }} - Recipe Cookbook{% endblock %}
+
+{% block content %}
+<center>
+    <h2>
+        <font face="Comic Sans MS" color="#FF0066">
+            🍽️ {{ recipe.title }} 🍽️
+        </font>
+    </h2>
+</center>
+
+<table width="100%" border="3" cellpadding="15" cellspacing="0" bgcolor="#CCFFCC">
+    <tr>
+        <td>
+            <font face="Arial" size="3" color="#000000">
+                ⏰ <b>Cooking Time:</b> {{ recipe.time_minutes }} minutes<br>
+                💰 <b>Estimated Price:</b> ${{ recipe.price }}<br>
+                {% if recipe.link %}
+                🔗 <b>Link:</b> <a href="{{ recipe.link }}">{{ recipe.link }}</a><br>
+                {% endif %}
+                🏷️ <b>Tags:</b>
+                {% for tag in recipe.tags %}
+                    <font color="#FF0066"><b>{{ tag.name }}</b></font>{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </font>
+        </td>
+    </tr>
+</table>
+
+<br>
+
+<table width="100%" border="3" cellpadding="15" cellspacing="0" bgcolor="#FFCCFF">
+    <tr>
+        <td>
+            <center>
+                <font face="Comic Sans MS" size="4" color="#0000FF">
+                    <b>🥕 INGREDIENTS 🥕</b>
+                </font>
+            </center>
+            <br>
+            <font face="Arial" size="3" color="#000000">
+                <ul>
+                    {% for ingredient in recipe.ingredients %}
+                    <li>
+                        <b>{{ ingredient.amount }} {{ ingredient.unit }}</b> - {{ ingredient.name }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            </font>
+        </td>
+    </tr>
+</table>
+
+<br>
+
+<table width="100%" border="3" cellpadding="15" cellspacing="0" bgcolor="#CCFFFF">
+    <tr>
+        <td>
+            <center>
+                <font face="Comic Sans MS" size="4" color="#0000FF">
+                    <b>👨‍🍳 COOKING INSTRUCTIONS 👨‍🍳</b>
+                </font>
+            </center>
+            <br>
+            <font face="Arial" size="3" color="#000000">
+                {% if recipe.description %}
+                    {% set steps = recipe.description.split('\n\n') %}
+                    {% for step in steps %}
+                        {% if step.strip() %}
+                        <p style="line-height: 1.6;">
+                            <b>{{ step }}</b>
+                        </p>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <p>No instructions available.</p>
+                {% endif %}
+            </font>
+        </td>
+    </tr>
+</table>
+
+<br>
+
+<center>
+    <a href="/">
+        <table border="3" cellpadding="10" bgcolor="#00FF00">
+            <tr>
+                <td>
+                    <font face="Arial" size="4" color="#000000">
+                        <b>⬅️ BACK TO HOME</b>
+                    </font>
+                </td>
+            </tr>
+        </table>
+    </a>
+</center>
+
+{% endblock %}

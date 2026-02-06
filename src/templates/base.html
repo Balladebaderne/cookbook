@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Recipe Cookbook{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+            <td>
+                <center>
+                    <table width="800" border="3" cellpadding="10" cellspacing="0" bgcolor="#FFCC00">
+                        <tr>
+                            <td>
+                                <center>
+                                    <h1>
+                                        <font face="Comic Sans MS, Arial" color="#FF0066">
+                                            🍳 AWESOME RECIPE COOKBOOK 🍳
+                                        </font>
+                                    </h1>
+                                </center>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table width="800" border="2" cellpadding="5" cellspacing="0" bgcolor="#00CCFF">
+                        <tr>
+                            <td align="center">
+                                <a href="/">
+                                    <font face="Arial" color="#FFFFFF" size="4">
+                                        <b>🏠 HOME</b>
+                                    </font>
+                                </a>
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table width="800" border="2" cellpadding="20" cellspacing="0" bgcolor="#FFFFFF">
+                        <tr>
+                            <td>
+                                {% block content %}{% endblock %}
+                            </td>
+                        </tr>
+                    </table>
+
+                    <table width="800" border="2" cellpadding="10" cellspacing="0" bgcolor="#00FF00">
+                        <tr>
+                            <td align="center">
+                                <font face="Arial" size="2" color="#000000">
+                                    <marquee>✨ Welcome to the best recipe site on the World Wide Web! ✨</marquee>
+                                </font>
+                            </td>
+                        </tr>
+                    </table>
+                </center>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
