@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - DATABASE_PATH=/app/data/cookbook.db
+    volumes:
+      - cookbook_data:/app/data
+    networks:
+      - cookbook-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    image: node:18-alpine
+    working_dir: /app/frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app/frontend
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000
+    command: npm start
+    depends_on:
+      - backend
+    networks:
+      - cookbook-network
+
+volumes:
+  cookbook_data:
+    driver: local
+
+networks:
+  cookbook-network:
+    driver: bridge

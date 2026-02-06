@@ -1,0 +1,396 @@
+openapi: 3.0.0
+info:
+  title: Cookbook Recipe Management API
+  description: A REST API for sharing and managing recipes
+  version: 1.0.0
+  contact:
+    name: BalladeBaderne Team
+    url: https://github.com/cookbookio/awesome_recipe_cookbook
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+  - url: https://api.cookbook.example.com
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the API
+      operationId: getHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/recipes:
+    get:
+      summary: Get all recipes
+      description: Retrieve a list of all recipes
+      operationId: getAllRecipes
+      tags:
+        - Recipes
+      parameters:
+        - name: skip
+          in: query
+          description: Number of recipes to skip
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          description: Maximum number of recipes to return
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of recipes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Recipe'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create a new recipe
+      description: Create a new recipe in the database
+      operationId: createRecipe
+      tags:
+        - Recipes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeInput'
+      responses:
+        '201':
+          description: Recipe created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/recipes/{id}:
+    get:
+      summary: Get a recipe by ID
+      description: Retrieve a specific recipe by its ID
+      operationId: getRecipeById
+      tags:
+        - Recipes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Recipe ID
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recipe retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '404':
+          description: Recipe not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      summary: Update a recipe
+      description: Update an existing recipe
+      operationId: updateRecipe
+      tags:
+        - Recipes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Recipe ID
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeInput'
+      responses:
+        '200':
+          description: Recipe updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '404':
+          description: Recipe not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete a recipe
+      description: Delete a recipe by its ID
+      operationId: deleteRecipe
+      tags:
+        - Recipes
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Recipe ID
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Recipe deleted successfully
+        '404':
+          description: Recipe not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/recipes/search:
+    get:
+      summary: Search recipes
+      description: Search for recipes by name, ingredients, or tags
+      operationId: searchRecipes
+      tags:
+        - Recipes
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query
+          schema:
+            type: string
+        - name: type
+          in: query
+          description: Search type (name, ingredients, tags)
+          schema:
+            type: string
+            enum: [name, ingredients, tags]
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Recipe'
+        '400':
+          description: Invalid search query
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Recipe:
+      type: object
+      required:
+        - id
+        - name
+        - ingredients
+        - instructions
+      properties:
+        id:
+          type: string
+          description: Unique recipe identifier
+          example: "recipe-123"
+        name:
+          type: string
+          description: Recipe name
+          example: "Spaghetti Carbonara"
+        description:
+          type: string
+          description: Recipe description
+          example: "A classic Italian pasta dish"
+        ingredients:
+          type: array
+          description: List of ingredients
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                example: "Spaghetti"
+              quantity:
+                type: number
+                example: 400
+              unit:
+                type: string
+                example: "grams"
+        instructions:
+          type: array
+          description: Step-by-step cooking instructions
+          items:
+            type: string
+          example:
+            - "Boil water in a large pot"
+            - "Cook spaghetti according to package instructions"
+        prepTime:
+          type: integer
+          description: Preparation time in minutes
+          example: 10
+        cookTime:
+          type: integer
+          description: Cooking time in minutes
+          example: 20
+        servings:
+          type: integer
+          description: Number of servings
+          example: 4
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+          description: Recipe difficulty level
+          example: "easy"
+        tags:
+          type: array
+          description: Recipe tags
+          items:
+            type: string
+          example: ["italian", "pasta", "vegetarian"]
+        createdAt:
+          type: string
+          format: date-time
+          description: Recipe creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Recipe last update timestamp
+
+    RecipeInput:
+      type: object
+      required:
+        - name
+        - ingredients
+        - instructions
+      properties:
+        name:
+          type: string
+          description: Recipe name
+          example: "Spaghetti Carbonara"
+        description:
+          type: string
+          description: Recipe description
+          example: "A classic Italian pasta dish"
+        ingredients:
+          type: array
+          description: List of ingredients
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              quantity:
+                type: number
+              unit:
+                type: string
+        instructions:
+          type: array
+          description: Step-by-step cooking instructions
+          items:
+            type: string
+        prepTime:
+          type: integer
+          description: Preparation time in minutes
+        cookTime:
+          type: integer
+          description: Cooking time in minutes
+        servings:
+          type: integer
+          description: Number of servings
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+        tags:
+          type: array
+          items:
+            type: string
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          description: HTTP status code
+          example: 404
+        message:
+          type: string
+          description: Error message
+          example: "Recipe not found"
+        details:
+          type: string
+          description: Additional error details
