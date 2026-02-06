@@ -6,7 +6,10 @@ Cookbook Repository
 
 group_info = {
     "name": "BalladeBaderne",
-    "repository": "https://github.com/cookbookio/awesome_recipe_cookbook",
+    "repository": "https://github.com/Balladebaderne/cookbook",
+    "git_links": [
+        "https://github.com/Balladebaderne/cookbook"
+    ],
     "members": [
         {
             "name": "Magnus Giemsa",
@@ -35,16 +38,18 @@ group_info = {
         }
     ],
     "tech_stack": {
-        "backend": ["Node.js", "Express.js"],
-        "frontend": ["React"],
+        "backend": "SQL",
+        "frontend": "React",
+        "stack": ["Node.js", "React"],
         "database": ["SQLite3"],
         "containerization": ["Docker", "Docker Compose"],
         "version_control": ["Git", "GitHub"],
-        "documentation": ["OpenAPI/Swagger"]
+        "documentation": ["OpenAPI/Swagger", "https://github.com/Balladebaderne/cookbook/blob/master/README.md"]
     },
+    "monitoring": "",
     "project_description": "A full-stack web application for sharing and managing recipes",
     "license": "MIT",
-    "organization": "cookbookio"
+    "organization": "Balladebaderne"
 }
 
 if __name__ == "__main__":
@@ -52,3 +57,6 @@ if __name__ == "__main__":
     print(f"Repository: {group_info['repository']}")
     print(f"Members: {len(group_info['members'])}")
     print(f"Tech Stack: {group_info['tech_stack']}")
+    for member in group_info['members']:
+        print(f"  - {member['name']} ({member['role']})")
+

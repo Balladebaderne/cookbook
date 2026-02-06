@@ -2,7 +2,7 @@
 
 A full-stack web application for sharing and managing recipes built with Node.js, Express, React, and SQLite3.
 
-**Repository**: https://github.com/cookbookio/awesome_recipe_cookbook
+**Repository**: https://github.com/Balladebaderne/cookbook
 
 ## Tech Stack
 
@@ -29,7 +29,7 @@ The easiest way to run the application is with Docker:
 
 ```bash
 # Clone the repository
-git clone https://github.com/cookbookio/awesome_recipe_cookbook.git
+git clone https://github.com/Balladebaderne/cookbook.git
 cd cookbook
 
 # Build and start all services
@@ -214,8 +214,8 @@ MIT - See LICENSE file for details.
 
 - 📧 GitHub Issues: Report bugs or request features
 - 📖 Documentation: See `/docs` folder
-- 🔗 Repository: https://github.com/cookbookio/awesome_recipe_cookbook
+- 🔗 Repository: https://github.com/Balladebaderne/cookbook
 
 ---
 
-**Cookbook** - A project by BalladeBaderne Team | [GitHub Organization](https://github.com/cookbookio)
+**Cookbook** - A project by BalladeBaderne Team | [GitHub Organization](https://github.com/Balladebaderne)
