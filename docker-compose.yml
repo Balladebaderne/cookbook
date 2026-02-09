@@ -6,36 +6,37 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "3000:3000"
     environment:
       - NODE_ENV=production
-      - PORT=5000
-      - DATABASE_PATH=/app/data/cookbook.db
+      - PORT=3000
+      - DB_PATH=/app/data/app.db
     volumes:
       - cookbook_data:/app/data
     networks:
       - cookbook-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
-  frontend:
-    image: node:18-alpine
-    working_dir: /app/frontend
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app/frontend
-    environment:
-      - REACT_APP_API_URL=http://localhost:5000
-    command: npm start
-    depends_on:
-      - backend
-    networks:
-      - cookbook-network
+  # Frontend service (uncomment when React frontend is ready)
+  # frontend:
+  #   image: node:18-alpine
+  #   working_dir: /app/frontend
+  #   ports:
+  #     - "3001:3000"
+  #   volumes:
+  #     - ./frontend:/app/frontend
+  #   environment:
+  #     - REACT_APP_API_URL=http://localhost:3000
+  #   command: npm start
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - cookbook-network
 
 volumes:
   cookbook_data:

@@ -39,7 +39,7 @@ paths:
                     type: string
                     format: date-time
 
-  /api/recipes:
+  /api/recipe/recipes/:
     get:
       summary: Get all recipes
       description: Retrieve a list of all recipes
@@ -107,7 +107,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/recipes/{id}:
+  /api/recipe/recipes/{id}/:
     get:
       summary: Get a recipe by ID
       description: Retrieve a specific recipe by its ID
@@ -209,7 +209,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /api/recipes/search:
+  /api/recipe/recipes/search/:
     get:
       summary: Search recipes
       description: Search for recipes by name, ingredients, or tags

@@ -3,15 +3,20 @@ import { db } from "../db.js";
 
 const router = Router();
 
-router.post("/create/", (req, res) => {
+router.post("/create/", async (req, res) => {
   console.log("Route invoked: POST /api/user/create/");
 
-  const { email, password, name } = req.body;
+  try {
+    const { email, password, name } = req.body;
 
-  db.prepare(`INSERT INTO users (email, password, name) VALUES (?, ?, ?)`)
-    .run(email, password, name);
+    await db.prepare(`INSERT INTO users (email, password, name) VALUES (?, ?, ?)`)
+      .run(email, password, name);
 
-  res.status(201).json({ email, name });
+    res.status(201).json({ email, name });
+  } catch (err) {
+    console.error("Error creating user:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 router.get("/me/", (req, res) => {
