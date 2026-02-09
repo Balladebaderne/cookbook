@@ -19,5 +19,5 @@ A full-stack web application for sharing and managing recipes built with Node.js
 - Laurits Munk 
 - Elias Garcia 
 - Andreas Brandenborg 
-- Jacob Bisgård 
+- Jacob Bisgaard 
 
