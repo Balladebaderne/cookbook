@@ -95,7 +95,7 @@ function seedDb() {
     const tags = ["Italian","Quick","Dinner","Vegetarian","Healthy","Seafood"];
     tags.forEach((x) => insertTag.run(x));
 
-    // Recipes (fulde descriptions kan copy/pastes 1:1 her)
+    // Recipes
     const r1 = insertRecipe.run(
       "Spaghetti Carbonara", 25, "12.50", "http://example.com/carbonara",
 `Step 1: Bring a large pot of salted water to boil and cook 400g spaghetti according to package directions.
@@ -174,7 +174,7 @@ Step 8: Serve immediately with the pan sauce, accompanied by rice or vegetables.
     );
     const recipe4_id = Number(r4.lastInsertRowid);
 
-    // recipe_ingredients (samme ids som Python seed)
+    // recipe_ingredients
     insertRecipeIngredient.run(recipe1_id, 1, "400", "g");
     insertRecipeIngredient.run(recipe1_id, 2, "4", "large");
     insertRecipeIngredient.run(recipe1_id, 3, "200", "g");
@@ -205,8 +205,7 @@ Step 8: Serve immediately with the pan sauce, accompanied by rice or vegetables.
     insertRecipeIngredient.run(recipe4_id, 18, "3", "tbsp");
     insertRecipeIngredient.run(recipe4_id, 12, "4", "cloves");
     insertRecipeIngredient.run(recipe4_id, 21, "1", "piece");
-    insertRecipeIngredient.run(recipe4_id, 22, "1", "tbsp");
-    insertRecipeIngredient.run(recipe4_id, 6, "1", "tsp");
+    insertRecipeIngredient.run(recipe4_id, 22, "2", "tbsp");
 
     // recipe_tags
     insertRecipeTag.run(recipe1_id, 1); // Italian
