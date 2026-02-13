@@ -1,16 +1,39 @@
-name: Greetings
+name: Greetings (every time)
 
-on: [pull_request_target, issues]
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
 
 jobs:
-  greeting:
+  greet:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
     steps:
-      - uses: actions/first-interaction@v1
+      - name: Comment on new issue
+        if: github.event_name == 'issues'
+        uses: actions/github-script@v7
         with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          issue-message: "Sikke et flot issue, du lige har lavet <3"
-          pr-message: "Tak for PR. Skal vi tage et balladebad sammen?"
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: "Sikke et flot issue, du lige har lavet <3"
+            })
+
+      - name: Comment on new pull request
+        if: github.event_name == 'pull_request_target'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: "Tak for PR. Skal vi tage et balladebad sammen?"
+            })
