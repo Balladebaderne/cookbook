@@ -63,7 +63,7 @@ jobs:
 
       - name: Copy files to remote server
         run: |
-          rsync -avz -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" --delete --exclude ".git" ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}
+          rsync -avz -e "ssh -v -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" --delete --exclude ".git" ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}
 
       - name: Remote Docker Compose Up
         run: |
