@@ -1,29 +1,27 @@
-# Dockerfile for the Cookbook application (backend only)
-
 # ---------- BUILD STAGE ----------
 FROM node:18-alpine AS backend-builder
 
-WORKDIR /app/app
+WORKDIR /app/backend
 
-# Copy the entire app directory (most robust approach)
-COPY app/ ./
+# Copy the entire backend directory
+COPY backend/ ./
 
-# Install dependencies (if package.json exists in app/)
+# Install dependencies
 RUN npm install --production || true
 
 # ---------- RUNTIME STAGE ----------
 FROM node:18-alpine
 
-WORKDIR /app
+WORKDIR /app/backend
 
 # Copy only the backend code from the build stage
-COPY --from=backend-builder /app/app ./app
+COPY --from=backend-builder /app/backend ./
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data
 
 # Copy the OpenAPI spec into the runtime image so `index.js` can find it
-COPY openapi.yaml ./
+COPY openapi.yaml /app/
 
 EXPOSE 3000
 
@@ -32,4 +30,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
 # Start the app
-CMD ["node", "app/index.js"]
+CMD ["node", "index.js"]
