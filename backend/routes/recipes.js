@@ -43,13 +43,14 @@ router.post("/recipes/", async (req, res) => {
     const data = req.body || {};
 
     const recipe = await db.prepare(
-      `INSERT INTO recipes (title, time_minutes, price, link, description) VALUES (?, ?, ?, ?, ?)`
+      `INSERT INTO recipes (title, time_minutes, price, link, description, instructions) VALUES (?, ?, ?, ?, ?, ?)`
     ).run(
       data.title,
       data.time_minutes || 0,
       data.price || "0",
       data.link || "",
-      data.description || ""
+      data.description || "",
+      data.instructions?.length ? JSON.stringify(data.instructions) : null
     );
 
     const recipeId = recipe.lastInsertRowid;
@@ -89,7 +90,7 @@ router.post("/recipes/", async (req, res) => {
 router.get("/recipes/:id/", async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const recipe = await db.prepare(`SELECT id, title, time_minutes, price, link, description FROM recipes WHERE id = ?`).get(id);
+    const recipe = await db.prepare(`SELECT id, title, time_minutes, price, link, description, instructions FROM recipes WHERE id = ?`).get(id);
     if (!recipe) return res.status(404).json({ detail: "Not found" });
 
     const ingredients = await db.prepare(`
@@ -113,6 +114,7 @@ router.get("/recipes/:id/", async (req, res) => {
       price: recipe.price,
       link: recipe.link || "",
       description: recipe.description || "",
+      instructions: recipe.instructions ? JSON.parse(recipe.instructions) : [],
       ingredients: ingredients.map(i => ({ id: i.id, name: i.name, amount: i.amount, unit: i.unit })),
       tags: tags.map(t => ({ id: t.id, name: t.name }))
     });
@@ -131,13 +133,14 @@ router.put("/recipes/:id/", async (req, res) => {
     if (!existing) return res.status(404).json({ detail: "Not found" });
 
     await db.prepare(
-      `UPDATE recipes SET title = ?, time_minutes = ?, price = ?, link = ?, description = ? WHERE id = ?`
+      `UPDATE recipes SET title = ?, time_minutes = ?, price = ?, link = ?, description = ?, instructions = ? WHERE id = ?`
     ).run(
       data.title,
       data.time_minutes || 0,
       data.price || "0",
       data.link || "",
       data.description || "",
+      data.instructions?.length ? JSON.stringify(data.instructions) : null,
       id
     );
 

@@ -20,6 +20,7 @@ export async function initDb() {
         price TEXT NOT NULL,
         link TEXT,
         description TEXT,
+        instructions TEXT,
         image TEXT
       )
     `);
@@ -74,7 +75,7 @@ async function seedDb() {
   try {
     const insertIngredient = db.prepare("INSERT INTO ingredients (name) VALUES (?)");
     const insertTag = db.prepare("INSERT INTO tags (name) VALUES (?)");
-    const insertRecipe = db.prepare("INSERT INTO recipes (title, time_minutes, price, link, description) VALUES (?, ?, ?, ?, ?)");
+    const insertRecipe = db.prepare("INSERT INTO recipes (title, time_minutes, price, link, description, instructions) VALUES (?, ?, ?, ?, ?, ?)");
     const insertRecipeIngredient = db.prepare("INSERT INTO recipe_ingredients (recipe_id, ingredient_id, amount, unit) VALUES (?, ?, ?, ?)");
     const insertRecipeTag = db.prepare("INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)");
 
@@ -100,29 +101,51 @@ async function seedDb() {
     // Recipes  
     const r1 = await insertRecipe.run(
       "Spaghetti Carbonara", 25, "12.50", "http://example.com/carbonara",
-      `Step 1: Bring a large pot of salted water to boil and cook 400g spaghetti.\nStep 2: Cook pancetta.\nStep 3: Mix eggs and cheese.\nStep 4: Combine and serve.`
+      "",
+      JSON.stringify([
+        "Bring a large pot of salted water to boil and cook 400g spaghetti.",
+        "Cook pancetta.",
+        "Mix eggs and cheese.",
+        "Combine and serve."
+      ])
     );
 
     const r2 = await insertRecipe.run(
       "Chicken Parmesan", 50, "18.00", "http://example.com/chicken-parm",
-      `Step 1: Prepare chicken.\nStep 2: Bread and fry.\nStep 3: Add sauce and cheese.\nStep 4: Bake.`
+      "",
+      JSON.stringify([
+        "Prepare chicken.",
+        "Bread and fry.",
+        "Add sauce and cheese.",
+        "Bake."
+      ])
     );
 
     const r3 = await insertRecipe.run(
       "Pasta Primavera", 30, "10.00", "http://example.com/primavera",
-      `Step 1: Cook pasta.\nStep 2: Prepare vegetables.\nStep 3: Combine all ingredients.`
+      "",
+      JSON.stringify([
+        "Cook pasta.",
+        "Prepare vegetables.",
+        "Combine all ingredients."
+      ])
     );
 
     const r4 = await insertRecipe.run(
       "Garlic Butter Salmon", 20, "22.00", "http://example.com/salmon",
-      `Step 1: Season salmon.\nStep 2: Cook in skillet.\nStep 3: Add garlic butter sauce.`
+      "",
+      JSON.stringify([
+        "Season salmon.",
+        "Cook in skillet.",
+        "Add garlic butter sauce."
+      ])
     );
 
     // Recipe ingredients (sample)
     await insertRecipeIngredient.run(r1.lastID, 1, "400", "g");
     await insertRecipeIngredient.run(r1.lastID, 2, "4", "large");
 
-    // Recipe tags ( sample)
+    // Recipe tags (sample)
     await insertRecipeTag.run(r1.lastID, 1); // Italian
 
     await db.exec("COMMIT");

@@ -27,7 +27,7 @@ export default function RecipeList({ navigate }) {
 
       <div className="toolbar">
         <div className="search-wrap">
-          <span className="search-icon">⌕</span>
+          {!search && <span className="search-icon">⌕</span>}
           <input
             type="text"
             placeholder=""
