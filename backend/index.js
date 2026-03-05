@@ -25,7 +25,7 @@ app.use(cors());
 app.use(express.json());
 
 // Swagger UI
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use("/apidocs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Health check
 app.get("/health", (req, res) => {
