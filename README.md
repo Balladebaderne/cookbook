@@ -109,7 +109,7 @@ cd ~/cookbook
 docker compose up -d
 ```
 
-discovered people in the project
+discovered people in the project and commited a change
 
 ### Update application from GitHub
 
