@@ -109,6 +109,8 @@ cd ~/cookbook
 docker compose up -d
 ```
 
+discovered people in the project
+
 ### Update application from GitHub
 
 ```bash
