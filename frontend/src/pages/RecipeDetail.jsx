@@ -15,8 +15,13 @@ export default function RecipeDetail({ id, navigate }) {
 
   const handleDelete = async () => {
     if (!confirm(`Slet "${recipe.title}"?`)) return
-    await fetch(`/api/recipe/recipes/${id}/`, { method: 'DELETE' })
-    navigate('list')
+    try {
+      const res = await fetch(`/api/recipe/recipes/${id}/`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
+      navigate('list')
+    } catch {
+      setError('Kunne ikke slette opskriften. Prøv igen.')
+    }
   }
 
   if (loading) return <div className="loading"><div className="spinner" /> Henter…</div>
@@ -27,19 +32,7 @@ export default function RecipeDetail({ id, navigate }) {
     </>
   )
 
-  // Split description into intro + steps
-  const rawDescription = recipe.description || ''
-  const hasStepFormat = /Step \d+:/i.test(rawDescription)
-  const intro = hasStepFormat
-    ? rawDescription.split(/Step \d+:/i)[0].trim()
-    : rawDescription
-
-  // Build steps array
-  const steps = Array.isArray(recipe.instructions) && recipe.instructions.length
-    ? recipe.instructions
-    : hasStepFormat
-      ? rawDescription.split(/Step \d+:/i).filter(s => s.trim())
-      : []
+  const steps = Array.isArray(recipe.instructions) ? recipe.instructions : []
 
   return (
     <div>
@@ -59,9 +52,9 @@ export default function RecipeDetail({ id, navigate }) {
         </div>
       )}
 
-      {intro && (
+      {recipe.description && (
         <p style={{ color: 'var(--ink)', fontSize: '1rem', lineHeight: 1.7, marginBottom: '1.5rem' }}>
-          {intro}
+          {recipe.description}
         </p>
       )}
 
