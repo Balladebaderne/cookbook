@@ -149,6 +149,9 @@ ssh azureuser@172.189.59.40
 ```
 
 ### What is not stored in this repository
+discovered people in the project and commited a change
+
+### Update application from GitHub
 
 This repo does **not** contain Azure infrastructure files such as Terraform, Bicep, or ARM templates, so it does not tell us:
 
