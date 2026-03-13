@@ -8,106 +8,68 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  BACKEND_IMAGE: ${{ github.repository_owner }}/cookbook-backend
-  FRONTEND_IMAGE: ${{ github.repository_owner }}/cookbook-frontend
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}
 
 jobs:
-  build:
-    name: Build & Test
+  build-and-push:
+    name: Build & Push Docker Images
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        project: [backend, frontend]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Install dependencies
-        working-directory: ./${{ matrix.project }}
-        run: npm install
-
-      - name: Run lint
-        working-directory: ./${{ matrix.project }}
-        run: npm run lint || true
-
-      - name: Run tests
-        working-directory: ./${{ matrix.project }}
-        run: npm test || true
-
-      - name: Build project
-        working-directory: ./${{ matrix.project }}
-        run: npm run build || true
-
-  publish-images:
-    name: Publish Images
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/master'
     permissions:
       contents: read
       packages: write
 
+    strategy:
+      matrix:
+        include:
+          - service: backend
+            context: .
+            dockerfile: ./backend/Dockerfile
+          - service: frontend
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Log in to GHCR
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract backend metadata
-        id: backend-meta
+      - name: Extract metadata (tags & labels)
+        id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.BACKEND_IMAGE }}
+          images: ${{ env.IMAGE_PREFIX }}/cookbook-${{ matrix.service }}
           tags: |
-            type=raw,value=latest
-            type=sha
+            type=ref,event=branch
+            type=sha,prefix=sha-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
 
-      - name: Build and push backend image
+      - name: Build and push ${{ matrix.service }} image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./backend/Dockerfile
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
           push: true
-          tags: ${{ steps.backend-meta.outputs.tags }}
-          labels: ${{ steps.backend-meta.outputs.labels }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Extract frontend metadata
-        id: frontend-meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.FRONTEND_IMAGE }}
-          tags: |
-            type=raw,value=latest
-            type=sha
-
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          push: true
-          tags: ${{ steps.frontend-meta.outputs.tags }}
-          labels: ${{ steps.frontend-meta.outputs.labels }}
 
   deploy:
     name: Deploy to Azure VM
     runs-on: ubuntu-latest
-    needs: publish-images
+    needs: build-and-push
     if: github.ref == 'refs/heads/master'
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
@@ -121,25 +83,18 @@ jobs:
           ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
           "echo 'SSH connection successful'"
 
-      - name: Ensure deployment directory exists
+      - name: Copy docker-compose to VM
+        run: |
+          rsync -avz \
+            -e "ssh -i ~/.ssh/id_rsa" \
+            ./docker-compose.yml \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}
+
+      - name: Deploy with Docker Compose
         run: |
           ssh -i ~/.ssh/id_rsa \
           ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-          "mkdir -p ${{ secrets.DEPLOY_PATH }}"
-
-      - name: Upload production compose file
-        run: |
-          scp -i ~/.ssh/id_rsa docker-compose.prod.yml \
-          ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/docker-compose.prod.yml
-
-      - name: Deploy images on VM
-        run: |
-          ssh -i ~/.ssh/id_rsa \
-          ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
-          "mkdir -p ${{ secrets.DEPLOY_PATH }} && \
-          printf 'GITHUB_REPOSITORY_OWNER=%s\nIMAGE_TAG=latest\n' '${{ github.repository_owner }}' > ${{ secrets.DEPLOY_PATH }}/.env && \
-          echo '${{ secrets.GHCR_PAT }}' | docker login ghcr.io -u '${{ secrets.GHCR_USERNAME }}' --password-stdin && \
-          cd ${{ secrets.DEPLOY_PATH }} && \
-          docker compose -f docker-compose.prod.yml pull && \
-          docker compose -f docker-compose.prod.yml up -d && \
-          docker image prune -f"
+          "cd ${{ secrets.DEPLOY_PATH }} && \
+           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
+           docker compose pull && \
+           docker compose up -d"
