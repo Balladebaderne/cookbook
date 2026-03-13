@@ -35,6 +35,8 @@ http://172.189.59.40/apidocs/
 - Azure Virtual Machine (Ubuntu)
 - Docker
 - Docker Compose
+- GitHub Actions
+- GitHub Container Registry (GHCR)
 
 ### DevOps & Version Control
 - Git
@@ -44,23 +46,21 @@ http://172.189.59.40/apidocs/
 
 ## Project Structure
 
-```
+```text
 cookbook/
-│
-├── backend/                # Express backend API
-│   ├── index.js
-│   ├── package.json
-│   └── Dockerfile
-│
-├── frontend/               # React frontend
-│   ├── src/
-│   ├── package.json
-│   ├── nginx.conf
-│   └── Dockerfile
-│
-├── openapi.yaml           # OpenAPI specification
-├── docker-compose.yml     # Docker orchestration
-└── README.md
+|-- backend/                  # Express backend API
+|   |-- index.js
+|   |-- package.json
+|   `-- Dockerfile
+|-- frontend/                 # React frontend
+|   |-- src/
+|   |-- package.json
+|   |-- nginx.conf
+|   `-- Dockerfile
+|-- docker-compose.yml        # Local development with image builds
+|-- docker-compose.prod.yml   # Production deployment with GHCR images
+|-- openapi.yaml              # OpenAPI specification
+`-- README.md
 ```
 
 ---
@@ -87,73 +87,132 @@ docker compose down
 ### Access locally
 
 Frontend:  
-http://localhost  
+http://localhost
 
 Backend API:  
-http://localhost:3000/api  
+http://localhost:3000/api
 
 Swagger docs:  
-http://localhost:3000/apidocs  
+http://localhost:3000/apidocs
 
 ---
 
-## Deployment (Azure VM)
+## Current Pipeline Overview
 
-The application is deployed on an Azure Virtual Machine using Docker.
+The repository currently deploys from GitHub Actions. The workflow is defined in [`.github/workflows/ci-cd.yml`](./.github/workflows/ci-cd.yml).
 
-### Start application on VM
+### How it works now
+
+1. A push to `master` or `dev` starts the pipeline.
+2. The `build` job installs dependencies and runs lint, tests, and build steps for both `backend` and `frontend`.
+3. On `master`, the workflow publishes Docker images to GitHub Container Registry:
+   - `ghcr.io/<owner>/cookbook-backend:latest`
+   - `ghcr.io/<owner>/cookbook-frontend:latest`
+4. The deploy job then SSHs into the VM using GitHub Secrets.
+5. The VM logs into `ghcr.io`, pulls the latest images, and starts them with `docker compose -f docker-compose.prod.yml up -d`.
+
+### Which secrets are involved
+
+The pipeline still depends on GitHub Secrets for access:
+
+- `SSH_PRIVATE_KEY`: private key used by GitHub Actions to SSH into the VM
+- `SSH_HOST`: public IP or DNS name of the VM
+- `SSH_USER`: SSH username on the VM, likely `azureuser`
+- `DEPLOY_PATH`: directory on the VM where the production compose file lives
+- `GHCR_USERNAME`: GitHub username or machine user with package read access
+- `GHCR_PAT`: GitHub token with permission to read packages from GHCR
+
+### Important difference
+
+The VM no longer needs the full repository copied onto it for deployment. It only needs:
+
+- Docker and Docker Compose installed
+- access to `ghcr.io`
+- the production compose file
+- a GitHub token that can pull the package images
+
+---
+
+## Azure VM Access
+
+### What we know from this repository
+
+The repository documents:
+
+- SSH user: `azureuser`
+- public IP: `172.189.59.40`
+
+That means the expected login command is:
 
 ```bash
 ssh azureuser@172.189.59.40
-cd ~/cookbook
-docker compose up -d
 ```
 
-### Update application from GitHub
+### What is not stored in this repository
+
+This repo does **not** contain Azure infrastructure files such as Terraform, Bicep, or ARM templates, so it does not tell us:
+
+- the Azure resource group
+- the VM name in Azure
+- the Azure subscription
+- whether a DNS name is configured
+
+You would need to check one of these places for that:
+
+- the Azure Portal
+- repository or organization secrets in GitHub
+- whoever created the VM
+
+### If SSH fails
+
+Common reasons:
+
+- your local machine does not have the correct private key
+- port `22` is blocked in the VM network security group
+- `azureuser` is not the right user anymore
+- the VM public IP has changed
+
+---
+
+## VM Deployment Layout
+
+The production deployment now expects a directory like this on the VM:
+
+```text
+<DEPLOY_PATH>/
+|-- .env
+`-- docker-compose.prod.yml
+```
+
+The `.env` file is written by the workflow and includes:
+
+```env
+GITHUB_REPOSITORY_OWNER=<owner>
+IMAGE_TAG=latest
+```
+
+---
+
+## Manual Commands On The VM
+
+If you SSH into the VM and want to update the running app manually:
 
 ```bash
-git pull origin dev
-docker compose up -d --build
+cd <DEPLOY_PATH>
+echo "<GHCR_PAT>" | docker login ghcr.io -u "<GHCR_USERNAME>" --password-stdin
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
 ```
 
----
+To inspect what is running:
 
-## 📖 API Documentation
-
-Swagger UI is available at:
-
-http://172.189.59.40/apidocs/
-
-The OpenAPI specification is defined in:
-
+```bash
+docker compose -f docker-compose.prod.yml ps
+docker images | grep cookbook
 ```
-openapi.yaml
-```
-
----
-
-## Team: BalladeBaderne
-
-- Magnus Giemsa  
-- Laurits Munk  
-- Elias Garcia  
-- Andreas Brandenborg  
-- Jacob Bisgaard  
 
 ---
 
 ## Repository
 
 https://github.com/Balladebaderne/cookbook
-
----
-
-## Status
-
-- Backend deployed and running on Azure VM  
-- Frontend deployed and running on Azure VM  
-- Swagger API documentation available  
-- Dockerized full-stack deployment  
-- GitHub integration configured  
-
----
