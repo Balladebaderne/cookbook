@@ -29,11 +29,9 @@ export default function App() {
         </div>
       </header>
 
-      <main className="main">
-        {page === 'list' && <RecipeList navigate={navigate} />}
-        {page === 'detail' && selectedId && <RecipeDetail id={selectedId} navigate={navigate} />}
-        {page === 'form' && <RecipeForm recipe={editRecipe} navigate={navigate} />}
-      </main>
+      {page === 'list' && <RecipeList navigate={navigate} />}
+      {page === 'detail' && selectedId && <RecipeDetail id={selectedId} navigate={navigate} />}
+      {page === 'form' && <RecipeForm recipe={editRecipe} navigate={navigate} />}
     </div>
   )
 }

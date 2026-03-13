@@ -24,18 +24,23 @@ export default function RecipeDetail({ id, navigate }) {
     }
   }
 
-  if (loading) return <div className="loading"><div className="spinner" /> Henter…</div>
+  if (loading) return (
+    <main className="main">
+      <div className="loading"><div className="spinner" /> Henter…</div>
+    </main>
+  )
+
   if (error) return (
-    <>
+    <main className="main">
       <button className="back-btn" onClick={() => navigate('list')}>← Tilbage</button>
       <div className="error-msg">{error}</div>
-    </>
+    </main>
   )
 
   const steps = Array.isArray(recipe.instructions) ? recipe.instructions : []
 
   return (
-    <div>
+    <main className="main">
       <button className="back-btn" onClick={() => navigate('list')}>← Alle opskrifter</button>
 
       <h1 className="detail-title">{recipe.title}</h1>
@@ -47,13 +52,13 @@ export default function RecipeDetail({ id, navigate }) {
       </div>
 
       {recipe.tags?.length > 0 && (
-        <div className="card-tags" style={{ marginBottom: '1.25rem' }}>
+        <div className="card-tags" style={{ marginBottom: '1.5rem' }}>
           {recipe.tags.map(t => <span key={t.id} className="tag">{t.name}</span>)}
         </div>
       )}
 
       {recipe.description && (
-        <p style={{ color: 'var(--ink)', fontSize: '1rem', lineHeight: 1.7, marginBottom: '1.5rem' }}>
+        <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '1.05rem', color: 'var(--brown)', lineHeight: 1.75, marginBottom: '1.75rem', paddingLeft: '1rem', borderLeft: '3px solid var(--brown-light)' }}>
           {recipe.description}
         </p>
       )}
@@ -99,6 +104,6 @@ export default function RecipeDetail({ id, navigate }) {
           </section>
         )}
       </div>
-    </div>
+    </main>
   )
 }
