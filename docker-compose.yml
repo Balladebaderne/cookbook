@@ -1,5 +1,6 @@
 services:
   backend:
+    profiles: ["prod"]
     image: ghcr.io/balladebaderne/cookbook-backend:latest
     ports:
       - "3000:3000"
@@ -19,11 +20,42 @@ services:
       start_period: 40s
 
   frontend:
+    profiles: ["prod"]
     image: ghcr.io/balladebaderne/cookbook-frontend:latest
     ports:
       - "80:80"
     depends_on:
       - backend
+    networks:
+      - cookbook-network
+
+  backend-dev:
+    profiles: ["dev"]
+    container_name: backend
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DB_PATH=/app/data/app.db
+    volumes:
+      - cookbook_data:/app/data
+    networks:
+      - cookbook-network
+
+  frontend-dev:
+    profiles: ["dev"]
+    container_name: frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend-dev
     networks:
       - cookbook-network
 

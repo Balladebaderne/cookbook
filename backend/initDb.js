@@ -2,7 +2,6 @@ import { db } from "./db.js";
 
 export async function initDb() {
   try {
-    // Create tables
     await db.exec(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,21 +27,21 @@ export async function initDb() {
     await db.exec(`
       CREATE TABLE IF NOT EXISTS ingredients (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL
+        name TEXT NOT NULL UNIQUE
       )
     `);
 
     await db.exec(`
       CREATE TABLE IF NOT EXISTS tags (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL
+        name TEXT NOT NULL UNIQUE
       )
     `);
 
     await db.exec(`
       CREATE TABLE IF NOT EXISTS recipe_ingredients (
-        recipe_id INTEGER,
-        ingredient_id INTEGER,
+        recipe_id INTEGER NOT NULL,
+        ingredient_id INTEGER NOT NULL,
         amount TEXT,
         unit TEXT,
         FOREIGN KEY (recipe_id) REFERENCES recipes(id),
@@ -52,17 +51,21 @@ export async function initDb() {
 
     await db.exec(`
       CREATE TABLE IF NOT EXISTS recipe_tags (
-        recipe_id INTEGER,
-        tag_id INTEGER,
+        recipe_id INTEGER NOT NULL,
+        tag_id INTEGER NOT NULL,
         FOREIGN KEY (recipe_id) REFERENCES recipes(id),
         FOREIGN KEY (tag_id) REFERENCES tags(id)
       )
     `);
 
-    // Check if we need to seed
+    // Indexes for faster JOIN lookups on junction tables
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_ri_recipe ON recipe_ingredients(recipe_id)`);
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_rt_recipe ON recipe_tags(recipe_id)`);
+
+    // Seed if empty
     const result = await db.prepare("SELECT COUNT(*) as c FROM recipes").all();
     const count = result[0]?.c || 0;
-    
+
     if (count === 0) {
       await seedDb();
     }
@@ -98,7 +101,7 @@ async function seedDb() {
       await insertTag.run(tag);
     }
 
-    // Recipes  
+    // Recipes
     const r1 = await insertRecipe.run(
       "Spaghetti Carbonara", 25, "12.50", "http://example.com/carbonara",
       "",
@@ -141,11 +144,11 @@ async function seedDb() {
       ])
     );
 
-    // Recipe ingredients (sample)
+    // Recipe ingredients
     await insertRecipeIngredient.run(r1.lastID, 1, "400", "g");
     await insertRecipeIngredient.run(r1.lastID, 2, "4", "large");
 
-    // Recipe tags (sample)
+    // Recipe tags
     await insertRecipeTag.run(r1.lastID, 1); // Italian
 
     await db.exec("COMMIT");
