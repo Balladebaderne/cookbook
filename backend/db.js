@@ -40,19 +40,6 @@ class Database {
     };
   }
 
-  transaction(fn) {
-    return async () => {
-      try {
-        await this.exec("BEGIN TRANSACTION");
-        await fn();
-        await this.exec("COMMIT");
-      } catch (err) {
-        await this.exec("ROLLBACK");
-        throw err;
-      }
-    };
-  }
-
   exec(sql) {
     return new Promise((resolve, reject) => {
       this.db.exec(sql, (err) => {
