@@ -31,21 +31,18 @@ export default function RecipeForm({ recipe, navigate }) {
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }))
 
-  // Ingredients
   const updateIng = (i, field, val) => {
     const next = [...form.ingredients]; next[i] = { ...next[i], [field]: val }; set('ingredients', next)
   }
   const addIng = () => set('ingredients', [...form.ingredients, { name: '', amount: '', unit: '' }])
   const removeIng = i => set('ingredients', form.ingredients.filter((_, idx) => idx !== i))
 
-  // Tags
   const updateTag = (i, val) => {
     const next = [...form.tags]; next[i] = { name: val }; set('tags', next)
   }
   const addTag = () => set('tags', [...form.tags, { name: '' }])
   const removeTag = i => set('tags', form.tags.filter((_, idx) => idx !== i))
 
-  // Instructions
   const updateStep = (i, val) => {
     const next = [...form.instructions]; next[i] = val; set('instructions', next)
   }
@@ -87,7 +84,7 @@ export default function RecipeForm({ recipe, navigate }) {
   }
 
   return (
-    <div>
+    <main className="main">
       <button className="back-btn" onClick={() => navigate(isEdit ? 'detail' : 'list', recipe?.id)}>
         ← {isEdit ? 'Tilbage til opskrift' : 'Tilbage'}
       </button>
@@ -100,7 +97,6 @@ export default function RecipeForm({ recipe, navigate }) {
 
       <div className="form-card">
 
-        {/* Grundoplysninger */}
         <div className="form-section">
           <h2 className="form-section-title">Grundoplysninger</h2>
           <div className="form-group">
@@ -132,7 +128,6 @@ export default function RecipeForm({ recipe, navigate }) {
           </div>
         </div>
 
-        {/* Ingredienser */}
         <div className="form-section">
           <h2 className="form-section-title">Ingredienser</h2>
           <div className="dynamic-list">
@@ -152,7 +147,6 @@ export default function RecipeForm({ recipe, navigate }) {
           <button className="btn-add" onClick={addIng}>+ Tilføj ingrediens</button>
         </div>
 
-        {/* Fremgangsmåde */}
         <div className="form-section">
           <h2 className="form-section-title">Fremgangsmåde</h2>
           <div className="dynamic-list">
@@ -169,7 +163,6 @@ export default function RecipeForm({ recipe, navigate }) {
           <button className="btn-add" onClick={addStep}>+ Tilføj trin</button>
         </div>
 
-        {/* Tags */}
         <div className="form-section">
           <h2 className="form-section-title">Tags</h2>
           <div className="dynamic-list">
@@ -195,6 +188,6 @@ export default function RecipeForm({ recipe, navigate }) {
           </button>
         </div>
       </div>
-    </div>
+    </main>
   )
 }
