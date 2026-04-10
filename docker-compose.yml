@@ -2,6 +2,7 @@ services:
   backend:
     profiles: ["prod"]
     image: ghcr.io/balladebaderne/cookbook-backend:latest
+    restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
@@ -22,6 +23,7 @@ services:
   frontend:
     profiles: ["prod"]
     image: ghcr.io/balladebaderne/cookbook-frontend:latest
+    restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
