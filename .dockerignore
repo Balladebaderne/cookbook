@@ -1,0 +1,21 @@
+# Node modules - built inside container for the correct platform
+node_modules/
+backend/node_modules/
+frontend/node_modules/
+
+# Git
+.git/
+.gitignore
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Legacy app
+legacy/
+
+# Environment files
+.env*
