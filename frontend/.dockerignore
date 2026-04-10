@@ -1,0 +1,12 @@
+# Node modules - built inside container for the correct platform
+node_modules/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment files
+.env*
