@@ -1,37 +1,49 @@
-import { useState } from 'react'
-import RecipeList from './pages/RecipeList'
+import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom'
+import LandingPage  from './pages/LandingPage'
+import RecipeList   from './pages/RecipeList'
 import RecipeDetail from './pages/RecipeDetail'
-import RecipeForm from './pages/RecipeForm'
+import RecipeForm   from './pages/RecipeForm'
 
-export default function App() {
-  const [page, setPage] = useState('list')
-  const [selectedId, setSelectedId] = useState(null)
-  const [editRecipe, setEditRecipe] = useState(null)
-
-  const navigate = (target, id = null, recipe = null) => {
-    setPage(target)
-    setSelectedId(id)
-    setEditRecipe(recipe)
-    window.scrollTo(0, 0)
-  }
-
+function RecipeLayout({ children }) {
+  const navigate = useNavigate()
   return (
     <div className="app">
       <header className="header">
         <div className="header-inner">
-          <button className="logo" onClick={() => navigate('list')}>
+          <Link to="/" className="logo" style={{ textDecoration: 'none' }}>
             ✦ Cookbook
-          </button>
+          </Link>
           <nav>
-            <button className="nav-link" onClick={() => navigate('list')}>Opskrifter</button>
-            <button className="btn-primary" onClick={() => navigate('form')}>+ Ny opskrift</button>
+            <Link to="/recipes" className="nav-link">Opskrifter</Link>
+            <button className="btn-primary" onClick={() => navigate('/recipes/new')}>
+              + Ny opskrift
+            </button>
           </nav>
         </div>
       </header>
-
-      {page === 'list' && <RecipeList navigate={navigate} />}
-      {page === 'detail' && selectedId && <RecipeDetail id={selectedId} navigate={navigate} />}
-      {page === 'form' && <RecipeForm recipe={editRecipe} navigate={navigate} />}
+      {children}
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/recipes" element={
+          <RecipeLayout><RecipeList /></RecipeLayout>
+        } />
+        <Route path="/recipes/new" element={
+          <RecipeLayout><RecipeForm /></RecipeLayout>
+        } />
+        <Route path="/recipes/:id" element={
+          <RecipeLayout><RecipeDetail /></RecipeLayout>
+        } />
+        <Route path="/recipes/:id/edit" element={
+          <RecipeLayout><RecipeForm /></RecipeLayout>
+        } />
+      </Routes>
+    </BrowserRouter>
   )
 }
