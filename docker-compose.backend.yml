@@ -1,0 +1,23 @@
+services:
+  backend:
+    image: ghcr.io/${GITHUB_OWNER}/cookbook-backend:latest
+    container_name: cookbook-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - DB_PATH=/app/data/app.db
+    volumes:
+      - cookbook_data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  cookbook_data:
+    driver: local

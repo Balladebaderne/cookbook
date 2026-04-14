@@ -1,0 +1,9 @@
+services:
+  frontend:
+    image: ghcr.io/${GITHUB_OWNER}/cookbook-frontend:latest
+    container_name: cookbook-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    environment:
+      - BACKEND_HOST=${BACKEND_PRIVATE_IP}:3000
