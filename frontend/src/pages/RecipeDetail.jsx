@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 
-export default function RecipeDetail({ id, navigate }) {
-  const [recipe, setRecipe] = useState(null)
+export default function RecipeDetail() {
+  const { id }       = useParams()
+  const navigate     = useNavigate()
+  const [recipe, setRecipe]   = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [error, setError]     = useState(null)
 
   useEffect(() => {
     setLoading(true)
@@ -18,7 +21,7 @@ export default function RecipeDetail({ id, navigate }) {
     try {
       const res = await fetch(`/api/recipe/recipes/${id}/`, { method: 'DELETE' })
       if (!res.ok) throw new Error()
-      navigate('list')
+      navigate('/recipes')
     } catch {
       setError('Kunne ikke slette opskriften. Prøv igen.')
     }
@@ -32,7 +35,7 @@ export default function RecipeDetail({ id, navigate }) {
 
   if (error) return (
     <main className="main">
-      <button className="back-btn" onClick={() => navigate('list')}>← Tilbage</button>
+      <button className="back-btn" onClick={() => navigate('/recipes')}>← Tilbage</button>
       <div className="error-msg">{error}</div>
     </main>
   )
@@ -41,14 +44,19 @@ export default function RecipeDetail({ id, navigate }) {
 
   return (
     <main className="main">
-      <button className="back-btn" onClick={() => navigate('list')}>← Alle opskrifter</button>
+      <button className="back-btn" onClick={() => navigate('/recipes')}>← Alle opskrifter</button>
+
+      {recipe.image && (
+        <div className="detail-image">
+          <img src={recipe.image} alt={recipe.title} />
+        </div>
+      )}
 
       <h1 className="detail-title">{recipe.title}</h1>
 
       <div className="detail-meta">
         {recipe.time_minutes && <span>⏱ {recipe.time_minutes} minutter</span>}
         {recipe.price && <span>💰 {recipe.price} kr</span>}
-        {recipe.servings && <span>👥 {recipe.servings} portioner</span>}
       </div>
 
       {recipe.tags?.length > 0 && (
@@ -58,13 +66,14 @@ export default function RecipeDetail({ id, navigate }) {
       )}
 
       {recipe.description && (
-        <p style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: '1.05rem', color: 'var(--brown)', lineHeight: 1.75, marginBottom: '1.75rem', paddingLeft: '1rem', borderLeft: '3px solid var(--brown-light)' }}>
-          {recipe.description}
-        </p>
+        <p className="detail-description">{recipe.description}</p>
       )}
 
       <div className="detail-actions">
-        <button className="btn-primary" onClick={() => navigate('form', recipe.id, recipe)}>
+        <button
+          className="btn-primary"
+          onClick={() => navigate(`/recipes/${id}/edit`, { state: { recipe } })}
+        >
           ✏ Rediger
         </button>
         <button className="btn-danger" onClick={handleDelete}>

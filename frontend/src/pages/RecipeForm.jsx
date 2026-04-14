@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation, useParams } from 'react-router-dom'
 
 const EMPTY = {
-  title: '', description: '', time_minutes: '', price: '', link: '',
+  title: '', description: '', time_minutes: '', price: '', link: '', image: '',
   ingredients: [{ name: '', amount: '', unit: '' }],
   tags: [{ name: '' }],
   instructions: [''],
@@ -15,6 +16,7 @@ function toForm(recipe) {
     time_minutes: recipe.time_minutes ?? '',
     price: recipe.price ?? '',
     link: recipe.link || '',
+    image: recipe.image || '',
     ingredients: recipe.ingredients?.length
       ? recipe.ingredients.map(i => ({ name: i.name, amount: i.amount ?? '', unit: i.unit ?? '' }))
       : [{ name: '', amount: '', unit: '' }],
@@ -23,31 +25,47 @@ function toForm(recipe) {
   }
 }
 
-export default function RecipeForm({ recipe, navigate }) {
-  const isEdit = !!recipe
-  const [form, setForm] = useState(() => toForm(recipe))
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState(null)
+export default function RecipeForm() {
+  const navigate    = useNavigate()
+  const location    = useLocation()
+  const { id }      = useParams()
+  const isEdit      = !!id
+
+  const [form, setForm]       = useState(() => toForm(location.state?.recipe ?? null))
+  const [saving, setSaving]   = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError]     = useState(null)
+
+  // If editing but no recipe in location state (e.g. page refresh), fetch from API
+  useEffect(() => {
+    if (isEdit && !location.state?.recipe) {
+      setLoading(true)
+      fetch(`/api/recipe/recipes/${id}/`)
+        .then(r => { if (!r.ok) throw new Error(); return r.json() })
+        .then(data => { setForm(toForm(data)); setLoading(false) })
+        .catch(() => { setError('Kunne ikke hente opskriften.'); setLoading(false) })
+    }
+  }, [id, isEdit, location.state])
 
   const set = (field, val) => setForm(f => ({ ...f, [field]: val }))
 
   const updateIng = (i, field, val) => {
     const next = [...form.ingredients]; next[i] = { ...next[i], [field]: val }; set('ingredients', next)
   }
-  const addIng = () => set('ingredients', [...form.ingredients, { name: '', amount: '', unit: '' }])
-  const removeIng = i => set('ingredients', form.ingredients.filter((_, idx) => idx !== i))
+  const addIng    = ()  => set('ingredients', [...form.ingredients, { name: '', amount: '', unit: '' }])
+  const removeIng = (i) => set('ingredients', form.ingredients.filter((_, idx) => idx !== i))
 
   const updateTag = (i, val) => {
     const next = [...form.tags]; next[i] = { name: val }; set('tags', next)
   }
-  const addTag = () => set('tags', [...form.tags, { name: '' }])
-  const removeTag = i => set('tags', form.tags.filter((_, idx) => idx !== i))
+  const addTag    = ()  => set('tags', [...form.tags, { name: '' }])
+  const removeTag = (i) => set('tags', form.tags.filter((_, idx) => idx !== i))
 
   const updateStep = (i, val) => {
     const next = [...form.instructions]; next[i] = val; set('instructions', next)
   }
-  const addStep = () => set('instructions', [...form.instructions, ''])
-  const removeStep = i => set('instructions', form.instructions.filter((_, idx) => idx !== i))
+  const addStep    = ()  => set('instructions', [...form.instructions, ''])
+  const removeStep = (i) => set('instructions', form.instructions.filter((_, idx) => idx !== i))
 
   const handleSubmit = async () => {
     if (!form.title.trim()) { setError('Opskriften skal have et navn.'); return }
@@ -59,6 +77,7 @@ export default function RecipeForm({ recipe, navigate }) {
       time_minutes: form.time_minutes ? Number(form.time_minutes) : null,
       price: form.price || null,
       link: form.link,
+      image: form.image || null,
       ingredients: form.ingredients.filter(i => i.name.trim()).map(i => ({
         name: i.name, amount: i.amount || null, unit: i.unit || null
       })),
@@ -67,7 +86,7 @@ export default function RecipeForm({ recipe, navigate }) {
     }
 
     try {
-      const url = isEdit ? `/api/recipe/recipes/${recipe.id}/` : '/api/recipe/recipes/'
+      const url    = isEdit ? `/api/recipe/recipes/${id}/` : '/api/recipe/recipes/'
       const method = isEdit ? 'PUT' : 'POST'
       const res = await fetch(url, {
         method,
@@ -76,16 +95,21 @@ export default function RecipeForm({ recipe, navigate }) {
       })
       if (!res.ok) throw new Error()
       const saved = await res.json()
-      navigate('detail', saved.id || recipe?.id)
+      navigate(`/recipes/${saved.id || id}`)
     } catch {
       setError('Kunne ikke gemme opskriften. Prøv igen.')
       setSaving(false)
     }
   }
 
+  const handleCancel = () => {
+    if (isEdit) navigate(`/recipes/${id}`)
+    else navigate('/recipes')
+  }
+
   return (
     <main className="main">
-      <button className="back-btn" onClick={() => navigate(isEdit ? 'detail' : 'list', recipe?.id)}>
+      <button className="back-btn" onClick={handleCancel}>
         ← {isEdit ? 'Tilbage til opskrift' : 'Tilbage'}
       </button>
 
@@ -95,6 +119,9 @@ export default function RecipeForm({ recipe, navigate }) {
 
       {error && <div className="error-msg" style={{ marginBottom: '1.5rem' }}>{error}</div>}
 
+      {loading ? (
+        <div className="loading"><div className="spinner" /> Henter opskrift…</div>
+      ) : (
       <div className="form-card">
 
         <div className="form-section">
@@ -126,6 +153,14 @@ export default function RecipeForm({ recipe, navigate }) {
             <input type="text" placeholder="https://…"
               value={form.link} onChange={e => set('link', e.target.value)} />
           </div>
+          <div className="form-group">
+            <label>Billed-URL</label>
+            <input type="text" placeholder="https://… (link til et billede)"
+              value={form.image} onChange={e => set('image', e.target.value)} />
+            {form.image && (
+              <img src={form.image} alt="Forhåndsvisning" className="image-preview" />
+            )}
+          </div>
         </div>
 
         <div className="form-section">
@@ -152,7 +187,7 @@ export default function RecipeForm({ recipe, navigate }) {
           <div className="dynamic-list">
             {form.instructions.map((step, i) => (
               <div key={i} className="dynamic-item">
-                <span style={{ color: 'var(--brown)', fontSize: '0.8rem', minWidth: 20 }}>{i + 1}.</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', minWidth: 20 }}>{i + 1}.</span>
                 <textarea placeholder={`Trin ${i + 1}…`} value={step}
                   onChange={e => updateStep(i, e.target.value)} style={{ minHeight: 60 }} />
                 <button className="btn-remove" onClick={() => removeStep(i)}
@@ -179,15 +214,13 @@ export default function RecipeForm({ recipe, navigate }) {
         </div>
 
         <div className="form-actions">
-          <button className="btn-secondary"
-            onClick={() => navigate(isEdit ? 'detail' : 'list', recipe?.id)}>
-            Annullér
-          </button>
+          <button className="btn-secondary" onClick={handleCancel}>Annullér</button>
           <button className="btn-primary" onClick={handleSubmit} disabled={saving}>
             {saving ? 'Gemmer…' : isEdit ? 'Gem ændringer' : 'Opret opskrift'}
           </button>
         </div>
       </div>
+      )}
     </main>
   )
 }

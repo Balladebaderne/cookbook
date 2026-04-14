@@ -45,10 +45,10 @@ router.patch("/me/", (req, res) => {
 
 router.post("/token/", (req, res) => {
   console.log("Route invoked: POST /api/user/token/");
-  const { email, password } = req.body;
+  const { email } = req.body;
 
-  // stub 1:1 som Flask
-  res.status(200).json({ email, password });
+  // stub — never return the password
+  res.status(200).json({ email, token: "stub-token" });
 });
 
 export default router;
