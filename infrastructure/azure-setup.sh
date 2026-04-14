@@ -163,7 +163,9 @@ provision "$BACKEND_IP" "backend VM"
 # ---------- GitHub secrets ----------
 log "Setting GitHub secrets on $GITHUB_REPO..."
 set_secret() {
-  printf '%s' "$2" | gh secret set "$1" -R "$GITHUB_REPO" --body -
+  # NB: `--body -` would literally store the string "-"; omit --body so gh
+  # reads the value from stdin instead.
+  printf '%s' "$2" | gh secret set "$1" -R "$GITHUB_REPO"
 }
 
 set_secret SSH_USER            "$ADMIN_USER"
