@@ -29,6 +29,34 @@ Install and configure on your local machine:
   `CR_PAT` (only needed if you pull images on the VM manually; the
   pipeline uses the ephemeral `GITHUB_TOKEN`)
 
+## One active deployment at a time
+
+The repo's deploy secrets (`SSH_HOST*`, `BACKEND_PRIVATE_IP`,
+`SSH_PRIVATE_KEY`) and the `DEPLOY_MODE` variable are **shared team state**.
+Only one teammate can have a live deployment at any moment — the last person
+to run `create_*.sh` owns the deploy target until they (or someone else)
+tear down.
+
+To make this visible and prevent accidents, the create scripts record the
+current owner in a repo variable `DEPLOY_OWNER` (= the GitHub username of
+whoever ran the script). If a classmate tries to run a create script while
+someone else owns the deployment, the script refuses with:
+
+```
+[error] Another teammate already has an active deployment on this repo.
+  Current owner  : alice
+  Deploy mode    : two-vms
+  ...
+```
+
+To release ownership, the current owner runs `bash infrastructure/azure-teardown.sh`
+— that deletes their Azure resources *and* clears `DEPLOY_OWNER` /
+`DEPLOY_MODE` / the deploy secrets from the repo, so the next teammate can
+run a create script without conflict.
+
+If the lock is genuinely stale (VMs already gone but state wasn't cleaned up),
+override with `FORCE=1 bash infrastructure/create_vm.sh`.
+
 ## Two deployment topologies
 
 The pipeline in [`.github/workflows/ci-cd.yml`](../.github/workflows/ci-cd.yml)

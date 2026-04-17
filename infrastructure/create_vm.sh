@@ -54,6 +54,46 @@ log "Verifying GitHub login..."
 gh auth status >/dev/null 2>&1 || die "Not logged in to GitHub. Run 'gh auth login' first."
 GH_USER=$(gh api user --jq .login)
 
+# ---------- Single-active-deployment guard ----------
+# The repo's deploy secrets and DEPLOY_MODE variable are shared team state.
+# Running this script overwrites them, which orphans any live deployment
+# pointed at by the old values (those VMs keep running in someone else's
+# Azure sub, burning credits, no longer receiving deploys). Track the
+# current owner in DEPLOY_OWNER; refuse if it's someone else unless FORCE=1.
+CURRENT_OWNER=$(gh variable list -R "$GITHUB_REPO" --json name,value \
+  -q '.[] | select(.name=="DEPLOY_OWNER") | .value' 2>/dev/null || true)
+CURRENT_MODE=$(gh variable list -R "$GITHUB_REPO" --json name,value \
+  -q '.[] | select(.name=="DEPLOY_MODE") | .value' 2>/dev/null || true)
+
+if [[ -n "$CURRENT_OWNER" && "$CURRENT_OWNER" != "$GH_USER" && "${FORCE:-0}" != "1" ]]; then
+  cat >&2 <<ERR
+
+[error] Another teammate already has an active deployment on this repo.
+
+  Current owner  : $CURRENT_OWNER
+  Deploy mode    : ${CURRENT_MODE:-unknown}
+  Repo           : $GITHUB_REPO
+
+Running this script now would overwrite the repo's deploy secrets and
+orphan $CURRENT_OWNER's VMs (still running in their Azure subscription,
+still burning credits, but no longer receiving deploys).
+
+What to do:
+  1. Ask $CURRENT_OWNER to run on their machine:
+       bash infrastructure/azure-teardown.sh
+     That deletes their Azure resources and clears the lock.
+  2. Or, if you know the lock is stale (VMs already gone), override:
+       FORCE=1 bash infrastructure/create_vm.sh
+
+ERR
+  exit 1
+fi
+
+if [[ -z "$CURRENT_OWNER" && -n "$CURRENT_MODE" ]]; then
+  log "Note: DEPLOY_MODE=$CURRENT_MODE is set but no DEPLOY_OWNER recorded."
+  log "      Claiming ownership. If a teammate still has VMs up, ask them to tear down."
+fi
+
 cat <<CONFIRM
 
 About to provision a single-VM deployment:
@@ -158,6 +198,9 @@ gh secret set SSH_PRIVATE_KEY -R "$GITHUB_REPO" < "$SSH_KEY_PATH"
 
 log "Setting deploy-mode variable to 'single' on $GITHUB_REPO..."
 gh variable set DEPLOY_MODE --body "single" -R "$GITHUB_REPO"
+
+log "Claiming deployment ownership as '$GH_USER'..."
+gh variable set DEPLOY_OWNER --body "$GH_USER" -R "$GITHUB_REPO"
 
 log "Done."
 cat <<SUMMARY

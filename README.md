@@ -47,7 +47,8 @@ All Azure provisioning lives under [`infrastructure/`](./infrastructure/README.m
 Two topologies are supported — pick one:
 
 - **Single VM** — `bash infrastructure/create_vm.sh`
-- **Two VMs** (public nginx + internal backend) — `bash infrastructure/create_two_vms.sh`
+- **Two VMs** (public nginx + backend with **no public IP**, reachable
+  only through nginx) — `bash infrastructure/create_two_vms.sh`
 
 The create scripts set the repo variable `DEPLOY_MODE` so the CI/CD
 pipeline knows which deploy job to run. Push to `master` (or trigger
@@ -57,8 +58,14 @@ pipeline knows which deploy job to run. Push to `master` (or trigger
 bash infrastructure/azure-teardown.sh
 ```
 
-See [`infrastructure/README.md`](./infrastructure/README.md) for
-prerequisites, secrets, and the full cycle.
+### Only one live deployment at a time
+
+The repo's deploy secrets and `DEPLOY_MODE` variable are shared team
+state — running `create_*.sh` overwrites them. The scripts enforce
+this by recording a `DEPLOY_OWNER` variable on the repo and refusing
+to run when someone else owns the current deployment. Teardown clears
+the lock. See [`infrastructure/README.md`](./infrastructure/README.md#one-active-deployment-at-a-time)
+for the full flow and the `FORCE=1` override.
 
 ## Pipeline Overview
 
@@ -71,7 +78,18 @@ prerequisites, secrets, and the full cycle.
 3. **deploy** — only on `master` or manual dispatch. Picks one path
    based on the `DEPLOY_MODE` repo variable:
    - `single` → SSHs to `SSH_HOST`, runs `docker-compose.single-vm.yml`
-   - `two-vms` → SSHs to backend + nginx VMs with their respective compose files
+   - `two-vms` → SSHs to nginx directly, and to backend via nginx as
+     an SSH jump host (backend has no public IP), each with its own
+     compose file
+
+## For contributors
+
+See [`AGENTS.md`](./AGENTS.md) for branching rules, the security gate,
+and do-not-touch paths. One-time hook install per clone:
+
+```bash
+cp scripts/security-check.sh .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+```
 
 ## Repository
 

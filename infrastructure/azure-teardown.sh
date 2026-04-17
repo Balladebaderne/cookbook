@@ -5,6 +5,7 @@ set -euo pipefail
 # This is destructive and irreversible — requires explicit confirmation.
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-balladebaderne}"
+GITHUB_REPO="${GITHUB_REPO:-Balladebaderne/cookbook}"
 
 log() { printf '\n\033[1;34m[teardown]\033[0m %s\n' "$*"; }
 die() { printf '\n\033[1;31m[error]\033[0m %s\n' "$*" >&2; exit 1; }
@@ -31,3 +32,22 @@ read -rp $'\nType the resource group name to confirm: ' confirm
 log "Deleting..."
 az group delete --name "$RESOURCE_GROUP" --yes --no-wait
 log "Delete submitted. Azure will finish in the background."
+
+# ---------- Clear shared deploy state on GitHub ----------
+# Best-effort: the teardown should still succeed even if gh isn't available.
+# This matters because leaving DEPLOY_OWNER / secrets behind blocks the next
+# teammate from running create_*.sh cleanly.
+if command -v gh >/dev/null && gh auth status >/dev/null 2>&1; then
+  log "Clearing repo deploy state on $GITHUB_REPO..."
+  for var in DEPLOY_OWNER DEPLOY_MODE; do
+    gh variable delete "$var" -R "$GITHUB_REPO" >/dev/null 2>&1 || true
+  done
+  for secret in SSH_HOST SSH_HOST_NGINX SSH_HOST_BACKEND BACKEND_PRIVATE_IP SSH_USER SSH_PRIVATE_KEY; do
+    gh secret delete "$secret" -R "$GITHUB_REPO" >/dev/null 2>&1 || true
+  done
+  log "Cleared DEPLOY_OWNER, DEPLOY_MODE, and deploy secrets."
+else
+  log "gh CLI not available or not logged in — skipping GitHub cleanup."
+  log "Run this manually if needed so the next teammate can deploy:"
+  log "  gh variable delete DEPLOY_OWNER DEPLOY_MODE -R $GITHUB_REPO"
+fi
