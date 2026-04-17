@@ -73,10 +73,16 @@ az network vnet create \
 
 create_vm() {
   local name="$1"
+  local public_ip_mode="${2:-with-public-ip}"
   log "Creating VM '$name'..."
   if az vm show -g "$RESOURCE_GROUP" -n "$name" >/dev/null 2>&1; then
     log "VM '$name' already exists, skipping create."
     return
+  fi
+  local pip_args=(--public-ip-sku Standard)
+  if [[ "$public_ip_mode" == "no-public-ip" ]]; then
+    # Empty string to --public-ip-address tells az vm create to skip the PIP.
+    pip_args=(--public-ip-address "")
   fi
   az vm create \
     --resource-group "$RESOURCE_GROUP" \
@@ -87,12 +93,12 @@ create_vm() {
     --ssh-key-values "$SSH_PUB_KEY_PATH" \
     --vnet-name "$VNET_NAME" \
     --subnet "$SUBNET_NAME" \
-    --public-ip-sku Standard \
+    "${pip_args[@]}" \
     --output none
 }
 
 create_vm "$NGINX_VM"
-create_vm "$BACKEND_VM"
+create_vm "$BACKEND_VM" "no-public-ip"
 
 # ---------- NSG rules ----------
 log "Opening ports 80 and 443 on '$NGINX_VM'..."
@@ -142,21 +148,22 @@ az network nsg rule update \
 # ---------- IP lookup ----------
 log "Fetching IP addresses..."
 NGINX_IP=$(az vm show -d -g "$RESOURCE_GROUP" -n "$NGINX_VM"   --query publicIps  -o tsv)
-BACKEND_IP=$(az vm show -d -g "$RESOURCE_GROUP" -n "$BACKEND_VM" --query publicIps  -o tsv)
 BACKEND_PRIVATE_IP=$(az vm show -d -g "$RESOURCE_GROUP" -n "$BACKEND_VM" --query privateIps -o tsv)
 
 log "  nginx   public IP:  $NGINX_IP"
-log "  backend public IP:  $BACKEND_IP"
-log "  backend private IP: $BACKEND_PRIVATE_IP"
+log "  backend private IP: $BACKEND_PRIVATE_IP (no public IP — reachable only via nginx)"
 
 # ---------- Provision VMs over SSH ----------
 SSH_OPTS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -i "$SSH_KEY_PATH")
 
 wait_for_ssh() {
   local host="$1"
-  log "Waiting for SSH on $host..."
+  local jump_host="${2:-}"
+  local extra=()
+  [[ -n "$jump_host" ]] && extra=(-o "ProxyJump=$ADMIN_USER@$jump_host")
+  log "Waiting for SSH on $host${jump_host:+ (via $jump_host)}..."
   for _ in $(seq 1 30); do
-    if ssh "${SSH_OPTS[@]}" "$ADMIN_USER@$host" 'true' 2>/dev/null; then
+    if ssh "${SSH_OPTS[@]}" "${extra[@]}" "$ADMIN_USER@$host" 'true' 2>/dev/null; then
       return 0
     fi
     sleep 5
@@ -165,10 +172,12 @@ wait_for_ssh() {
 }
 
 provision() {
-  local host="$1" label="$2"
-  wait_for_ssh "$host"
-  log "Provisioning $label ($host): base packages + Docker..."
-  ssh "${SSH_OPTS[@]}" "$ADMIN_USER@$host" 'bash -s' <<'REMOTE'
+  local host="$1" label="$2" jump_host="${3:-}"
+  local extra=()
+  [[ -n "$jump_host" ]] && extra=(-o "ProxyJump=$ADMIN_USER@$jump_host")
+  wait_for_ssh "$host" "$jump_host"
+  log "Provisioning $label ($host)${jump_host:+ via $jump_host}: base packages + Docker..."
+  ssh "${SSH_OPTS[@]}" "${extra[@]}" "$ADMIN_USER@$host" 'bash -s' <<'REMOTE'
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 sudo -E apt-get update -y
@@ -190,8 +199,8 @@ mkdir -p "$HOME/app"
 REMOTE
 }
 
-provision "$NGINX_IP"   "nginx VM"
-provision "$BACKEND_IP" "backend VM"
+provision "$NGINX_IP"          "nginx VM"
+provision "$BACKEND_PRIVATE_IP" "backend VM" "$NGINX_IP"
 
 # ---------- GitHub secrets ----------
 log "Setting GitHub secrets on $GITHUB_REPO..."
@@ -203,9 +212,12 @@ set_secret() {
 
 set_secret SSH_USER            "$ADMIN_USER"
 set_secret SSH_HOST_NGINX      "$NGINX_IP"
-set_secret SSH_HOST_BACKEND    "$BACKEND_IP"
 set_secret BACKEND_PRIVATE_IP  "$BACKEND_PRIVATE_IP"
 gh secret set SSH_PRIVATE_KEY -R "$GITHUB_REPO" < "$SSH_KEY_PATH"
+
+# Clean up a stale SSH_HOST_BACKEND from previous versions where the backend
+# was reachable on its own public IP. Ignore errors if the secret isn't there.
+gh secret delete SSH_HOST_BACKEND -R "$GITHUB_REPO" >/dev/null 2>&1 || true
 
 log "Setting deploy-mode variable to 'two-vms' on $GITHUB_REPO..."
 gh variable set DEPLOY_MODE --body "two-vms" -R "$GITHUB_REPO"
@@ -215,13 +227,11 @@ cat <<SUMMARY
 
 Two-VM deployment provisioned:
   Resource group:     $RESOURCE_GROUP
-  nginx VM:           $NGINX_IP   (ports 80/443 open)
-  backend VM:         $BACKEND_IP (port $BACKEND_PORT open from VNet only)
-  backend private IP: $BACKEND_PRIVATE_IP
+  nginx VM:           $NGINX_IP          (ports 80/443 open)
+  backend VM:         $BACKEND_PRIVATE_IP (no public IP; port $BACKEND_PORT from nginx only)
 
 GitHub secrets set on $GITHUB_REPO:
-  SSH_USER, SSH_HOST_NGINX, SSH_HOST_BACKEND,
-  BACKEND_PRIVATE_IP, SSH_PRIVATE_KEY
+  SSH_USER, SSH_HOST_NGINX, BACKEND_PRIVATE_IP, SSH_PRIVATE_KEY
 
 Push to master to trigger the deploy pipeline.
 SUMMARY

@@ -70,17 +70,20 @@ What it does:
 
 1. Creates resource group `rg-balladebaderne` in `francecentral`.
 2. Creates a VNet `10.0.0.0/16` with subnet `10.0.1.0/24`.
-3. Creates two `Standard_B1s` VMs: `cookbook-nginx` (public) and
-   `cookbook-backend` (internal).
+3. Creates two `Standard_B1s` VMs: `cookbook-nginx` (public IP) and
+   `cookbook-backend` (**no public IP** — only a private VNet address).
 4. Opens **80 / 443** on nginx. Restricts backend port **3000** to
-   the nginx VM's private IP only — backend is not reachable from
-   the internet on the app port.
-5. Installs Docker + Compose on both VMs over SSH.
-6. Sets repo secrets `SSH_HOST_NGINX`, `SSH_HOST_BACKEND`,
-   `BACKEND_PRIVATE_IP`, `SSH_USER`, `SSH_PRIVATE_KEY`.
+   the nginx VM's private IP only.
+5. Installs Docker + Compose on nginx directly and on the backend
+   via nginx as an SSH jump host (`ProxyJump`).
+6. Sets repo secrets `SSH_HOST_NGINX`, `BACKEND_PRIVATE_IP`,
+   `SSH_USER`, `SSH_PRIVATE_KEY`.
 7. Sets repo variable `DEPLOY_MODE=two-vms`.
 
 Push to `master` and the app will be live at `http://<NGINX_IP>`.
+The backend is not reachable from the public internet — no public IP,
+no internet-facing ports. The deploy pipeline reaches it by using
+nginx as an SSH jump host.
 
 ## Teardown
 
