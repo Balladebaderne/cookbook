@@ -94,11 +94,53 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
+  deploy-single-vm:
+    name: Deploy to single VM
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: |
+      vars.DEPLOY_MODE == 'single' &&
+      (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch')
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy compose file
+        run: |
+          scp -i ~/.ssh/id_rsa docker-compose.single-vm.yml \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/app/docker-compose.yml
+
+      - name: Pull and start containers
+        env:
+          OWNER_LC: ${{ github.repository_owner }}
+        run: |
+          OWNER_LC=$(echo "$OWNER_LC" | tr '[:upper:]' '[:lower:]')
+          ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \
+            "cd ~/app && \
+             echo '${{ secrets.GITHUB_TOKEN }}' | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
+             GITHUB_OWNER=$OWNER_LC sudo -E docker compose pull && \
+             GITHUB_OWNER=$OWNER_LC sudo -E docker compose up -d"
+
   deploy-backend:
     name: Deploy backend to Azure VM
     runs-on: ubuntu-latest
     needs: build-and-push
-    if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+    if: |
+      vars.DEPLOY_MODE == 'two-vms' &&
+      (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch')
 
     permissions:
       contents: read
@@ -136,7 +178,9 @@ jobs:
     name: Deploy nginx to Azure VM
     runs-on: ubuntu-latest
     needs: [build-and-push, deploy-backend]
-    if: github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+    if: |
+      vars.DEPLOY_MODE == 'two-vms' &&
+      (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch')
 
     permissions:
       contents: read

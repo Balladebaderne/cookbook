@@ -4,7 +4,7 @@ set -euo pipefail
 # Provisions the two-VM cookbook deployment in Azure and wires up
 # GitHub repo secrets so the CI/CD pipeline can SSH into the VMs.
 #
-# Run interactively the first time:   bash infrastructure/azure-setup.sh
+# Run interactively the first time:   bash infrastructure/create_two_vms.sh
 # Safe to re-run: resource creation is idempotent; existing resources are reused.
 
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-balladebaderne}"
@@ -85,7 +85,10 @@ log "Opening ports 80 and 443 on '$NGINX_VM'..."
 az vm open-port --resource-group "$RESOURCE_GROUP" --name "$NGINX_VM" --port 80  --priority 1001 --output none || true
 az vm open-port --resource-group "$RESOURCE_GROUP" --name "$NGINX_VM" --port 443 --priority 1002 --output none || true
 
-log "Allowing backend port $BACKEND_PORT from VNet ($VNET_CIDR) only on '$BACKEND_VM'..."
+NGINX_PRIVATE_IP=$(az vm show -d -g "$RESOURCE_GROUP" -n "$NGINX_VM" --query privateIps -o tsv)
+[[ -n "$NGINX_PRIVATE_IP" ]] || die "Could not resolve nginx private IP"
+
+log "Allowing backend port $BACKEND_PORT from nginx ($NGINX_PRIVATE_IP) only on '$BACKEND_VM'..."
 BACKEND_NSG=$(az vm show -g "$RESOURCE_GROUP" -n "$BACKEND_VM" \
   --query "networkProfile.networkInterfaces[0].id" -o tsv \
   | xargs -I{} az network nic show --ids {} --query "networkSecurityGroup.id" -o tsv)
@@ -96,15 +99,31 @@ if [[ -z "$BACKEND_NSG" ]]; then
 fi
 [[ -n "$BACKEND_NSG" ]] || die "Could not locate NSG for $BACKEND_VM"
 
+BACKEND_NSG_NAME="$(basename "$BACKEND_NSG")"
+
+# If a prior run created a broader rule, drop it so we end up with the stricter one.
+az network nsg rule delete \
+  --resource-group "$RESOURCE_GROUP" \
+  --nsg-name "$BACKEND_NSG_NAME" \
+  --name "allow-backend-from-vnet" \
+  --output none 2>/dev/null || true
+
 az network nsg rule create \
   --resource-group "$RESOURCE_GROUP" \
-  --nsg-name "$(basename "$BACKEND_NSG")" \
-  --name "allow-backend-from-vnet" \
+  --nsg-name "$BACKEND_NSG_NAME" \
+  --name "allow-backend-from-nginx" \
   --priority 1100 \
-  --source-address-prefixes "$VNET_CIDR" \
+  --source-address-prefixes "$NGINX_PRIVATE_IP" \
   --destination-port-ranges "$BACKEND_PORT" \
   --access Allow --protocol Tcp --direction Inbound \
-  --output none 2>/dev/null || log "Rule 'allow-backend-from-vnet' already exists."
+  --output none 2>/dev/null || \
+az network nsg rule update \
+  --resource-group "$RESOURCE_GROUP" \
+  --nsg-name "$BACKEND_NSG_NAME" \
+  --name "allow-backend-from-nginx" \
+  --source-address-prefixes "$NGINX_PRIVATE_IP" \
+  --destination-port-ranges "$BACKEND_PORT" \
+  --output none
 
 # ---------- IP lookup ----------
 log "Fetching IP addresses..."
@@ -173,6 +192,9 @@ set_secret SSH_HOST_NGINX      "$NGINX_IP"
 set_secret SSH_HOST_BACKEND    "$BACKEND_IP"
 set_secret BACKEND_PRIVATE_IP  "$BACKEND_PRIVATE_IP"
 gh secret set SSH_PRIVATE_KEY -R "$GITHUB_REPO" < "$SSH_KEY_PATH"
+
+log "Setting deploy-mode variable to 'two-vms' on $GITHUB_REPO..."
+gh variable set DEPLOY_MODE --body "two-vms" -R "$GITHUB_REPO"
 
 log "Done."
 cat <<SUMMARY
