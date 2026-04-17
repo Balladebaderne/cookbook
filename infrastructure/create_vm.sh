@@ -14,8 +14,6 @@ VM_NAME="${VM_NAME:-cookbook-vm}"
 VM_SIZE="${VM_SIZE:-Standard_B1s}"
 VM_IMAGE="Canonical:0001-com-ubuntu-server-jammy:22_04-lts:latest"
 ADMIN_USER="${ADMIN_USER:-azureuser}"
-SSH_PUB_KEY_PATH="${SSH_PUB_KEY_PATH:-$HOME/.ssh/id_rsa.pub}"
-SSH_KEY_PATH="${SSH_KEY_PATH:-$HOME/.ssh/id_rsa}"
 
 GITHUB_REPO="${GITHUB_REPO:-Balladebaderne/cookbook}"
 
@@ -27,8 +25,24 @@ die() { printf '\n\033[1;31m[error]\033[0m %s\n' "$*" >&2; exit 1; }
 command -v az >/dev/null || die "Azure CLI (az) not installed."
 command -v gh >/dev/null || die "GitHub CLI (gh) not installed."
 command -v ssh >/dev/null || die "ssh not installed."
+
+# Auto-detect an SSH key pair if the user didn't set env vars.
+# Order matches Azure's recommendations and ssh-keygen defaults.
+if [[ -z "${SSH_KEY_PATH:-}" ]]; then
+  for candidate in id_rsa id_ed25519 id_ecdsa; do
+    if [[ -f "$HOME/.ssh/$candidate" && -f "$HOME/.ssh/$candidate.pub" ]]; then
+      SSH_KEY_PATH="$HOME/.ssh/$candidate"
+      SSH_PUB_KEY_PATH="$HOME/.ssh/$candidate.pub"
+      log "Using SSH key pair: $SSH_KEY_PATH"
+      break
+    fi
+  done
+fi
+SSH_KEY_PATH="${SSH_KEY_PATH:-}"
+SSH_PUB_KEY_PATH="${SSH_PUB_KEY_PATH:-${SSH_KEY_PATH}.pub}"
+
+[[ -n "$SSH_KEY_PATH" && -f "$SSH_KEY_PATH" ]] || die "No SSH private key found. Tried ~/.ssh/{id_rsa,id_ed25519,id_ecdsa}. Generate one (ssh-keygen -t ed25519) or set SSH_KEY_PATH."
 [[ -f "$SSH_PUB_KEY_PATH" ]] || die "SSH public key not found at $SSH_PUB_KEY_PATH"
-[[ -f "$SSH_KEY_PATH" ]] || die "SSH private key not found at $SSH_KEY_PATH"
 
 log "Verifying Azure login..."
 az account show >/dev/null 2>&1 || die "Not logged in to Azure. Run 'az login' first."

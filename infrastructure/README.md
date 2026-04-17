@@ -20,8 +20,10 @@ Install and configure on your local machine:
 
 - **Azure CLI** (`az`) — logged in with `az login`
 - **GitHub CLI** (`gh`) — logged in with `gh auth login`
-- **SSH key pair** at `~/.ssh/id_rsa` / `~/.ssh/id_rsa.pub`
-  (override with `SSH_KEY_PATH` / `SSH_PUB_KEY_PATH` env vars)
+- **SSH key pair** in `~/.ssh/` — `id_rsa`, `id_ed25519`, or `id_ecdsa`
+  (auto-detected in that order; override with `SSH_KEY_PATH` /
+  `SSH_PUB_KEY_PATH` env vars). If you don't have one yet:
+  `ssh-keygen -t ed25519 -C "you@example.com"`
 - Access to the `Balladebaderne/cookbook` GitHub repo
 - A **Personal Access Token** with `read:packages` scope available as
   `CR_PAT` (only needed if you pull images on the VM manually; the
