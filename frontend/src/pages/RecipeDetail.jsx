@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { getRecipe, deleteRecipe } from '../api/recipes'
 
 export default function RecipeDetail() {
   const { id }       = useParams()
@@ -10,8 +11,7 @@ export default function RecipeDetail() {
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/recipe/recipes/${id}/`)
-      .then(r => { if (!r.ok) throw new Error(); return r.json() })
+    getRecipe(id)
       .then(data => { setRecipe(data); setLoading(false) })
       .catch(() => { setError('Kunne ikke hente opskrift.'); setLoading(false) })
   }, [id])
@@ -19,8 +19,7 @@ export default function RecipeDetail() {
   const handleDelete = async () => {
     if (!confirm(`Slet "${recipe.title}"?`)) return
     try {
-      const res = await fetch(`/api/recipe/recipes/${id}/`, { method: 'DELETE' })
-      if (!res.ok) throw new Error()
+      await deleteRecipe(id)
       navigate('/recipes')
     } catch {
       setError('Kunne ikke slette opskriften. Prøv igen.')

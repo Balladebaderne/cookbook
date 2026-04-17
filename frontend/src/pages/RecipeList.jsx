@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { listRecipes } from '../api/recipes'
 
 export default function RecipeList() {
   const navigate = useNavigate()
@@ -10,8 +11,7 @@ export default function RecipeList() {
   const [activeTag, setActiveTag] = useState(null)
 
   useEffect(() => {
-    fetch('/api/recipe/recipes/')
-      .then(r => r.json())
+    listRecipes()
       .then(data => { setRecipes(data); setLoading(false) })
       .catch(() => { setError('Kunne ikke hente opskrifter.'); setLoading(false) })
   }, [])

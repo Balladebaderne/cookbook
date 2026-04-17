@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import RecipeCard from './RecipeCard'
+import { listRecipesByCountry } from '../api/recipes'
 
 export default function CountryPanel({ country, onClose }) {
   const [recipes, setRecipes]   = useState([])
@@ -12,8 +13,7 @@ export default function CountryPanel({ country, onClose }) {
     setLoading(true)
     setError(null)
     setRecipes([])
-    fetch(`/api/recipe/recipes/country/${country.id}`)
-      .then(r => { if (!r.ok) throw new Error(); return r.json() })
+    listRecipesByCountry(country.id)
       .then(data => { setRecipes(data); setLoading(false) })
       .catch(() => { setError('Kunne ikke hente opskrifter.'); setLoading(false) })
   }, [country])
