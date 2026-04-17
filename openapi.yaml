@@ -10,8 +10,6 @@ info:
 servers:
   - url: http://localhost:3000
     description: Local development server
-  - url: http://172.189.59.40
-    description: Production server (Azure VM)
 
 tags:
   - name: Health
