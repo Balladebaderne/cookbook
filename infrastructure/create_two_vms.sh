@@ -52,10 +52,35 @@ SSH_PUB_KEY_PATH="${SSH_PUB_KEY_PATH:-${SSH_KEY_PATH}.pub}"
 log "Verifying Azure login..."
 az account show >/dev/null 2>&1 || die "Not logged in to Azure. Run 'az login' first."
 ACCOUNT_NAME=$(az account show --query name -o tsv)
-log "Azure account: $ACCOUNT_NAME"
+SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+SIGNED_IN_USER=$(az account show --query user.name -o tsv)
 
 log "Verifying GitHub login..."
 gh auth status >/dev/null 2>&1 || die "Not logged in to GitHub. Run 'gh auth login' first."
+GH_USER=$(gh api user --jq .login)
+
+cat <<CONFIRM
+
+About to provision a two-VM deployment:
+
+  Azure subscription : $ACCOUNT_NAME
+  Subscription ID    : $SUBSCRIPTION_ID
+  Signed-in user     : $SIGNED_IN_USER
+  Resource group     : $RESOURCE_GROUP   (location: $LOCATION)
+  VNet / subnet      : $VNET_NAME ($VNET_CIDR) / $SUBNET_NAME ($SUBNET_CIDR)
+  VMs                : $NGINX_VM (public) + $BACKEND_VM (private, no public IP)
+  VM size            : $VM_SIZE, Ubuntu 22.04
+
+  GitHub repo        : $GITHUB_REPO
+  GitHub user        : $GH_USER
+  Secrets to be set  : SSH_HOST_NGINX, BACKEND_PRIVATE_IP, SSH_USER, SSH_PRIVATE_KEY
+  Variable to be set : DEPLOY_MODE=two-vms
+
+This will consume Azure credits and overwrite the repo's deploy secrets.
+CONFIRM
+
+read -rp "Continue? (y/N): " confirm
+[[ "$confirm" =~ ^[Yy]$ ]] || die "Aborted by user."
 
 # ---------- Resource group ----------
 log "Creating resource group '$RESOURCE_GROUP' in $LOCATION..."
