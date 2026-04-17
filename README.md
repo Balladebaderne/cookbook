@@ -6,7 +6,7 @@ The application is deployed on an Azure Virtual Machine using Docker and is acce
 
 ---
 
-## Live Deployment
+## Live Deployments
 
 **Frontend:**  
 http://172.189.59.40
