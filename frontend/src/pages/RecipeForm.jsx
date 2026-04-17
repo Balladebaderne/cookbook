@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, useParams } from 'react-router-dom'
+import { getRecipe, createRecipe, updateRecipe } from '../api/recipes'
 
 const EMPTY = {
   title: '', description: '', time_minutes: '', price: '', link: '', image: '',
@@ -40,8 +41,7 @@ export default function RecipeForm() {
   useEffect(() => {
     if (isEdit && !location.state?.recipe) {
       setLoading(true)
-      fetch(`/api/recipe/recipes/${id}/`)
-        .then(r => { if (!r.ok) throw new Error(); return r.json() })
+      getRecipe(id)
         .then(data => { setForm(toForm(data)); setLoading(false) })
         .catch(() => { setError('Kunne ikke hente opskriften.'); setLoading(false) })
     }
@@ -86,15 +86,9 @@ export default function RecipeForm() {
     }
 
     try {
-      const url    = isEdit ? `/api/recipe/recipes/${id}/` : '/api/recipe/recipes/'
-      const method = isEdit ? 'PUT' : 'POST'
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (!res.ok) throw new Error()
-      const saved = await res.json()
+      const saved = isEdit
+        ? await updateRecipe(id, payload)
+        : await createRecipe(payload)
       navigate(`/recipes/${saved.id || id}`)
     } catch {
       setError('Kunne ikke gemme opskriften. Prøv igen.')
