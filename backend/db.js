@@ -15,6 +15,7 @@ class Database {
       if (err) console.error("Database connection error:", err);
       else console.log("Connected to SQLite database at", filename);
     });
+    this.db.run("PRAGMA foreign_keys = ON");
   }
 
   prepare(sql) {
