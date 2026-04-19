@@ -17,8 +17,6 @@ ADMIN_USER="${ADMIN_USER:-azureuser}"
 
 GITHUB_REPO="${GITHUB_REPO:-Balladebaderne/cookbook}"
 
-APP_PORT=3000
-
 log() { printf '\n\033[1;34m[setup]\033[0m %s\n' "$*"; }
 die() { printf '\n\033[1;31m[error]\033[0m %s\n' "$*" >&2; exit 1; }
 
@@ -136,10 +134,10 @@ else
 fi
 
 # ---------- NSG rules ----------
-log "Opening ports 80, 443, and $APP_PORT on '$VM_NAME'..."
-az vm open-port --resource-group "$RESOURCE_GROUP" --name "$VM_NAME" --port 80        --priority 1001 --output none || true
-az vm open-port --resource-group "$RESOURCE_GROUP" --name "$VM_NAME" --port 443       --priority 1002 --output none || true
-az vm open-port --resource-group "$RESOURCE_GROUP" --name "$VM_NAME" --port "$APP_PORT" --priority 1003 --output none || true
+# Backend port 3000 is intentionally NOT opened — nginx reverse-proxies /api from inside cookbook-network.
+log "Opening ports 80 and 443 on '$VM_NAME'..."
+az vm open-port --resource-group "$RESOURCE_GROUP" --name "$VM_NAME" --port 80  --priority 1001 --output none || true
+az vm open-port --resource-group "$RESOURCE_GROUP" --name "$VM_NAME" --port 443 --priority 1002 --output none || true
 
 # ---------- IP lookup ----------
 log "Fetching IP address..."
@@ -208,7 +206,7 @@ cat <<SUMMARY
 Single-VM deployment provisioned:
   Resource group: $RESOURCE_GROUP
   VM:             $VM_NAME ($VM_IP)
-  Open ports:     80, 443, $APP_PORT
+  Open ports:     80, 443
 
 GitHub secrets set on $GITHUB_REPO:
   SSH_USER, SSH_HOST, SSH_PRIVATE_KEY
