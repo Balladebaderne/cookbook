@@ -98,6 +98,31 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/recipe/recipes/country/{country}/:
+    get:
+      summary: Get recipes by country
+      operationId: getRecipesByCountry
+      tags: [Recipes]
+      parameters:
+        - name: country
+          in: path
+          required: true
+          description: Country name (matches the recipes.country column)
+          schema:
+            type: string
+            example: Italien
+      responses:
+        '200':
+          description: List of recipes for that country
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Recipe'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
   /api/recipe/recipes/{id}/:
     get:
       summary: Get a recipe by ID
@@ -207,66 +232,6 @@ paths:
                 $ref: '#/components/schemas/User'
         '500':
           $ref: '#/components/responses/ServerError'
-
-  /api/user/token/:
-    post:
-      summary: Get auth token
-      operationId: getToken
-      tags: [Users]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                password:
-                  type: string
-      responses:
-        '200':
-          description: Token returned
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  email:
-                    type: string
-                  token:
-                    type: string
-
-  /api/user/me/:
-    get:
-      summary: Get current user
-      operationId: getMe
-      tags: [Users]
-      responses:
-        '200':
-          description: Current user
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-
-    put:
-      summary: Update current user
-      operationId: updateMe
-      tags: [Users]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserInput'
-      responses:
-        '200':
-          description: User updated
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
 
 components:
   parameters:
