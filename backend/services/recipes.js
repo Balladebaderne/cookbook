@@ -142,48 +142,62 @@ export async function getRecipe(id) {
 }
 
 export async function createRecipe(data) {
-  const result = await db.prepare(
-    `INSERT INTO recipes (title, time_minutes, price, link, description, instructions, image, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(
-    data.title.trim(),
-    data.time_minutes || 0,
-    data.price || "0",
-    data.link || "",
-    data.description || "",
-    data.instructions?.length ? JSON.stringify(data.instructions) : null,
-    data.image || null,
-    data.country || null
-  );
+  await db.exec("BEGIN TRANSACTION");
+  try {
+    const result = await db.prepare(
+      `INSERT INTO recipes (title, time_minutes, price, link, description, instructions, image, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      data.title.trim(),
+      data.time_minutes || 0,
+      data.price || "0",
+      data.link || "",
+      data.description || "",
+      data.instructions?.length ? JSON.stringify(data.instructions) : null,
+      data.image || null,
+      data.country || null
+    );
 
-  const recipeId = result.lastInsertRowid;
-  await saveIngredients(recipeId, data.ingredients);
-  await saveTags(recipeId, data.tags);
-  return recipeId;
+    const recipeId = result.lastInsertRowid;
+    await saveIngredients(recipeId, data.ingredients);
+    await saveTags(recipeId, data.tags);
+    await db.exec("COMMIT");
+    return recipeId;
+  } catch (err) {
+    await db.exec("ROLLBACK").catch(() => {});
+    throw err;
+  }
 }
 
 export async function updateRecipe(id, data) {
   const existing = await db.prepare(`SELECT id FROM recipes WHERE id = ?`).get(id);
   if (!existing) return false;
 
-  await db.prepare(
-    `UPDATE recipes SET title = ?, time_minutes = ?, price = ?, link = ?, description = ?, instructions = ?, image = ?, country = ? WHERE id = ?`
-  ).run(
-    data.title.trim(),
-    data.time_minutes || 0,
-    data.price || "0",
-    data.link || "",
-    data.description || "",
-    data.instructions?.length ? JSON.stringify(data.instructions) : null,
-    data.image || null,
-    data.country || null,
-    id
-  );
+  await db.exec("BEGIN TRANSACTION");
+  try {
+    await db.prepare(
+      `UPDATE recipes SET title = ?, time_minutes = ?, price = ?, link = ?, description = ?, instructions = ?, image = ?, country = ? WHERE id = ?`
+    ).run(
+      data.title.trim(),
+      data.time_minutes || 0,
+      data.price || "0",
+      data.link || "",
+      data.description || "",
+      data.instructions?.length ? JSON.stringify(data.instructions) : null,
+      data.image || null,
+      data.country || null,
+      id
+    );
 
-  await db.prepare(`DELETE FROM recipe_ingredients WHERE recipe_id = ?`).run(id);
-  await db.prepare(`DELETE FROM recipe_tags WHERE recipe_id = ?`).run(id);
-  await saveIngredients(id, data.ingredients);
-  await saveTags(id, data.tags);
-  return true;
+    await db.prepare(`DELETE FROM recipe_ingredients WHERE recipe_id = ?`).run(id);
+    await db.prepare(`DELETE FROM recipe_tags WHERE recipe_id = ?`).run(id);
+    await saveIngredients(id, data.ingredients);
+    await saveTags(id, data.tags);
+    await db.exec("COMMIT");
+    return true;
+  } catch (err) {
+    await db.exec("ROLLBACK").catch(() => {});
+    throw err;
+  }
 }
 
 export async function deleteRecipe(id) {

@@ -82,7 +82,7 @@ feature   ●───●   ●──●──●          (branch from dev, mer
 ### Why `master` is strict and `dev` is not
 
 - A push to `master` triggers the deploy job in `ci-cd.yml`, which SSHes into the Azure VM and restarts containers. Mistakes there are user-visible.
-- A push to `dev` only triggers `security-audit` and `build-and-push` — the images get tagged but nothing deploys. It's our integration playground.
+- A push to `dev` only triggers `dependency-audit` and `build-and-push` — the images get tagged but nothing deploys. It's our integration playground.
 
 ### Agent rules around git flow
 
@@ -184,7 +184,7 @@ chmod +x .git/hooks/pre-push
 - **To `dev`:** no PR required. Direct pushes or feature-branch merges both fine. Still run the security check first.
 - Use the repo's `PULL_REQUEST_TEMPLATE.md`. Fill in **all** three sections (what / why / how tested).
 - A PR that changes CI/CD (`.github/workflows/**`), infra (`infrastructure/**`), or any `Dockerfile` requires an explicit note in the PR body calling that out. The agent should never sneak these in alongside feature work.
-- Agents should open PRs to `master` as **draft** by default, and only mark ready once the local security check and the CI `security-audit` job both pass cleanly.
+- Agents should open PRs to `master` as **draft** by default, and only mark ready once the local security check and the CI `dependency-audit` job both pass cleanly.
 
 ---
 

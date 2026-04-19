@@ -19,3 +19,9 @@ legacy/
 
 # Environment files
 .env*
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal

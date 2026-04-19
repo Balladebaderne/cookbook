@@ -72,7 +72,7 @@ for the full flow and the `FORCE=1` override.
 [`ci-cd.yml`](./.github/workflows/ci-cd.yml) runs on push to
 `master`/`dev` and on `workflow_dispatch`:
 
-1. **security-audit** — `npm audit` on backend + frontend.
+1. **dependency-audit** — `npm audit` on backend + frontend.
 2. **build-and-push** — builds backend + frontend images, pushes to
    `ghcr.io/balladebaderne/cookbook-{backend,frontend}`.
 3. **deploy** — only on `master` or manual dispatch. Picks one path
