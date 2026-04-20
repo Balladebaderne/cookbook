@@ -151,7 +151,7 @@ async function seedDb() {
         "Vend den varme pasta direkte op i panden med guanciale (stadig væk fra varmen). Tilsæt æggeblandingen og rør hurtigt mens du gradvist tilsætter pastavand lidt ad gangen — saucen skal være silkeblød og cremet, ikke scrambled eggs.",
         "Server straks på forvarmede tallerkener med ekstra Pecorino og en drys groft sort peber."
       ]),
-      null, "italy"
+      "https://i.pinimg.com/1200x/f2/9f/f7/f29ff752fe9b098e8a3c9e73d5de2dec.jpg", "italy"
     );
     await insertRecipeIngredient.run(r1.lastID, 1, "400", "g");
     await insertRecipeIngredient.run(r1.lastID, 2, "150", "g");
@@ -176,7 +176,7 @@ async function seedDb() {
         "Læg skankene tilbage, dæk med låg og sæt i ovnen i 2½-3 timer. Vend dem en gang undervejs. Kødet er klar når det falder af benet af sig selv.",
         "Tag skankene op og kog saucen ind på komfuret til den er tyk og skinnende. Smag til med salt. Server med kartoffelmos eller polenta."
       ]),
-      null, "denmark"
+      "https://i.pinimg.com/1200x/97/05/d6/9705d67b884b9bab4ad06858468666bb.jpg", "denmark"
     );
     await insertRecipeIngredient.run(r2.lastID, 8, "4", "stk");
     await insertRecipeIngredient.run(r2.lastID, 9, "500", "ml");
@@ -203,7 +203,7 @@ async function seedDb() {
         "Vend dejen direkte fra køleskabet ned i den glødende gryde. Rids overfladen med en skarp kniv eller rageblad. Bag med låg i 20 minutter, fjern låget og bag videre 20-25 minutter til skorpen er dyb mahognibrun.",
         "Det sværeste: Lad brødet køle helt af på en rist i mindst 1 time inden du skærer i det. Smulen sætter sig stadig inde i brødet."
       ]),
-      null, "denmark"
+      "https://i.pinimg.com/1200x/53/2c/ea/532cea66f74f8b7f546cd471ee8f5573.jpg", "denmark"
     );
     await insertRecipeIngredient.run(r3.lastID, 16, "450", "g");
     await insertRecipeIngredient.run(r3.lastID, 17, "50", "g");
@@ -226,7 +226,7 @@ async function seedDb() {
         "Vend forsigtigt og steg 1-2 minutter på den anden side. Fisken er færdig når den akkurat er uigennemsigtig igennem.",
         "Anret torsken med den gyldne side opad. Hæld beurre blanc henover ved bordet."
       ]),
-      null, "france"
+      "https://i.pinimg.com/1200x/11/ca/71/11ca71a2b2ae94f5d19697695b75409e.jpg", "france"
     );
     await insertRecipeIngredient.run(r4.lastID, 23, "600", "g");
     await insertRecipeIngredient.run(r4.lastID, 24, "150", "ml");
@@ -292,7 +292,7 @@ async function seedDb() {
         "Lad kyllingen hvile 2 minutter på et rist, skær derefter i tykke skiver på skrå.",
         "Anret over dampende ris. Hæld karry-saucen ved siden af, så panko'en forbliver sprød."
       ]),
-      null, "japan"
+      "https://i.pinimg.com/1200x/bb/7c/97/bb7c9754d6a10f5742fd52f8e59b6a65.jpg", "japan"
     );
     await insertRecipeIngredient.run(r5.lastID, 29, "2", "stk");
     await insertRecipeIngredient.run(r5.lastID, 30, "100", "g");
@@ -318,7 +318,7 @@ async function seedDb() {
         "Varm tortillas direkte over en gasflamme eller i en tør pande til de er bløde og let svitsede.",
         "Saml tacos: kød, ananas, finthakket løg, koriander og et generøst skvæt lime. Server straks."
       ]),
-      null, "mexico"
+      "https://i.pinimg.com/1200x/8f/41/fd/8f41fd55427d5ddff6f637299064f142.jpg", "mexico"
     );
     await insertRecipeIngredient.run(r6.lastID, 34, "600", "g");
     await insertRecipeIngredient.run(r6.lastID, 35, "4", "skiver");
@@ -344,7 +344,7 @@ async function seedDb() {
         "Tilsæt fløde og smør. Læg kyllingen i saucen og lad det simre 10 minutter til saucen er tyk og klæber til kødet.",
         "Smag til med salt og et drys tørret fenugreek (kasuri methi) hvis du har det. Server med naan eller basmatiris."
       ]),
-      null, "india"
+      "https://i.pinimg.com/1200x/a0/48/4c/a0484cc5bc54fd2d7298f8bb56b257ae.jpg", "india"
     );
     await insertRecipeIngredient.run(r7.lastID, 41, "800", "g");
     await insertRecipeIngredient.run(r7.lastID, 42, "150", "g");
@@ -371,7 +371,7 @@ async function seedDb() {
         "Rist mandler på en tør pande til gyldne — de brænder hurtigt, så hold øje.",
         "Server taginen drysset med ristede mandler og frisk koriander. Couscous eller brød ved siden af."
       ]),
-      null, "morocco"
+      "https://i.pinimg.com/1200x/b1/a5/68/b1a5685cc332e1c047b67adce392790b.jpg", "morocco"
     );
     await insertRecipeIngredient.run(r8.lastID, 47, "800", "g");
     await insertRecipeIngredient.run(r8.lastID, 48, "100", "g");
@@ -398,7 +398,7 @@ async function seedDb() {
         "Tilsæt rejer, æg, halvdelen af bønnespirerne og forårsløg. Vend hurtigt sammen.",
         "Anret med ristede peanuts, resten af bønnespirerne, limebåde og frisk koriander."
       ]),
-      null, "thailand"
+      "https://i.pinimg.com/1200x/86/36/0d/86360d6aa83b4570417451bcb4d03350.jpg", "thailand"
     );
     await insertRecipeIngredient.run(r9.lastID, 54, "250", "g");
     await insertRecipeIngredient.run(r9.lastID, 55, "200", "g");
