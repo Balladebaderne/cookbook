@@ -1,6 +1,8 @@
 ---
 name: General Issue
 about: Create a task, bug or improvement
+title: '[TASK] '
+labels: ['triage']
 ---
 
 # Issue

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(jq -r '.tool_input.command // \"\"'); if echo \"$cmd\" | grep -qE 'git[[:space:]]+push.*[[:space:]:]master([[:space:]]|$)'; then echo 'BLOCKED by .claude/settings.json: pushing to master is forbidden (AGENTS.md §1 — master is PR-only and auto-deploys to the Azure VM). Open a PR from release/* or hotfix/* instead.' >&2; exit 2; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

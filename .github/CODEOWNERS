@@ -1,0 +1,17 @@
+# CODEOWNERS — review routing for pull requests.
+# Format: <path-pattern> <space-separated owners>
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-configuration/customizing-your-repository/about-code-owners
+
+# Default owner for everything in the repo.
+# Expand this list with the rest of the group as PRs come in.
+*                       @KINGINTHECASTE123
+
+# Sensitive areas: CI/CD, infra, prod compose files, and the legacy reference
+# implementation. AGENTS.md forbids modifying these without explicit approval —
+# CODEOWNERS makes the review requirement explicit on the GitHub side too.
+/.github/workflows/     @KINGINTHECASTE123
+/infrastructure/        @KINGINTHECASTE123
+/docker-compose.single-vm.yml   @KINGINTHECASTE123
+/docker-compose.nginx.yml       @KINGINTHECASTE123
+/docker-compose.backend.yml     @KINGINTHECASTE123
+/legacy/                @KINGINTHECASTE123
