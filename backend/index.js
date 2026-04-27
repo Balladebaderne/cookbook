@@ -7,7 +7,6 @@ import { fileURLToPath } from "url";
 import { initDb } from "./db/schema.js";
 
 import apiRouter from "./routes/api.js";
-import usersRouter from "./routes/users.js";
 import recipesRouter from "./routes/recipes.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 
@@ -38,7 +37,6 @@ app.get("/health", (req, res) => {
 
 // samme base paths som Flask
 app.use("/api", apiRouter);
-app.use("/api/user", usersRouter);
 app.use("/api/recipe", recipesRouter);
 
 app.use(notFound);

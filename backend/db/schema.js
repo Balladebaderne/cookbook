@@ -4,15 +4,6 @@ import { seedDb } from "./seed.js";
 export async function initDb() {
   try {
     await db.exec(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        name TEXT NOT NULL
-      )
-    `);
-
-    await db.exec(`
       CREATE TABLE IF NOT EXISTS recipes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,

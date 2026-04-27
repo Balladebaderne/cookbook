@@ -16,7 +16,6 @@ tags:
   - name: Recipes
   - name: Ingredients
   - name: Tags
-  - name: Users
 
 paths:
   /health:
@@ -212,27 +211,6 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/user/create/:
-    post:
-      summary: Create a user
-      operationId: createUser
-      tags: [Users]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserInput'
-      responses:
-        '201':
-          description: User created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
-        '500':
-          $ref: '#/components/responses/ServerError'
-
 components:
   parameters:
     RecipeId:
@@ -373,31 +351,6 @@ components:
         name:
           type: string
           example: Italiensk
-
-    User:
-      type: object
-      properties:
-        email:
-          type: string
-          example: user@example.com
-        name:
-          type: string
-          example: Jacob Bisgaard
-
-    UserInput:
-      type: object
-      required:
-        - email
-        - password
-        - name
-      properties:
-        email:
-          type: string
-          example: user@example.com
-        password:
-          type: string
-        name:
-          type: string
 
     Error:
       type: object
