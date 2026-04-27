@@ -64,8 +64,8 @@ reads a repo variable `DEPLOY_MODE` and picks which deploy job to run:
 
 | Mode       | Script                 | VMs                          | Compose file used                                                           |
 | ---------- | ---------------------- | ---------------------------- | --------------------------------------------------------------------------- |
-| `single`   | `create_vm.sh`         | 1 (public)                   | [`docker-compose.single-vm.yml`](../docker-compose.single-vm.yml)           |
-| `two-vms`  | `create_two_vms.sh`    | 2 (public nginx + private backend) | [`docker-compose.nginx.yml`](../docker-compose.nginx.yml) + [`docker-compose.backend.yml`](../docker-compose.backend.yml) |
+| `single`   | `create_vm.sh`         | 1 (public)                   | [`deploy/single-vm.yml`](../deploy/single-vm.yml)                                                                |
+| `two-vms`  | `create_two_vms.sh`    | 2 (public nginx + private backend) | [`deploy/nginx.yml`](../deploy/nginx.yml) + [`deploy/backend.yml`](../deploy/backend.yml)                |
 
 The create scripts set `DEPLOY_MODE` for you. You only need to pick one
 topology at a time.

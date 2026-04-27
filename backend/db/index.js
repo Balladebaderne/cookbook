@@ -5,10 +5,11 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, "app.db");
+// Default fallback puts app.db in backend/ to match the pre-split layout.
+// In Docker, DB_PATH is set to /app/data/app.db so this fallback is unused.
+const DB_PATH = process.env.DB_PATH || path.join(__dirname, "..", "app.db");
 console.log("DB_PATH:", DB_PATH);
 
-// Promisify sqlite3 for easier use
 class Database {
   constructor(filename) {
     this.db = new sqlite3.Database(filename, (err) => {
