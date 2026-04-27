@@ -4,11 +4,12 @@ import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { initDb } from "./initDb.js";
+import { initDb } from "./db/schema.js";
 
 import apiRouter from "./routes/api.js";
 import usersRouter from "./routes/users.js";
 import recipesRouter from "./routes/recipes.js";
+import { errorHandler, notFound } from "./middleware/error.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,6 +40,9 @@ app.get("/health", (req, res) => {
 app.use("/api", apiRouter);
 app.use("/api/user", usersRouter);
 app.use("/api/recipe", recipesRouter);
+
+app.use(notFound);
+app.use(errorHandler);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`Node API running: http://localhost:${PORT}`);
