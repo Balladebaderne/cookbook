@@ -8,7 +8,6 @@ router.get("/", (req, res) => {
     message: "Cookbook API",
     version: "1.0.0",
     endpoints: {
-      user: "/api/user",
       recipe: "/api/recipe"
     }
   });

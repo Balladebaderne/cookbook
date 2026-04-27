@@ -33,6 +33,10 @@ jobs:
         working-directory: backend
         run: npm audit --audit-level=high
 
+      - name: Test backend
+        working-directory: backend
+        run: npm test
+
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
@@ -119,7 +123,7 @@ jobs:
 
       - name: Copy compose file
         run: |
-          scp -i ~/.ssh/id_rsa docker-compose.single-vm.yml \
+          scp -i ~/.ssh/id_rsa deploy/single-vm.yml \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/app/docker-compose.yml
 
       - name: Pull and start containers
@@ -165,7 +169,7 @@ jobs:
             -o "ProxyJump=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}" \
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
-            docker-compose.backend.yml \
+            deploy/backend.yml \
             ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_PRIVATE_IP }}:~/app/docker-compose.yml
 
       - name: Pull and start backend container
@@ -208,7 +212,7 @@ jobs:
 
       - name: Copy nginx compose file
         run: |
-          scp -i ~/.ssh/id_rsa docker-compose.nginx.yml \
+          scp -i ~/.ssh/id_rsa deploy/nginx.yml \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/docker-compose.yml
 
       - name: Pull and start nginx container

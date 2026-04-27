@@ -11,7 +11,5 @@
 # CODEOWNERS makes the review requirement explicit on the GitHub side too.
 /.github/workflows/     @KINGINTHECASTE123
 /infrastructure/        @KINGINTHECASTE123
-/docker-compose.single-vm.yml   @KINGINTHECASTE123
-/docker-compose.nginx.yml       @KINGINTHECASTE123
-/docker-compose.backend.yml     @KINGINTHECASTE123
+/deploy/                @KINGINTHECASTE123
 /legacy/                @KINGINTHECASTE123

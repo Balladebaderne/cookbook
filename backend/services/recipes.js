@@ -1,4 +1,4 @@
-import { db } from "../db.js";
+import { db } from "../db/index.js";
 
 async function upsertIngredient(name) {
   let row = await db.prepare(`SELECT id FROM ingredients WHERE name = ?`).get(name);

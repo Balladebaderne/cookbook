@@ -212,4 +212,8 @@ GitHub secrets set on $GITHUB_REPO:
   SSH_USER, SSH_HOST, SSH_PRIVATE_KEY
 
 Push to master to trigger the deploy pipeline.
+After the deploy completes, the app will be live at:
+
+  http://$VM_IP/
+
 SUMMARY

@@ -23,9 +23,10 @@ cookbook/
 │   ├── azure-teardown.sh         # deletes the resource group
 │   └── README.md
 ├── docker-compose.yml            # local dev
-├── docker-compose.single-vm.yml  # prod: single VM
-├── docker-compose.nginx.yml      # prod: two-VM, nginx host
-├── docker-compose.backend.yml    # prod: two-VM, backend host
+├── deploy/                       # prod compose variants
+│   ├── single-vm.yml             # single VM
+│   ├── nginx.yml                 # two-VM, nginx host
+│   └── backend.yml               # two-VM, backend host
 ├── openapi.yaml
 └── .github/workflows/ci-cd.yml
 ```
@@ -77,7 +78,7 @@ for the full flow and the `FORCE=1` override.
    `ghcr.io/balladebaderne/cookbook-{backend,frontend}`.
 3. **deploy** — only on `master` or manual dispatch. Picks one path
    based on the `DEPLOY_MODE` repo variable:
-   - `single` → SSHs to `SSH_HOST`, runs `docker-compose.single-vm.yml`
+   - `single` → SSHs to `SSH_HOST`, runs `deploy/single-vm.yml`
    - `two-vms` → SSHs to nginx directly, and to backend via nginx as
      an SSH jump host (backend has no public IP), each with its own
      compose file
