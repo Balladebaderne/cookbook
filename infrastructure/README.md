@@ -16,10 +16,11 @@ create_two_vms.sh  → push to master  → app live  → azure-teardown.sh
 
 ## Prerequisites
 
-Install and configure on your local machine:
+Install on your local machine — login is handled by the create scripts
+themselves (they call `az login` / `gh auth login` for you on first run):
 
-- **Azure CLI** (`az`) — logged in with `az login`
-- **GitHub CLI** (`gh`) — logged in with `gh auth login`
+- **Azure CLI** (`az`)
+- **GitHub CLI** (`gh`)
 - **SSH key pair** in `~/.ssh/` — `id_rsa`, `id_ed25519`, or `id_ecdsa`
   (auto-detected in that order; override with `SSH_KEY_PATH` /
   `SSH_PUB_KEY_PATH` env vars). If you don't have one yet:
@@ -28,6 +29,9 @@ Install and configure on your local machine:
 - A **Personal Access Token** with `read:packages` scope available as
   `CR_PAT` (only needed if you pull images on the VM manually; the
   pipeline uses the ephemeral `GITHUB_TOKEN`)
+
+See the [root README](../README.md#1-install-prerequisites-one-time-per-machine)
+for OS-specific install commands (`brew` / `winget` / `apt`).
 
 ### Operating systems
 
