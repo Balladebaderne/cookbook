@@ -29,6 +29,19 @@ Install and configure on your local machine:
   `CR_PAT` (only needed if you pull images on the VM manually; the
   pipeline uses the ephemeral `GITHUB_TOKEN`)
 
+### Operating systems
+
+- **macOS / Linux:** kør scripts direkte med `bash infrastructure/...`.
+- **Windows:** kør via **WSL** (anbefalet) eller **Git Bash** — ikke
+  PowerShell eller `cmd`. Scripts bruger bash-arrays, heredocs og
+  `set -euo pipefail`, som ikke findes i PowerShell. WSL/Git Bash
+  bundler bash 5.x og kan finde `az` / `gh` på PATH når de er
+  installeret normalt på Windows.
+
+  Repoet har en `.gitattributes` der tvinger LF på `*.sh`, så CRLF-
+  konvertering (Git's default `core.autocrlf=true` på Windows) ikke
+  bryder scripts med fejl som `'\r': command not found`.
+
 ## One active deployment at a time
 
 The repo's deploy secrets (`SSH_HOST*`, `BACKEND_PRIVATE_IP`,

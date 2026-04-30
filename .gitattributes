@@ -1,0 +1,4 @@
+# Force LF on shell scripts so Windows checkouts (with core.autocrlf=true)
+# don't end up with CRLF, which makes bash fail with cryptic errors like
+# "'\r': command not found" or heredoc syntax errors.
+*.sh text eol=lf
