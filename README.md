@@ -44,20 +44,98 @@ docker compose --profile dev down            # stop
 
 ## Deploying to Azure
 
-All Azure provisioning lives under [`infrastructure/`](./infrastructure/README.md).
-Two topologies are supported — pick one:
+End-to-end: install two CLIs, clone the repo, run one script, push to
+`master`. The script handles everything else — including opening a
+browser for `az login` / `gh auth login` if you're not already signed in.
 
-- **Single VM** — `bash infrastructure/create_vm.sh`
-- **Two VMs** (public nginx + backend with **no public IP**, reachable
-  only through nginx) — `bash infrastructure/create_two_vms.sh`
+### 1. Install prerequisites (one-time per machine)
 
-The create scripts set the repo variable `DEPLOY_MODE` so the CI/CD
-pipeline knows which deploy job to run. Push to `master` (or trigger
-`workflow_dispatch`) to deploy. Tear down with:
+You need three things on PATH: **Azure CLI** (`az`), **GitHub CLI**
+(`gh`), and an **SSH key pair** in `~/.ssh/`.
+
+#### macOS
+
+```bash
+brew install azure-cli gh
+```
+
+#### Windows
+
+Open **Git Bash** (bundles bash + ssh, ships with [Git for Windows](https://git-scm.com/download/win)).
+Then in Git Bash:
+
+```bash
+winget install --id Microsoft.AzureCLI -e
+winget install --id GitHub.cli -e
+```
+
+> Run the deploy script from **Git Bash** (or WSL) — not from
+> PowerShell or `cmd`. The script is bash and uses arrays, heredocs,
+> and `set -euo pipefail`.
+
+#### Linux (Debian / Ubuntu)
+
+```bash
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+sudo apt install gh
+```
+
+#### SSH key (all OSes)
+
+If `ls ~/.ssh/id_*` shows nothing, generate one:
+
+```bash
+ssh-keygen -t ed25519 -C "your.email@example.com"
+```
+
+Press Enter through the prompts (default path, empty passphrase is fine
+for class).
+
+### 2. Clone the repo
+
+```bash
+git clone https://github.com/Balladebaderne/cookbook.git
+cd cookbook
+```
+
+### 3. Run the setup script
+
+Pick one topology:
+
+```bash
+bash infrastructure/create_two_vms.sh   # public nginx + private backend (recommended)
+# — or —
+bash infrastructure/create_vm.sh        # single public VM
+```
+
+The script will:
+
+1. Open a browser for `az login` if you're not signed in to Azure.
+2. Walk you through `gh auth login` if you're not signed in to GitHub.
+3. Show a confirmation prompt with what it's about to provision (resource group, VMs, ports, GitHub secrets it will set). Type `y` to continue.
+4. Provision the VMs, install Docker on them, and write the deploy
+   secrets back to the GitHub repo.
+
+When it finishes it prints the public IP of the nginx VM.
+
+### 4. Trigger the deploy
+
+```bash
+git push origin master   # or open & merge a dev → master PR
+```
+
+The pipeline ([`ci-cd.yml`](./.github/workflows/ci-cd.yml)) builds
+the Docker images, pushes them to GHCR, and deploys to your VMs. App
+goes live at `http://<NGINX_IP>` once the workflow finishes (~3 min).
+
+### 5. Tear down when you're done
 
 ```bash
 bash infrastructure/azure-teardown.sh
 ```
+
+Stops the Azure billing and clears the deploy lock so the next teammate
+can run a create script.
 
 ### Only one live deployment at a time
 

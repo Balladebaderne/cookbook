@@ -50,13 +50,19 @@ SSH_PUB_KEY_PATH="${SSH_PUB_KEY_PATH:-${SSH_KEY_PATH}.pub}"
 [[ -f "$SSH_PUB_KEY_PATH" ]] || die "SSH public key not found at $SSH_PUB_KEY_PATH"
 
 log "Verifying Azure login..."
-az account show >/dev/null 2>&1 || die "Not logged in to Azure. Run 'az login' first."
+if ! az account show >/dev/null 2>&1; then
+  log "Not logged in to Azure — opening browser to sign in..."
+  az login || die "Azure login failed."
+fi
 ACCOUNT_NAME=$(az account show --query name -o tsv)
 SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 SIGNED_IN_USER=$(az account show --query user.name -o tsv)
 
 log "Verifying GitHub login..."
-gh auth status >/dev/null 2>&1 || die "Not logged in to GitHub. Run 'gh auth login' first."
+if ! gh auth status >/dev/null 2>&1; then
+  log "Not logged in to GitHub — starting interactive login flow..."
+  gh auth login || die "GitHub login failed."
+fi
 GH_USER=$(gh api user --jq .login)
 
 # ---------- Single-active-deployment guard ----------
