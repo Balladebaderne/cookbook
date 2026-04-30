@@ -228,7 +228,9 @@ wait_for_ssh() {
   [[ -n "$jump_host" ]] && extra=(-o "ProxyJump=$ADMIN_USER@$jump_host")
   log "Waiting for SSH on $host${jump_host:+ (via $jump_host)}..."
   for _ in $(seq 1 30); do
-    if ssh "${SSH_OPTS[@]}" "${extra[@]}" "$ADMIN_USER@$host" 'true' 2>/dev/null; then
+    # ${extra[@]+"${extra[@]}"} expands to nothing when the array is empty —
+    # bash 3.2 (macOS default) treats "${extra[@]}" as unbound under set -u.
+    if ssh "${SSH_OPTS[@]}" ${extra[@]+"${extra[@]}"} "$ADMIN_USER@$host" 'true' 2>/dev/null; then
       return 0
     fi
     sleep 5
@@ -242,7 +244,7 @@ provision() {
   [[ -n "$jump_host" ]] && extra=(-o "ProxyJump=$ADMIN_USER@$jump_host")
   wait_for_ssh "$host" "$jump_host"
   log "Provisioning $label ($host)${jump_host:+ via $jump_host}: base packages + Docker..."
-  ssh "${SSH_OPTS[@]}" "${extra[@]}" "$ADMIN_USER@$host" 'bash -s' <<'REMOTE'
+  ssh "${SSH_OPTS[@]}" ${extra[@]+"${extra[@]}"} "$ADMIN_USER@$host" 'bash -s' <<'REMOTE'
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 sudo -E apt-get update -y
