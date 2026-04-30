@@ -159,10 +159,16 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          # Pre-cache the nginx (jump host) key. OpenSSH applies command-line
+          # -o options to the destination only, not to the ProxyJump hop, so
+          # the jump connection still does strict host key checking against
+          # the default known_hosts. Without this keyscan, scp/ssh below fail
+          # with "Host key verification failed" on the jump.
+          ssh-keyscan -H ${{ secrets.SSH_HOST_NGINX }} >> ~/.ssh/known_hosts
 
       # Backend has no public IP; reach it via nginx as an SSH jump host.
-      # StrictHostKeyChecking is off because we can't keyscan a private host
-      # from the GitHub runner, and the jump host's key isn't cached either.
+      # The destination (backend) host key can't be pre-scanned from the
+      # runner, so accept it on first contact via StrictHostKeyChecking=no.
       - name: Copy backend compose file
         run: |
           scp -i ~/.ssh/id_rsa \
