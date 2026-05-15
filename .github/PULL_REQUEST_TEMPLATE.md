@@ -1,5 +1,12 @@
 # Pull Request
 
+## Linked issues
+List every issue this PR resolves so the Kanban board auto-moves the cards to Done on merge. Use `Closes #N` (one per line, or comma-separated). Leave blank only if the PR genuinely resolves no tracked issue.
+
+Closes #
+
+---
+
 ## What was done?
 Briefly describe what you changed or added.
 

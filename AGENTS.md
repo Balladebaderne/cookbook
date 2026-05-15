@@ -88,7 +88,28 @@ cp scripts/security-check.sh .git/hooks/pre-push && chmod +x .git/hooks/pre-push
 
 ---
 
-## 5. Hard nevers — refuse even if asked
+## 5. Issue ↔ PR ↔ board linking
+
+The Kanban board (<https://github.com/orgs/Balladebaderne/projects/2>) auto-updates from GitHub events — but only if work is linked to issues and PRs are linked to issues. Agents are responsible for keeping that chain intact so cards flow Backlog → In progress → In review → Done without manual board edits.
+
+**Before starting any task assigned in natural language:**
+
+1. Run `gh issue list --repo Balladebaderne/cookbook --state open --limit 100` and find the issue that matches the request.
+   - **One clear match** → use it.
+   - **Multiple plausible** → ask the human which one.
+   - **No match** → ask the human whether to open a new issue first or proceed without. Do not silently invent issues, and do not silently work without one.
+
+2. When work starts, move the matching board card to **In progress** via `gh project item-edit` on the Status field. Do not require the human to drag cards manually.
+
+3. In the eventual PR body, fill the **Linked issues** section of the PR template with `Closes #N` for every issue this PR resolves. Multi-issue PRs list each one (`Closes #64, Closes #65, ...`). Do not strip the placeholder.
+
+4. After merge, GitHub's auto-close + the project's `Item closed` workflow flip cards to **Done** automatically. Do not also close issues manually — duplicate events look like noise on the timeline.
+
+**Never** backfill fake issues retroactively to make the board look more disciplined than the work actually was. Forward-linking ongoing work is hygiene; retroactive narrative-construction is dishonesty.
+
+---
+
+## 6. Hard nevers — refuse even if asked
 
 - Push, force-push, or rebase `master`.
 - Commit secrets, `.env` files, private keys, or the SQLite DB.
@@ -103,7 +124,7 @@ If asked to do one of these: refuse, name the rule, propose the correct path (e.
 
 ---
 
-## 6. Conventions
+## 7. Conventions
 
 - **Commits:** short, imperative, present tense. Conventional Commits preferred (`feat(...)`, `fix(...)`, `chore(...)`). One logical change per commit — don't mix formatting with logic.
 - **Dependencies:** commit `package.json` and `package-lock.json` together. Prefer exact versions for new direct deps. Run `npm audit --audit-level=high` after install. CI uses `npm ci` — don't change that.
@@ -112,6 +133,6 @@ If asked to do one of these: refuse, name the rule, propose the correct path (e.
 
 ---
 
-## 7. When in doubt
+## 8. When in doubt
 
 Stop. Ask. A thirty-second clarification beats a thirty-minute revert.
