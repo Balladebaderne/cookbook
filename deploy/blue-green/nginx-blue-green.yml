@@ -1,0 +1,9 @@
+services:
+  frontend:
+    image: ghcr.io/${GITHUB_OWNER}/cookbook-frontend:${FRONTEND_IMAGE_TAG:-latest}
+    container_name: cookbook-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    env_file:
+      - active-color.env

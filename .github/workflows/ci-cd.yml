@@ -86,7 +86,7 @@ jobs:
           images: ${{ steps.prefix.outputs.value }}/cookbook-${{ matrix.service }}
           tags: |
             type=ref,event=branch
-            type=sha,prefix=sha-
+            type=sha,prefix=sha-,format=long
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/master' }}
 
       - name: Build and push ${{ matrix.service }} image
@@ -232,3 +232,190 @@ jobs:
              echo '${{ secrets.GITHUB_TOKEN }}' | sudo docker login ghcr.io -u ${{ github.actor }} --password-stdin && \
              GITHUB_OWNER=$OWNER_LC BACKEND_PRIVATE_IP=${{ secrets.BACKEND_PRIVATE_IP }} sudo -E docker compose pull && \
              GITHUB_OWNER=$OWNER_LC BACKEND_PRIVATE_IP=${{ secrets.BACKEND_PRIVATE_IP }} sudo -E docker compose up -d"
+
+  deploy-three-vms-blue-green:
+    name: Deploy three-VM blue/green
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: |
+      vars.DEPLOY_MODE == 'three-vms' &&
+      (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch')
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST_NGINX }} >> ~/.ssh/known_hosts
+
+      - name: Copy blue/green deployment files
+        run: |
+          ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
+            "mkdir -p ~/app/blue-green"
+
+          ssh -i ~/.ssh/id_rsa \
+            -o "ProxyJump=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_PRIVATE_IP }} \
+            "mkdir -p ~/app/blue-green"
+
+          scp -i ~/.ssh/id_rsa \
+            deploy/blue-green/nginx-blue-green.yml \
+            deploy/blue-green/rollback-blue-green.sh \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/blue-green/
+
+          scp -i ~/.ssh/id_rsa \
+            -o "ProxyJump=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            deploy/blue-green/backend-blue-green.yml \
+            deploy/blue-green/deploy-blue-green.sh \
+            ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_PRIVATE_IP }}:~/app/blue-green/
+
+          ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
+            "chmod +x ~/app/blue-green/rollback-blue-green.sh"
+
+          ssh -i ~/.ssh/id_rsa \
+            -o "ProxyJump=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_PRIVATE_IP }} \
+            "chmod +x ~/app/blue-green/deploy-blue-green.sh"
+
+      - name: Initialize active color state
+        env:
+          BACKEND_PRIVATE_IP: ${{ secrets.BACKEND_PRIVATE_IP }}
+        run: |
+          if ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
+            "test -f ~/app/blue-green/active-color.env"; then
+            echo "Existing active-color.env found on nginx VM"
+          else
+            {
+              printf "ACTIVE_COLOR=blue\n"
+              printf "PREVIOUS_COLOR=green\n"
+              printf "BACKEND_PRIVATE_IP=%s\n" "$BACKEND_PRIVATE_IP"
+              printf "BACKEND_HOST=%s:3001\n" "$BACKEND_PRIVATE_IP"
+              printf "BLUE_BACKEND_HOST=%s:3001\n" "$BACKEND_PRIVATE_IP"
+              printf "GREEN_BACKEND_HOST=%s:3002\n" "$BACKEND_PRIVATE_IP"
+              printf "BACKEND_IMAGE_TAG=latest\n"
+              printf "FRONTEND_IMAGE_TAG=latest\n"
+              printf "UPDATED_AT=%s\n" "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            } > /tmp/cookbook-active-color.env
+            scp -i ~/.ssh/id_rsa \
+              /tmp/cookbook-active-color.env \
+              ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/blue-green/active-color.env
+          fi
+
+      - name: Sync active color state to backend VM
+        run: |
+          scp -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/blue-green/active-color.env \
+            /tmp/cookbook-active-color.env
+
+          scp -i ~/.ssh/id_rsa \
+            -o "ProxyJump=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            /tmp/cookbook-active-color.env \
+            ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_PRIVATE_IP }}:~/app/blue-green/active-color.env
+
+      - name: Log in to GHCR on backend VM
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_ACTOR: ${{ github.actor }}
+        run: |
+          printf '%s' "$GHCR_TOKEN" | ssh -i ~/.ssh/id_rsa \
+            -o "ProxyJump=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_PRIVATE_IP }} \
+            "sudo docker login ghcr.io -u '$GHCR_ACTOR' --password-stdin"
+
+      - name: Deploy inactive backend and verify health
+        env:
+          OWNER_LC: ${{ github.repository_owner }}
+          BACKEND_PRIVATE_IP: ${{ secrets.BACKEND_PRIVATE_IP }}
+          DATABASE_PRIVATE_IP: ${{ secrets.DATABASE_PRIVATE_IP }}
+          POSTGRES_PORT: ${{ secrets.POSTGRES_PORT }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          OWNER_LC=$(echo "$OWNER_LC" | tr '[:upper:]' '[:lower:]')
+          IMAGE_TAG="sha-${GITHUB_SHA}"
+          POSTGRES_PORT="${POSTGRES_PORT:-5432}"
+
+          for value in "$BACKEND_PRIVATE_IP" "$DATABASE_PRIVATE_IP" "$POSTGRES_DB" "$POSTGRES_USER" "$POSTGRES_PASSWORD"; do
+            if [ -z "$value" ]; then
+              echo "Missing required three-vms deploy secret" >&2
+              exit 1
+            fi
+          done
+
+          quote() { printf "%q" "$1"; }
+          remote_env=(
+            "GITHUB_OWNER=$(quote "$OWNER_LC")"
+            "BACKEND_IMAGE_TAG=$(quote "$IMAGE_TAG")"
+            "FRONTEND_IMAGE_TAG=$(quote "$IMAGE_TAG")"
+            "BACKEND_PRIVATE_IP=$(quote "$BACKEND_PRIVATE_IP")"
+            "POSTGRES_HOST=$(quote "$DATABASE_PRIVATE_IP")"
+            "POSTGRES_PORT=$(quote "$POSTGRES_PORT")"
+            "POSTGRES_DB=$(quote "$POSTGRES_DB")"
+            "POSTGRES_USER=$(quote "$POSTGRES_USER")"
+            "POSTGRES_PASSWORD=$(quote "$POSTGRES_PASSWORD")"
+          )
+
+          ssh -i ~/.ssh/id_rsa \
+            -o "ProxyJump=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_PRIVATE_IP }} \
+            "cd ~/app/blue-green && sudo env ${remote_env[*]} bash ./deploy-blue-green.sh"
+
+      - name: Switch nginx to healthy color
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_ACTOR: ${{ github.actor }}
+          OWNER_LC: ${{ github.repository_owner }}
+        run: |
+          OWNER_LC=$(echo "$OWNER_LC" | tr '[:upper:]' '[:lower:]')
+          IMAGE_TAG="sha-${GITHUB_SHA}"
+
+          scp -i ~/.ssh/id_rsa \
+            -o "ProxyJump=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_PRIVATE_IP }}:~/app/blue-green/active-color.env \
+            /tmp/cookbook-active-color.env
+
+          scp -i ~/.ssh/id_rsa \
+            /tmp/cookbook-active-color.env \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/blue-green/active-color.env
+
+          printf '%s' "$GHCR_TOKEN" | ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
+            "sudo docker login ghcr.io -u '$GHCR_ACTOR' --password-stdin"
+
+          quote() { printf "%q" "$1"; }
+          remote_env=(
+            "GITHUB_OWNER=$(quote "$OWNER_LC")"
+            "FRONTEND_IMAGE_TAG=$(quote "$IMAGE_TAG")"
+          )
+
+          ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
+            "cd ~/app/blue-green && \
+             sudo env ${remote_env[*]} docker compose --env-file active-color.env -f nginx-blue-green.yml pull frontend && \
+             sudo env ${remote_env[*]} docker compose --env-file active-color.env -f nginx-blue-green.yml up -d frontend"

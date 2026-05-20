@@ -6,7 +6,7 @@ Actions.
 
 ## Tech Stack
 
-**Backend:** Node.js, Express, SQLite3, OpenAPI 3.0 (Swagger)
+**Backend:** Node.js, Express, SQLite3/Postgres, OpenAPI 3.0 (Swagger)
 **Frontend:** React (Vite), served by Nginx
 **Infrastructure:** Azure VMs (Ubuntu 22.04), Docker, Docker Compose,
 GitHub Actions, GitHub Container Registry
@@ -27,7 +27,8 @@ cookbook/
 ├── deploy/                       # prod compose variants
 │   ├── single-vm.yml             # single VM
 │   ├── nginx.yml                 # two-VM, nginx host
-│   └── backend.yml               # two-VM, backend host
+│   ├── backend.yml               # two-VM, backend host
+│   └── blue-green/               # three-VM blue/green deploy files
 ├── openapi.yaml
 └── .github/workflows/ci-cd.yml
 ```
@@ -106,7 +107,7 @@ Pick one topology:
 ```bash
 bash infrastructure/create_two_vms.sh   # public nginx + private backend (recommended)
 # — or —
-bash infrastructure/create_three_vms.sh # public nginx + private backend + private database (infra only)
+bash infrastructure/create_three_vms.sh # public nginx + private backend + private database
 # — or —
 bash infrastructure/create_vm.sh        # single public VM
 ```
@@ -119,9 +120,9 @@ The script will:
 4. Provision the VMs, install Docker on them, and write the deploy
    secrets back to the GitHub repo.
 
-When it finishes it prints the public IP of the public entry VM. The new
-three-VM script only provisions infrastructure for now; it does not yet
-add a deployable Postgres path to CI/CD.
+When it finishes it prints the public IP of the public entry VM. The
+three-VM path deploys the backend with a blue/green flow and Postgres
+runtime configuration; see [`deploy/README-blue-green.md`](./deploy/README-blue-green.md).
 
 ### 4. Trigger the deploy
 
@@ -133,10 +134,8 @@ The pipeline ([`ci-cd.yml`](./.github/workflows/ci-cd.yml)) builds
 the Docker images, pushes them to GHCR, and deploys to your VMs. App
 goes live at `http://<NGINX_IP>` once the workflow finishes (~3 min).
 
-> Today, automated deploys only exist for `single` and `two-vms`. If you
-> provision with `create_three_vms.sh`, that step prepares the Azure
-> topology for the Postgres migration, but the deploy workflow and runtime
-> changes still need a later phase.
+> `master` deploys automatically through CI/CD. Follow the branch rules in
+> [`AGENTS.md`](./AGENTS.md): merge to `master` only through a PR.
 
 ### 5. Tear down when you're done
 
@@ -170,8 +169,12 @@ for the full flow and the `FORCE=1` override.
    - `two-vms` → SSHs to nginx directly, and to backend via nginx as
      an SSH jump host (backend has no public IP), each with its own
      compose file
-   - `three-vms` → reserved by `create_three_vms.sh` for the future
-     nginx + backend + Postgres rollout; deploy jobs are not wired yet
+   - `three-vms` → deploys the inactive backend color on the backend VM,
+     health-checks it, then recreates nginx with the new `BACKEND_HOST`
+     from `deploy/blue-green/active-color.env`
+
+For three-VM operations, rollback, and database migration constraints, see
+[`deploy/README-blue-green.md`](./deploy/README-blue-green.md).
 
 ## For contributors
 
