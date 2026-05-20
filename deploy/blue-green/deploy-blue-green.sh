@@ -114,6 +114,11 @@ for attempt in $(seq 1 "$HEALTH_RETRIES"); do
       printf "UPDATED_AT=%s\n" "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
     } > "$tmp_file"
     mv "$tmp_file" "$ACTIVE_ENV_FILE"
+    # Written under sudo (root). Hand ownership back to the SSH user (owner of
+    # the deploy dir) so the CI sync/switch steps can scp this file both ways on
+    # every deploy, not just the first. Contains no secrets.
+    chown --reference="$SCRIPT_DIR" "$ACTIVE_ENV_FILE" 2>/dev/null || true
+    chmod 0644 "$ACTIVE_ENV_FILE"
     echo "backend-$TARGET_COLOR is healthy on $TARGET_BACKEND_HOST"
     exit 0
   fi
