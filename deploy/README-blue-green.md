@@ -99,6 +99,36 @@ environment variables are set:
 
 For the three-VM workflow, CI maps `DATABASE_PRIVATE_IP` to `POSTGRES_HOST`.
 
+## Database Setup (one-time)
+
+Postgres runs as a single container on the **database VM** via
+[`postgres.yml`](./blue-green/postgres.yml). This is a **one-time, stateful**
+setup — data lives in the named volume `cookbook_pgdata`
+(`/var/lib/postgresql/data`) and survives container restarts and VM reboots
+(`restart: unless-stopped`). It is intentionally **not** part of the per-deploy
+CI flow, so an app deploy never risks the database.
+
+The app creates its schema and seeds itself on first boot
+([`backend/db/schema.js`](../backend/db/schema.js) runs `CREATE TABLE IF NOT
+EXISTS` + seeds when empty), so **no manual schema load or migration is
+needed** — only an empty database and a user that owns it.
+
+Credentials are read from a `chmod 600` env file on the VM that must match the
+GitHub secrets (`POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`). The
+compose file never hard-codes the password.
+
+Bring it up on the database VM (reached via the nginx VM as a jump host):
+
+```bash
+cd ~/app/blue-green
+# postgres.env contains POSTGRES_DB / POSTGRES_USER / POSTGRES_PASSWORD (chmod 600)
+sudo docker compose --env-file postgres.env -f postgres.yml up -d
+sudo docker exec cookbook-postgres pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+```
+
+The Azure NSG only allows port `5432` from the backend VM, so publishing the
+port on the database VM is not publicly reachable.
+
 ## Migration Rule
 
 Blue/green means old and new backend versions can run at the same time. Any

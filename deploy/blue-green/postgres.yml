@@ -1,0 +1,26 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: cookbook-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      # Published on the database VM so the backend VM can reach it at
+      # ${DATABASE_PRIVATE_IP}:5432. The Azure NSG restricts source to the
+      # backend VM only, so 0.0.0.0 here is not publicly reachable.
+      - "5432:5432"
+    volumes:
+      - cookbook_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  cookbook_pgdata:
+    driver: local
