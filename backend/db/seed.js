@@ -1,14 +1,11 @@
 import { db } from "./index.js";
 
-export async function seedDb() {
-  try {
-    const insertIngredient = db.prepare("INSERT INTO ingredients (name) VALUES (?)");
-    const insertTag = db.prepare("INSERT INTO tags (name) VALUES (?)");
-    const insertRecipe = db.prepare("INSERT INTO recipes (title, time_minutes, price, link, description, instructions, image, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-    const insertRecipeIngredient = db.prepare("INSERT INTO recipe_ingredients (recipe_id, ingredient_id, amount, unit) VALUES (?, ?, ?, ?)");
-    const insertRecipeTag = db.prepare("INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)");
-
-    await db.exec("BEGIN TRANSACTION");
+async function insertSeedData(conn) {
+    const insertIngredient = conn.prepare("INSERT INTO ingredients (name) VALUES (?)");
+    const insertTag = conn.prepare("INSERT INTO tags (name) VALUES (?)");
+    const insertRecipe = conn.prepare("INSERT INTO recipes (title, time_minutes, price, link, description, instructions, image, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    const insertRecipeIngredient = conn.prepare("INSERT INTO recipe_ingredients (recipe_id, ingredient_id, amount, unit) VALUES (?, ?, ?, ?)");
+    const insertRecipeTag = conn.prepare("INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)");
 
     // Ingredients
     // Carbonara (1-7)
@@ -326,10 +323,14 @@ export async function seedDb() {
     await insertRecipeTag.run(r9.lastID, 13);
     await insertRecipeTag.run(r9.lastID, 10);
 
-    await db.exec("COMMIT");
+}
+
+export async function seedDb() {
+  try {
+    await db.transaction(insertSeedData);
     console.log("Database seeded successfully");
   } catch (err) {
     console.error("Error seeding database:", err);
-    await db.exec("ROLLBACK").catch(() => {});
+    throw err;
   }
 }

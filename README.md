@@ -6,7 +6,7 @@ Actions.
 
 ## Tech Stack
 
-**Backend:** Node.js, Express, SQLite3, OpenAPI 3.0 (Swagger)
+**Backend:** Node.js, Express, SQLite3/Postgres, OpenAPI 3.0 (Swagger)
 **Frontend:** React (Vite), served by Nginx
 **Infrastructure:** Azure VMs (Ubuntu 22.04), Docker, Docker Compose,
 GitHub Actions, GitHub Container Registry
@@ -20,13 +20,15 @@ cookbook/
 ├── infrastructure/               # Azure provisioning scripts
 │   ├── create_vm.sh              # single-VM setup
 │   ├── create_two_vms.sh         # two-VM (nginx + backend) setup
+│   ├── create_three_vms.sh       # three-VM (nginx + backend + database) setup
 │   ├── azure-teardown.sh         # deletes the resource group
 │   └── README.md
 ├── docker-compose.yml            # local dev
 ├── deploy/                       # prod compose variants
 │   ├── single-vm.yml             # single VM
 │   ├── nginx.yml                 # two-VM, nginx host
-│   └── backend.yml               # two-VM, backend host
+│   ├── backend.yml               # two-VM, backend host
+│   └── blue-green/               # three-VM blue/green deploy files
 ├── openapi.yaml
 └── .github/workflows/ci-cd.yml
 ```
@@ -105,6 +107,8 @@ Pick one topology:
 ```bash
 bash infrastructure/create_two_vms.sh   # public nginx + private backend (recommended)
 # — or —
+bash infrastructure/create_three_vms.sh # public nginx + private backend + private database
+# — or —
 bash infrastructure/create_vm.sh        # single public VM
 ```
 
@@ -116,7 +120,9 @@ The script will:
 4. Provision the VMs, install Docker on them, and write the deploy
    secrets back to the GitHub repo.
 
-When it finishes it prints the public IP of the nginx VM.
+When it finishes it prints the public IP of the public entry VM. The
+three-VM path deploys the backend with a blue/green flow and Postgres
+runtime configuration; see [`deploy/README-blue-green.md`](./deploy/README-blue-green.md).
 
 ### 4. Trigger the deploy
 
@@ -127,6 +133,9 @@ git push origin master   # or open & merge a dev → master PR
 The pipeline ([`ci-cd.yml`](./.github/workflows/ci-cd.yml)) builds
 the Docker images, pushes them to GHCR, and deploys to your VMs. App
 goes live at `http://<NGINX_IP>` once the workflow finishes (~3 min).
+
+> `master` deploys automatically through CI/CD. Follow the branch rules in
+> [`AGENTS.md`](./AGENTS.md): merge to `master` only through a PR.
 
 ### 5. Tear down when you're done
 
@@ -160,6 +169,12 @@ for the full flow and the `FORCE=1` override.
    - `two-vms` → SSHs to nginx directly, and to backend via nginx as
      an SSH jump host (backend has no public IP), each with its own
      compose file
+   - `three-vms` → deploys the inactive backend color on the backend VM,
+     health-checks it, then recreates nginx with the new `BACKEND_HOST`
+     from `deploy/blue-green/active-color.env`
+
+For three-VM operations, rollback, and database migration constraints, see
+[`deploy/README-blue-green.md`](./deploy/README-blue-green.md).
 
 ## For contributors
 
