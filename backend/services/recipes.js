@@ -1,35 +1,35 @@
 import { db } from "../db/index.js";
 
-async function upsertIngredient(name) {
-  let row = await db.prepare(`SELECT id FROM ingredients WHERE name = ?`).get(name);
+async function upsertIngredient(name, conn = db) {
+  let row = await conn.prepare(`SELECT id FROM ingredients WHERE name = ?`).get(name);
   if (!row) {
-    row = { id: (await db.prepare(`INSERT INTO ingredients (name) VALUES (?)`).run(name)).lastInsertRowid };
+    row = { id: (await conn.prepare(`INSERT INTO ingredients (name) VALUES (?)`).run(name)).lastInsertRowid };
   }
   return row.id;
 }
 
-async function upsertTag(name) {
-  let row = await db.prepare(`SELECT id FROM tags WHERE name = ?`).get(name);
+async function upsertTag(name, conn = db) {
+  let row = await conn.prepare(`SELECT id FROM tags WHERE name = ?`).get(name);
   if (!row) {
-    row = { id: (await db.prepare(`INSERT INTO tags (name) VALUES (?)`).run(name)).lastInsertRowid };
+    row = { id: (await conn.prepare(`INSERT INTO tags (name) VALUES (?)`).run(name)).lastInsertRowid };
   }
   return row.id;
 }
 
-async function saveIngredients(recipeId, ingredients = []) {
+async function saveIngredients(recipeId, ingredients = [], conn = db) {
   for (const ing of ingredients) {
     if (!ing.name?.trim()) continue;
-    const ingredientId = await upsertIngredient(ing.name);
-    await db.prepare(`INSERT INTO recipe_ingredients (recipe_id, ingredient_id, amount, unit) VALUES (?, ?, ?, ?)`)
+    const ingredientId = await upsertIngredient(ing.name, conn);
+    await conn.prepare(`INSERT INTO recipe_ingredients (recipe_id, ingredient_id, amount, unit) VALUES (?, ?, ?, ?)`)
       .run(recipeId, ingredientId, ing.amount || null, ing.unit || null);
   }
 }
 
-async function saveTags(recipeId, tags = []) {
+async function saveTags(recipeId, tags = [], conn = db) {
   for (const t of tags) {
     if (!t.name?.trim()) continue;
-    const tagId = await upsertTag(t.name);
-    await db.prepare(`INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)`).run(recipeId, tagId);
+    const tagId = await upsertTag(t.name, conn);
+    await conn.prepare(`INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)`).run(recipeId, tagId);
   }
 }
 
@@ -142,9 +142,8 @@ export async function getRecipe(id) {
 }
 
 export async function createRecipe(data) {
-  await db.exec("BEGIN TRANSACTION");
-  try {
-    const result = await db.prepare(
+  return db.transaction(async (tx) => {
+    const result = await tx.prepare(
       `INSERT INTO recipes (title, time_minutes, price, link, description, instructions, image, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       data.title.trim(),
@@ -158,23 +157,18 @@ export async function createRecipe(data) {
     );
 
     const recipeId = result.lastInsertRowid;
-    await saveIngredients(recipeId, data.ingredients);
-    await saveTags(recipeId, data.tags);
-    await db.exec("COMMIT");
+    await saveIngredients(recipeId, data.ingredients, tx);
+    await saveTags(recipeId, data.tags, tx);
     return recipeId;
-  } catch (err) {
-    await db.exec("ROLLBACK").catch(() => {});
-    throw err;
-  }
+  });
 }
 
 export async function updateRecipe(id, data) {
-  const existing = await db.prepare(`SELECT id FROM recipes WHERE id = ?`).get(id);
-  if (!existing) return false;
+  return db.transaction(async (tx) => {
+    const existing = await tx.prepare(`SELECT id FROM recipes WHERE id = ?`).get(id);
+    if (!existing) return false;
 
-  await db.exec("BEGIN TRANSACTION");
-  try {
-    await db.prepare(
+    await tx.prepare(
       `UPDATE recipes SET title = ?, time_minutes = ?, price = ?, link = ?, description = ?, instructions = ?, image = ?, country = ? WHERE id = ?`
     ).run(
       data.title.trim(),
@@ -188,22 +182,20 @@ export async function updateRecipe(id, data) {
       id
     );
 
-    await db.prepare(`DELETE FROM recipe_ingredients WHERE recipe_id = ?`).run(id);
-    await db.prepare(`DELETE FROM recipe_tags WHERE recipe_id = ?`).run(id);
-    await saveIngredients(id, data.ingredients);
-    await saveTags(id, data.tags);
-    await db.exec("COMMIT");
+    await tx.prepare(`DELETE FROM recipe_ingredients WHERE recipe_id = ?`).run(id);
+    await tx.prepare(`DELETE FROM recipe_tags WHERE recipe_id = ?`).run(id);
+    await saveIngredients(id, data.ingredients, tx);
+    await saveTags(id, data.tags, tx);
     return true;
-  } catch (err) {
-    await db.exec("ROLLBACK").catch(() => {});
-    throw err;
-  }
+  });
 }
 
 export async function deleteRecipe(id) {
-  await db.prepare(`DELETE FROM recipe_ingredients WHERE recipe_id = ?`).run(id);
-  await db.prepare(`DELETE FROM recipe_tags WHERE recipe_id = ?`).run(id);
-  await db.prepare(`DELETE FROM recipes WHERE id = ?`).run(id);
+  await db.transaction(async (tx) => {
+    await tx.prepare(`DELETE FROM recipe_ingredients WHERE recipe_id = ?`).run(id);
+    await tx.prepare(`DELETE FROM recipe_tags WHERE recipe_id = ?`).run(id);
+    await tx.prepare(`DELETE FROM recipes WHERE id = ?`).run(id);
+  });
 }
 
 export async function listIngredients() {
