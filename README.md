@@ -20,6 +20,7 @@ cookbook/
 ├── infrastructure/               # Azure provisioning scripts
 │   ├── create_vm.sh              # single-VM setup
 │   ├── create_two_vms.sh         # two-VM (nginx + backend) setup
+│   ├── create_three_vms.sh       # three-VM (nginx + backend + database) setup
 │   ├── azure-teardown.sh         # deletes the resource group
 │   └── README.md
 ├── docker-compose.yml            # local dev
@@ -105,6 +106,8 @@ Pick one topology:
 ```bash
 bash infrastructure/create_two_vms.sh   # public nginx + private backend (recommended)
 # — or —
+bash infrastructure/create_three_vms.sh # public nginx + private backend + private database (infra only)
+# — or —
 bash infrastructure/create_vm.sh        # single public VM
 ```
 
@@ -116,7 +119,9 @@ The script will:
 4. Provision the VMs, install Docker on them, and write the deploy
    secrets back to the GitHub repo.
 
-When it finishes it prints the public IP of the nginx VM.
+When it finishes it prints the public IP of the public entry VM. The new
+three-VM script only provisions infrastructure for now; it does not yet
+add a deployable Postgres path to CI/CD.
 
 ### 4. Trigger the deploy
 
@@ -127,6 +132,11 @@ git push origin master   # or open & merge a dev → master PR
 The pipeline ([`ci-cd.yml`](./.github/workflows/ci-cd.yml)) builds
 the Docker images, pushes them to GHCR, and deploys to your VMs. App
 goes live at `http://<NGINX_IP>` once the workflow finishes (~3 min).
+
+> Today, automated deploys only exist for `single` and `two-vms`. If you
+> provision with `create_three_vms.sh`, that step prepares the Azure
+> topology for the Postgres migration, but the deploy workflow and runtime
+> changes still need a later phase.
 
 ### 5. Tear down when you're done
 
@@ -160,6 +170,8 @@ for the full flow and the `FORCE=1` override.
    - `two-vms` → SSHs to nginx directly, and to backend via nginx as
      an SSH jump host (backend has no public IP), each with its own
      compose file
+   - `three-vms` → reserved by `create_three_vms.sh` for the future
+     nginx + backend + Postgres rollout; deploy jobs are not wired yet
 
 ## For contributors
 
