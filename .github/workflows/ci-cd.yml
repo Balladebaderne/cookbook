@@ -240,8 +240,8 @@ jobs:
              GITHUB_OWNER=$OWNER_LC BACKEND_PRIVATE_IP=${{ secrets.BACKEND_PRIVATE_IP }} sudo -E docker compose pull && \
              GITHUB_OWNER=$OWNER_LC BACKEND_PRIVATE_IP=${{ secrets.BACKEND_PRIVATE_IP }} sudo -E docker compose up -d"
 
-  deploy-three-vms-blue-green:
-    name: Deploy three-VM blue/green
+  deploy-three-vms-database:
+    name: Deploy database
     runs-on: ubuntu-latest
     needs: build-and-push
     if: |
@@ -263,7 +263,73 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SSH_HOST_NGINX }} >> ~/.ssh/known_hosts
 
-      - name: Copy blue/green deployment files
+      - name: Copy Postgres compose to database VM
+        run: |
+          ssh -i ~/.ssh/id_rsa \
+            -o "ProxyJump=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            ${{ secrets.SSH_USER }}@${{ secrets.DATABASE_PRIVATE_IP }} \
+            "mkdir -p ~/app/blue-green"
+
+          scp -i ~/.ssh/id_rsa \
+            -o "ProxyJump=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            deploy/blue-green/postgres.yml \
+            ${{ secrets.SSH_USER }}@${{ secrets.DATABASE_PRIVATE_IP }}:~/app/blue-green/
+
+      - name: Start Postgres and wait for healthy
+        env:
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          for value in "$POSTGRES_DB" "$POSTGRES_USER" "$POSTGRES_PASSWORD"; do
+            if [ -z "$value" ]; then
+              echo "Missing required Postgres secret" >&2
+              exit 1
+            fi
+          done
+
+          quote() { printf "%q" "$1"; }
+          remote_env=(
+            "POSTGRES_DB=$(quote "$POSTGRES_DB")"
+            "POSTGRES_USER=$(quote "$POSTGRES_USER")"
+            "POSTGRES_PASSWORD=$(quote "$POSTGRES_PASSWORD")"
+          )
+
+          ssh -i ~/.ssh/id_rsa \
+            -o "ProxyJump=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}" \
+            -o StrictHostKeyChecking=no \
+            -o UserKnownHostsFile=/dev/null \
+            ${{ secrets.SSH_USER }}@${{ secrets.DATABASE_PRIVATE_IP }} \
+            "cd ~/app/blue-green && sudo env ${remote_env[*]} docker compose -f postgres.yml up -d --wait"
+
+  deploy-three-vms-backend:
+    name: Deploy backend to Azure VM
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-three-vms-database]
+    if: |
+      vars.DEPLOY_MODE == 'three-vms' &&
+      (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch')
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST_NGINX }} >> ~/.ssh/known_hosts
+
+      - name: Copy backend deployment files
         run: |
           ssh -i ~/.ssh/id_rsa \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
@@ -277,21 +343,12 @@ jobs:
             "mkdir -p ~/app/blue-green"
 
           scp -i ~/.ssh/id_rsa \
-            deploy/blue-green/nginx-blue-green.yml \
-            deploy/blue-green/rollback-blue-green.sh \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/blue-green/
-
-          scp -i ~/.ssh/id_rsa \
             -o "ProxyJump=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}" \
             -o StrictHostKeyChecking=no \
             -o UserKnownHostsFile=/dev/null \
             deploy/blue-green/backend-blue-green.yml \
             deploy/blue-green/deploy-blue-green.sh \
             ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_PRIVATE_IP }}:~/app/blue-green/
-
-          ssh -i ~/.ssh/id_rsa \
-            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
-            "chmod +x ~/app/blue-green/rollback-blue-green.sh"
 
           ssh -i ~/.ssh/id_rsa \
             -o "ProxyJump=${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}" \
@@ -391,6 +448,44 @@ jobs:
             ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_PRIVATE_IP }} \
             "cd ~/app/blue-green && sudo env ${remote_env[*]} bash ./deploy-blue-green.sh"
 
+  deploy-three-vms-nginx:
+    name: Deploy nginx to Azure VM
+    runs-on: ubuntu-latest
+    needs: [build-and-push, deploy-three-vms-backend]
+    if: |
+      vars.DEPLOY_MODE == 'three-vms' &&
+      (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch')
+
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST_NGINX }} >> ~/.ssh/known_hosts
+
+      - name: Copy nginx deployment files
+        run: |
+          ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
+            "mkdir -p ~/app/blue-green"
+
+          scp -i ~/.ssh/id_rsa \
+            deploy/blue-green/nginx-blue-green.yml \
+            deploy/blue-green/rollback-blue-green.sh \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/blue-green/
+
+          ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
+            "chmod +x ~/app/blue-green/rollback-blue-green.sh"
+
       - name: Switch nginx to healthy color
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -426,3 +521,17 @@ jobs:
             "cd ~/app/blue-green && \
              sudo env ${remote_env[*]} docker compose --env-file active-color.env -f nginx-blue-green.yml pull frontend && \
              sudo env ${remote_env[*]} docker compose --env-file active-color.env -f nginx-blue-green.yml up -d frontend"
+
+      - name: Smoke test public endpoint
+        env:
+          NGINX_HOST: ${{ secrets.SSH_HOST_NGINX }}
+        run: |
+          BASE="http://$NGINX_HOST"
+          echo "Smoke testing $BASE ..."
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 --retry 5 --retry-delay 3 --retry-all-errors "$BASE/")
+          echo "Frontend returned HTTP $code"
+          [ "$code" = "200" ] || { echo "Frontend smoke test failed"; exit 1; }
+          body=$(curl -s --max-time 15 --retry 5 --retry-delay 3 --retry-all-errors "$BASE/api/recipe/recipes/")
+          echo "$body" | head -c 200; echo
+          echo "$body" | grep -q '"title"' || { echo "API smoke test failed (no recipes returned)"; exit 1; }
+          echo "Smoke test passed: frontend 200 + API serving recipes"
