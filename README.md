@@ -6,7 +6,7 @@ Actions.
 
 ## Tech Stack
 
-**Backend:** Node.js, Express, SQLite3/Postgres, OpenAPI 3.0 (Swagger)
+**Backend:** Node.js (`node:http`), SQLite3/Postgres, OpenAPI 3.0 (Swagger)
 **Frontend:** React (Vite), served by Nginx
 **Infrastructure:** Azure VMs (Ubuntu 22.04), Docker, Docker Compose,
 GitHub Actions, GitHub Container Registry
@@ -15,7 +15,7 @@ GitHub Actions, GitHub Container Registry
 
 ```text
 cookbook/
-├── backend/                      # Express API + Dockerfile
+├── backend/                      # Node HTTP API + Dockerfile
 ├── frontend/                     # React + nginx Dockerfile
 ├── infrastructure/               # Azure provisioning scripts
 │   ├── create_vm.sh              # single-VM setup
@@ -43,6 +43,27 @@ docker compose --profile dev down            # stop
 - Frontend: http://localhost
 - Backend API: http://localhost:3000/api
 - Swagger: http://localhost:3000/apidocs
+
+## Linting
+
+ESLint is configured for both backend and frontend.
+
+**Backend** (runs in Docker or directly with Node):
+```bash
+docker compose --profile dev exec backend-dev npm run lint
+docker compose --profile dev exec backend-dev npm run lint:fix
+```
+
+**Frontend** (lint runs automatically during Docker build):
+```bash
+# Lint is enforced on every build — a failing lint will fail the build:
+docker compose --profile dev up -d --build
+
+# To auto-fix issues using a temporary node container:
+docker run --rm -v "${PWD}/frontend:/app" -w /app node:18-alpine sh -c "npm install && npm run lint:fix"
+```
+
+Lint also runs in CI/CD for every push to `dev` and `master`, and on all PRs to `master`.
 
 ## Deploying to Azure
 

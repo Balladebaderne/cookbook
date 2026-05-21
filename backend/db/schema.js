@@ -23,18 +23,18 @@ export async function initDb() {
 
     // Add country column to existing databases that were created before this column existed
     if (db.dialect === "postgres") {
-      await db.exec(`ALTER TABLE recipes ADD COLUMN IF NOT EXISTS country TEXT`);
+      await db.exec("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS country TEXT");
     } else {
       try {
-        await db.exec(`ALTER TABLE recipes ADD COLUMN country TEXT`);
-      } catch (_) { /* column already exists */ }
+        await db.exec("ALTER TABLE recipes ADD COLUMN country TEXT");
+      } catch { /* column already exists */ }
     }
 
     // Backfill country for recipes that were seeded before the column existed
-    await db.exec(`UPDATE recipes SET country = 'italy'   WHERE title = 'Spaghetti Carbonara' AND country IS NULL`);
-    await db.exec(`UPDATE recipes SET country = 'denmark'  WHERE title LIKE 'Smørbraiseret%'    AND country IS NULL`);
-    await db.exec(`UPDATE recipes SET country = 'denmark'  WHERE title LIKE 'Rustikt%'          AND country IS NULL`);
-    await db.exec(`UPDATE recipes SET country = 'france'   WHERE title LIKE 'Pandestegte%'      AND country IS NULL`);
+    await db.exec("UPDATE recipes SET country = 'italy'   WHERE title = 'Spaghetti Carbonara' AND country IS NULL");
+    await db.exec("UPDATE recipes SET country = 'denmark'  WHERE title LIKE 'Smørbraiseret%'    AND country IS NULL");
+    await db.exec("UPDATE recipes SET country = 'denmark'  WHERE title LIKE 'Rustikt%'          AND country IS NULL");
+    await db.exec("UPDATE recipes SET country = 'france'   WHERE title LIKE 'Pandestegte%'      AND country IS NULL");
 
     await db.exec(`
       CREATE TABLE IF NOT EXISTS ingredients (
@@ -71,8 +71,8 @@ export async function initDb() {
     `);
 
     // Indexes for faster JOIN lookups on junction tables
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_ri_recipe ON recipe_ingredients(recipe_id)`);
-    await db.exec(`CREATE INDEX IF NOT EXISTS idx_rt_recipe ON recipe_tags(recipe_id)`);
+    await db.exec("CREATE INDEX IF NOT EXISTS idx_ri_recipe ON recipe_ingredients(recipe_id)");
+    await db.exec("CREATE INDEX IF NOT EXISTS idx_rt_recipe ON recipe_tags(recipe_id)");
 
     // Seed if empty
     const result = await db.prepare("SELECT COUNT(*) as c FROM recipes").all();

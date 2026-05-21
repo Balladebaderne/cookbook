@@ -5,16 +5,24 @@ export class HttpError extends Error {
   }
 }
 
-export function notFound(req, res, next) {
-  next(new HttpError(404, "Ikke fundet."));
+export function notFound() {
+  return new HttpError(404, "Ikke fundet.");
 }
 
-// Express requires the 4-arg signature to identify this as an error handler.
-export function errorHandler(err, req, res, _next) {
+export function errorHandler(err, req, res) {
   const status = err.status || err.statusCode || 500;
   if (status >= 500) {
-    console.error(`${req.method} ${req.path} →`, err);
+    console.error(`${req.method} ${req.url} →`, err);
   }
+
   const message = status >= 500 ? "Der opstod en serverfejl." : err.message;
-  res.status(status).json({ error: message });
+
+  if (res.headersSent) {
+    res.end();
+    return;
+  }
+
+  res.statusCode = status;
+  res.setHeader("Content-Type", "application/json; charset=utf-8");
+  res.end(JSON.stringify({ error: message }));
 }
