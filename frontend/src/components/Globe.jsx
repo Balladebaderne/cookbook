@@ -1,9 +1,9 @@
-import { useRef, useState, useCallback, useMemo } from 'react'
-import { useFrame } from '@react-three/fiber'
-import { useTexture, OrbitControls, Html } from '@react-three/drei'
-import * as THREE from 'three'
+import { useRef, useState, useCallback, useMemo } from "react";
+import { useFrame } from "@react-three/fiber";
+import { useTexture, OrbitControls, Html } from "@react-three/drei";
+import * as THREE from "three";
 
-const RADIUS = 2.2
+const RADIUS = 2.2;
 
 export const COUNTRIES = [
   { id: "italy",    name: "Italien",  flag: "🇮🇹", lat: 42.5,  lng: 12.5,   color: "#FF4D4D" },
@@ -14,32 +14,32 @@ export const COUNTRIES = [
   { id: "india",    name: "Indien",   flag: "🇮🇳", lat: 20.6,  lng: 79.0,   color: "#FFB347" },
   { id: "morocco",  name: "Marokko",  flag: "🇲🇦", lat: 31.8,  lng: -7.1,   color: "#E85D5D" },
   { id: "thailand", name: "Thailand", flag: "🇹🇭", lat: 15.9,  lng: 100.9,  color: "#47A0FF" },
-]
+];
 
 function latLngToVector3(lat, lng, radius) {
-  const phi   = (90 - lat)  * (Math.PI / 180)
-  const theta = (lng + 180) * (Math.PI / 180)
+  const phi   = (90 - lat)  * (Math.PI / 180);
+  const theta = (lng + 180) * (Math.PI / 180);
   return new THREE.Vector3(
     -(radius * Math.sin(phi) * Math.cos(theta)),
     radius  * Math.cos(phi),
     radius  * Math.sin(phi) * Math.sin(theta)
-  )
+  );
 }
 
 function Stars() {
   const positions = useMemo(() => {
-    const count = 2200
-    const arr = new Float32Array(count * 3)
+    const count = 2200;
+    const arr = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {
-      const r     = 80 + Math.random() * 140
-      const theta = Math.random() * Math.PI * 2
-      const phi   = Math.acos(2 * Math.random() - 1)
-      arr[i * 3]     = r * Math.sin(phi) * Math.cos(theta)
-      arr[i * 3 + 1] = r * Math.cos(phi)
-      arr[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta)
+      const r     = 80 + Math.random() * 140;
+      const theta = Math.random() * Math.PI * 2;
+      const phi   = Math.acos(2 * Math.random() - 1);
+      arr[i * 3]     = r * Math.sin(phi) * Math.cos(theta);
+      arr[i * 3 + 1] = r * Math.cos(phi);
+      arr[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
     }
-    return arr
-  }, [])
+    return arr;
+  }, []);
   return (
     <points>
       <bufferGeometry>
@@ -47,7 +47,7 @@ function Stars() {
       </bufferGeometry>
       <pointsMaterial size={0.16} color="#b8d4ff" transparent opacity={0.7} sizeAttenuation />
     </points>
-  )
+  );
 }
 
 function Atmosphere() {
@@ -62,87 +62,87 @@ function Atmosphere() {
         <meshBasicMaterial color="#0d3a8a" transparent opacity={0.05} side={THREE.BackSide} depthWrite={false} />
       </mesh>
     </>
-  )
+  );
 }
 
 function CountryMarker({ country, onClick }) {
-  const groupRef  = useRef()
-  const pulseRef  = useRef()
-  const dotRef    = useRef()
-  const [hovered, setHovered] = useState(false)
-  const [visible, setVisible] = useState(true)
-  const visibleRef = useRef(true)
-  const clickTime  = useRef(0)
+  const groupRef  = useRef();
+  const pulseRef  = useRef();
+  const dotRef    = useRef();
+  const [hovered, setHovered] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const visibleRef = useRef(true);
+  const clickTime  = useRef(0);
 
   const pos = useMemo(
     () => latLngToVector3(country.lat, country.lng, RADIUS + 0.02),
     [country.lat, country.lng]
-  )
+  );
 
   // Quaternion that orients the flat XY geometries to face outward from the sphere
   const quat = useMemo(() => {
-    const normal = pos.clone().normalize()
+    const normal = pos.clone().normalize();
     return new THREE.Quaternion().setFromUnitVectors(
       new THREE.Vector3(0, 0, 1),
       normal
-    )
-  }, [pos])
+    );
+  }, [pos]);
 
-  const color = useMemo(() => new THREE.Color(country.color), [country.color])
+  const color = useMemo(() => new THREE.Color(country.color), [country.color]);
 
   // Pre-allocate vectors to avoid GC pressure in the render loop
-  const tempVec = useMemo(() => new THREE.Vector3(), [])
-  const camDirVec = useMemo(() => new THREE.Vector3(), [])
+  const tempVec = useMemo(() => new THREE.Vector3(), []);
+  const camDirVec = useMemo(() => new THREE.Vector3(), []);
 
   useFrame(({ camera, clock }) => {
-    const t = clock.getElapsedTime()
+    const t = clock.getElapsedTime();
 
     // Hide label + fade marker when on the far side of the globe
     if (groupRef.current) {
-      groupRef.current.getWorldPosition(tempVec)
-      camDirVec.copy(camera.position).normalize()
-      tempVec.normalize()
-      const isVisible = camDirVec.dot(tempVec) > 0.05
+      groupRef.current.getWorldPosition(tempVec);
+      camDirVec.copy(camera.position).normalize();
+      tempVec.normalize();
+      const isVisible = camDirVec.dot(tempVec) > 0.05;
       if (visibleRef.current !== isVisible) {
-        visibleRef.current = isVisible
-        setVisible(isVisible)
+        visibleRef.current = isVisible;
+        setVisible(isVisible);
       }
     }
 
     // Pulse ring animation
     if (pulseRef.current) {
-      const s = 1 + 0.85 * Math.abs(Math.sin(t * 1.4))
-      pulseRef.current.scale.setScalar(s)
-      pulseRef.current.material.opacity = 0.5 * (1 - Math.abs(Math.sin(t * 1.4)))
+      const s = 1 + 0.85 * Math.abs(Math.sin(t * 1.4));
+      pulseRef.current.scale.setScalar(s);
+      pulseRef.current.material.opacity = 0.5 * (1 - Math.abs(Math.sin(t * 1.4)));
     }
 
     // Dot breathing + click pop
     if (dotRef.current) {
-      const elapsed = Date.now() - clickTime.current
-      let scale = 1 + 0.12 * Math.sin(t * 2.5)
-      if (hovered) scale *= 1.5
-      if (elapsed < 300) scale *= 1 + 0.8 * (1 - elapsed / 300)
-      dotRef.current.scale.setScalar(scale)
+      const elapsed = Date.now() - clickTime.current;
+      let scale = 1 + 0.12 * Math.sin(t * 2.5);
+      if (hovered) scale *= 1.5;
+      if (elapsed < 300) scale *= 1 + 0.8 * (1 - elapsed / 300);
+      dotRef.current.scale.setScalar(scale);
     }
-  })
+  });
 
   const handleClick = useCallback((e) => {
-    e.stopPropagation()
-    clickTime.current = Date.now()
-    onClick(country)
-  }, [country, onClick])
+    e.stopPropagation();
+    clickTime.current = Date.now();
+    onClick(country);
+  }, [country, onClick]);
 
   const handlePointerOver = useCallback((e) => {
-    e.stopPropagation()
-    setHovered(true)
-    document.body.style.cursor = 'pointer'
-  }, [])
+    e.stopPropagation();
+    setHovered(true);
+    document.body.style.cursor = "pointer";
+  }, []);
 
   const handlePointerOut = useCallback((e) => {
-    e.stopPropagation()
-    setHovered(false)
-    document.body.style.cursor = 'auto'
-  }, [])
+    e.stopPropagation();
+    setHovered(false);
+    document.body.style.cursor = "auto";
+  }, []);
 
   return (
     <group
@@ -187,7 +187,7 @@ function CountryMarker({ country, onClick }) {
         <Html
           position={[0, 0, 0.04]}
           center
-          style={{ pointerEvents: 'none', whiteSpace: 'nowrap', userSelect: 'none' }}
+          style={{ pointerEvents: "none", whiteSpace: "nowrap", userSelect: "none" }}
         >
           <div className="globe-label" style={{ borderColor: `${country.color}33` }}>
             <span className="globe-label-flag">{country.flag}</span>
@@ -196,22 +196,22 @@ function CountryMarker({ country, onClick }) {
         </Html>
       )}
     </group>
-  )
+  );
 }
 
 export default function Globe({ onCountryClick }) {
-  const rotGroupRef = useRef()
-  const [autoRotate, setAutoRotate] = useState(true)
+  const rotGroupRef = useRef();
+  const [autoRotate, setAutoRotate] = useState(true);
 
-  const colorMap = useTexture('/textures/world.200407.3x5400x2700.jpg')
+  const colorMap = useTexture("/textures/world.200407.3x5400x2700.jpg");
 
   useFrame((_, delta) => {
     if (autoRotate && rotGroupRef.current) {
-      rotGroupRef.current.rotation.y += delta * 0.07
+      rotGroupRef.current.rotation.y += delta * 0.07;
     }
-  })
+  });
 
-  const handleStart = useCallback(() => setAutoRotate(false), [])
+  const handleStart = useCallback(() => setAutoRotate(false), []);
 
   return (
     <>
@@ -246,5 +246,5 @@ export default function Globe({ onCountryClick }) {
 
       <Atmosphere />
     </>
-  )
+  );
 }

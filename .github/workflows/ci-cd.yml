@@ -40,6 +40,10 @@ jobs:
         working-directory: backend
         run: npm test
 
+      - name: Lint backend
+        working-directory: backend
+        run: npm run lint
+
       - name: Install frontend dependencies
         working-directory: frontend
         run: npm ci
@@ -47,6 +51,10 @@ jobs:
       - name: Audit frontend
         working-directory: frontend
         run: npm audit --audit-level=high
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
 
   build-and-push:
     name: Build & Push Docker Images

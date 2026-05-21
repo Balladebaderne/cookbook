@@ -1,49 +1,49 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { getRecipe, deleteRecipe } from '../api/recipes'
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { getRecipe, deleteRecipe } from "../api/recipes";
 
 export default function RecipeDetail() {
-  const { id }       = useParams()
-  const navigate     = useNavigate()
-  const [recipe, setRecipe]   = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError]     = useState(null)
+  const { id }       = useParams();
+  const navigate     = useNavigate();
+  const [recipe, setRecipe]   = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
 
   useEffect(() => {
-    setLoading(true)
+    setLoading(true);
     getRecipe(id)
-      .then(data => { setRecipe(data); setLoading(false) })
-      .catch(() => { setError('Kunne ikke hente opskrift.'); setLoading(false) })
-  }, [id])
+      .then(data => { setRecipe(data); setLoading(false); })
+      .catch(() => { setError("Kunne ikke hente opskrift."); setLoading(false); });
+  }, [id]);
 
   const handleDelete = async () => {
-    if (!confirm(`Slet "${recipe.title}"?`)) return
+    if (!confirm(`Slet "${recipe.title}"?`)) return;
     try {
-      await deleteRecipe(id)
-      navigate('/recipes')
+      await deleteRecipe(id);
+      navigate("/recipes");
     } catch {
-      setError('Kunne ikke slette opskriften. Prøv igen.')
+      setError("Kunne ikke slette opskriften. Prøv igen.");
     }
-  }
+  };
 
   if (loading) return (
     <main className="main">
       <div className="loading"><div className="spinner" /> Henter…</div>
     </main>
-  )
+  );
 
   if (error) return (
     <main className="main">
-      <button className="back-btn" onClick={() => navigate('/recipes')}>← Tilbage</button>
+      <button className="back-btn" onClick={() => navigate("/recipes")}>← Tilbage</button>
       <div className="error-msg">{error}</div>
     </main>
-  )
+  );
 
-  const steps = Array.isArray(recipe.instructions) ? recipe.instructions : []
+  const steps = Array.isArray(recipe.instructions) ? recipe.instructions : [];
 
   return (
     <main className="main">
-      <button className="back-btn" onClick={() => navigate('/recipes')}>← Alle opskrifter</button>
+      <button className="back-btn" onClick={() => navigate("/recipes")}>← Alle opskrifter</button>
 
       {recipe.image && (
         <div className="detail-image">
@@ -59,7 +59,7 @@ export default function RecipeDetail() {
       </div>
 
       {recipe.tags?.length > 0 && (
-        <div className="card-tags" style={{ marginBottom: '1.5rem' }}>
+        <div className="card-tags" style={{ marginBottom: "1.5rem" }}>
           {recipe.tags.map(t => <span key={t.id} className="tag">{t.name}</span>)}
         </div>
       )}
@@ -113,5 +113,5 @@ export default function RecipeDetail() {
         )}
       </div>
     </main>
-  )
+  );
 }

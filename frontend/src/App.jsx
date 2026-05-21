@@ -1,21 +1,21 @@
-import { BrowserRouter, Routes, Route, Link, useNavigate } from 'react-router-dom'
-import LandingPage  from './pages/LandingPage'
-import RecipeList   from './pages/RecipeList'
-import RecipeDetail from './pages/RecipeDetail'
-import RecipeForm   from './pages/RecipeForm'
+import { BrowserRouter, Routes, Route, Link, useNavigate } from "react-router-dom";
+import LandingPage  from "./pages/LandingPage";
+import RecipeList   from "./pages/RecipeList";
+import RecipeDetail from "./pages/RecipeDetail";
+import RecipeForm   from "./pages/RecipeForm";
 
 function RecipeLayout({ children }) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   return (
     <div className="app">
       <header className="header">
         <div className="header-inner">
-          <Link to="/" className="logo" style={{ textDecoration: 'none' }}>
+          <Link to="/" className="logo" style={{ textDecoration: "none" }}>
             ✦ Cookbook
           </Link>
           <nav>
             <Link to="/recipes" className="nav-link">Opskrifter</Link>
-            <button className="btn-primary" onClick={() => navigate('/recipes/new')}>
+            <button className="btn-primary" onClick={() => navigate("/recipes/new")}>
               + Ny opskrift
             </button>
           </nav>
@@ -23,7 +23,7 @@ function RecipeLayout({ children }) {
       </header>
       {children}
     </div>
-  )
+  );
 }
 
 export default function App() {
@@ -45,5 +45,5 @@ export default function App() {
         } />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }

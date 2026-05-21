@@ -1,38 +1,38 @@
-import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { listRecipes } from '../api/recipes'
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { listRecipes } from "../api/recipes";
 
 export default function RecipeList() {
-  const navigate = useNavigate()
-  const [recipes, setRecipes]     = useState([])
-  const [loading, setLoading]     = useState(true)
-  const [error, setError]         = useState(null)
-  const [search, setSearch]       = useState('')
-  const [activeTag, setActiveTag] = useState(null)
+  const navigate = useNavigate();
+  const [recipes, setRecipes]     = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState(null);
+  const [search, setSearch]       = useState("");
+  const [activeTag, setActiveTag] = useState(null);
 
   useEffect(() => {
     listRecipes()
-      .then(data => { setRecipes(data); setLoading(false) })
-      .catch(() => { setError('Kunne ikke hente opskrifter.'); setLoading(false) })
-  }, [])
+      .then(data => { setRecipes(data); setLoading(false); })
+      .catch(() => { setError("Kunne ikke hente opskrifter."); setLoading(false); });
+  }, []);
 
   const allTags = useMemo(() => {
-    const set = new Set()
-    recipes.forEach(r => r.tags?.forEach(t => set.add(t.name)))
-    return [...set].sort()
-  }, [recipes])
+    const set = new Set();
+    recipes.forEach(r => r.tags?.forEach(t => set.add(t.name)));
+    return [...set].sort();
+  }, [recipes]);
 
   const filtered = recipes.filter(r => {
     const matchesSearch =
       r.title.toLowerCase().includes(search.toLowerCase()) ||
-      r.tags?.some(t => t.name.toLowerCase().includes(search.toLowerCase()))
-    const matchesTag = !activeTag || r.tags?.some(t => t.name === activeTag)
-    return matchesSearch && matchesTag
-  })
+      r.tags?.some(t => t.name.toLowerCase().includes(search.toLowerCase()));
+    const matchesTag = !activeTag || r.tags?.some(t => t.name === activeTag);
+    return matchesSearch && matchesTag;
+  });
 
   return (
     <main className="main">
-      <button className="back-btn" onClick={() => navigate('/')}>
+      <button className="back-btn" onClick={() => navigate("/")}>
         ← Verdenskøkkenet
       </button>
 
@@ -40,7 +40,7 @@ export default function RecipeList() {
         <h1 className="section-title-lg">Alle opskrifter</h1>
         {!loading && (
           <span className="section-count">
-            {filtered.length} {filtered.length === 1 ? 'opskrift' : 'opskrifter'}
+            {filtered.length} {filtered.length === 1 ? "opskrift" : "opskrifter"}
           </span>
         )}
       </div>
@@ -57,7 +57,7 @@ export default function RecipeList() {
         {allTags.length > 0 && (
           <div className="tag-filters">
             <button
-              className={`tag-filter-btn${!activeTag ? ' active' : ''}`}
+              className={`tag-filter-btn${!activeTag ? " active" : ""}`}
               onClick={() => setActiveTag(null)}
             >
               Alle
@@ -65,7 +65,7 @@ export default function RecipeList() {
             {allTags.map(tag => (
               <button
                 key={tag}
-                className={`tag-filter-btn${activeTag === tag ? ' active' : ''}`}
+                className={`tag-filter-btn${activeTag === tag ? " active" : ""}`}
                 onClick={() => setActiveTag(activeTag === tag ? null : tag)}
               >
                 {tag}
@@ -81,8 +81,8 @@ export default function RecipeList() {
       {!loading && !error && filtered.length === 0 && (
         <div className="empty">
           <div className="empty-icon">🍽</div>
-          <h3>{search || activeTag ? 'Ingen resultater' : 'Ingen opskrifter endnu'}</h3>
-          <p>{search || activeTag ? 'Prøv et andet søgeord eller filter' : 'Tilføj din første opskrift!'}</p>
+          <h3>{search || activeTag ? "Ingen resultater" : "Ingen opskrifter endnu"}</h3>
+          <p>{search || activeTag ? "Prøv et andet søgeord eller filter" : "Tilføj din første opskrift!"}</p>
         </div>
       )}
 
@@ -111,7 +111,7 @@ export default function RecipeList() {
                 <h2 className="card-title">{recipe.title}</h2>
                 {recipe.ingredients?.length > 0 && (
                   <p className="card-ingredients">
-                    {recipe.ingredients.slice(0, 4).map(i => i.name).join(', ')}
+                    {recipe.ingredients.slice(0, 4).map(i => i.name).join(", ")}
                     {recipe.ingredients.length > 4 && ` +${recipe.ingredients.length - 4} mere`}
                   </p>
                 )}
@@ -135,5 +135,5 @@ export default function RecipeList() {
         </div>
       )}
     </main>
-  )
+  );
 }
