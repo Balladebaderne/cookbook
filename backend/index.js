@@ -31,7 +31,6 @@ const httpRequestDuration = new client.Histogram({
 // Load OpenAPI spec
 const swaggerDocument = YAML.load(path.join(__dirname, "..", "openapi.yaml"));
 
-
 function createRoutes() {
   return [
     defineRoute("GET", "/health", async ({ res }) => {
@@ -40,49 +39,45 @@ function createRoutes() {
         timestamp: new Date().toISOString(),
       });
     }),
+    defineRoute("GET", "/metrics", async ({ res }) => {
+      try {
+        res.setHeader("Content-Type", register.contentType);
+        res.end(await register.metrics());
+      } catch (err) {
+        res.statusCode = 500;
+        res.end(String(err));
+      }
+    }),
     ...createSwaggerRoutes(swaggerDocument),
     ...apiRoutes,
     ...recipeRoutes,
   ];
 }
 
-// Track request durations
-app.use((req, res, next) => {
-  const end = httpRequestDuration.startTimer();
-  res.on("finish", () => {
-    end({
-      method: req.method,
-      route: req.route?.path ?? req.path,
-      status_code: res.statusCode,
+export function createApp() {
+  const handler = createRouter(createRoutes(), {
+    onError: errorHandler,
+    onNotFound: notFound,
+  });
+
+  // Wrap handler with Prometheus request duration tracking
+  return function instrumentedHandler(req, res) {
+    const end = httpRequestDuration.startTimer();
+    res.on("finish", () => {
+      end({
+        method: req.method,
+        route: req.url?.split("?")[0] ?? "/",
+        status_code: res.statusCode,
+      });
     });
-  });
-  next();
-});
-
-// Swagger UI
-app.use("/apidocs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
-// Health check
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "ok",
-    timestamp: new Date().toISOString()
-  });
+    return handler(req, res);
+  };
 }
 
-// Prometheus metrics endpoint (scraped by prometheus service)
-app.get("/metrics", async (req, res) => {
-  try {
-    res.set("Content-Type", register.contentType);
-    res.end(await register.metrics());
-  } catch (err) {
-    res.status(500).end(String(err));
-  }
-});
-
-// samme base paths som Flask
-app.use("/api", apiRouter);
-app.use("/api/recipe", recipesRouter);
+export async function createServer() {
+  await initDb();
+  return http.createServer(createApp());
+}
 
 export async function startServer(port = PORT, host = "0.0.0.0") {
   const server = await createServer();
