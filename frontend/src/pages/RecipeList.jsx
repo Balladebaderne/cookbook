@@ -133,8 +133,7 @@ export default function RecipeList() {
             </div>
           ))}
         </div>
-      );
-    }
+      )}
     </main>
-  )
+  );
 }
