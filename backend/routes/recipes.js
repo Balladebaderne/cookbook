@@ -1,51 +1,53 @@
-import { Router } from "express";
 import * as recipes from "../services/recipes.js";
-import { asyncHandler } from "../middleware/asyncHandler.js";
 import { HttpError } from "../middleware/error.js";
+import { sendJson, sendNoContent } from "../http/responses.js";
+import { defineRoute } from "../http/router.js";
 
-const router = Router();
+export default [
+  defineRoute("GET", "/api/recipe/recipes", async ({ res }) => {
+    sendJson(res, 200, await recipes.listRecipes());
+  }),
 
-router.get("/recipes/", asyncHandler(async (req, res) => {
-  res.json(await recipes.listRecipes());
-}));
+  defineRoute("POST", "/api/recipe/recipes", async ({ res, body }) => {
+    const data = body || {};
+    if (!data.title?.trim()) throw new HttpError(400, "Opskriften skal have et navn.");
 
-router.post("/recipes/", asyncHandler(async (req, res) => {
-  const data = req.body || {};
-  if (!data.title?.trim()) throw new HttpError(400, "Opskriften skal have et navn.");
-  const id = await recipes.createRecipe(data);
-  res.status(201).json({ id, ...data });
-}));
+    const id = await recipes.createRecipe(data);
+    sendJson(res, 201, { id, ...data });
+  }),
 
-router.get("/recipes/country/:country", asyncHandler(async (req, res) => {
-  res.json(await recipes.listRecipesByCountry(req.params.country));
-}));
+  defineRoute("GET", "/api/recipe/recipes/country/:country", async ({ res, params }) => {
+    sendJson(res, 200, await recipes.listRecipesByCountry(params.country));
+  }),
 
-router.get("/recipes/:id/", asyncHandler(async (req, res) => {
-  const recipe = await recipes.getRecipe(Number(req.params.id));
-  if (!recipe) throw new HttpError(404, "Opskriften blev ikke fundet.");
-  res.json(recipe);
-}));
+  defineRoute("GET", "/api/recipe/recipes/:id", async ({ res, params }) => {
+    const recipe = await recipes.getRecipe(Number(params.id));
+    if (!recipe) throw new HttpError(404, "Opskriften blev ikke fundet.");
 
-router.put("/recipes/:id/", asyncHandler(async (req, res) => {
-  const id = Number(req.params.id);
-  const data = req.body || {};
-  if (!data.title?.trim()) throw new HttpError(400, "Opskriften skal have et navn.");
-  const ok = await recipes.updateRecipe(id, data);
-  if (!ok) throw new HttpError(404, "Opskriften blev ikke fundet.");
-  res.json({ id, ...data });
-}));
+    sendJson(res, 200, recipe);
+  }),
 
-router.delete("/recipes/:id/", asyncHandler(async (req, res) => {
-  await recipes.deleteRecipe(Number(req.params.id));
-  res.status(204).send("");
-}));
+  defineRoute("PUT", "/api/recipe/recipes/:id", async ({ res, params, body }) => {
+    const id = Number(params.id);
+    const data = body || {};
+    if (!data.title?.trim()) throw new HttpError(400, "Opskriften skal have et navn.");
 
-router.get("/ingredients/", asyncHandler(async (req, res) => {
-  res.json(await recipes.listIngredients());
-}));
+    const ok = await recipes.updateRecipe(id, data);
+    if (!ok) throw new HttpError(404, "Opskriften blev ikke fundet.");
 
-router.get("/tags/", asyncHandler(async (req, res) => {
-  res.json(await recipes.listTags());
-}));
+    sendJson(res, 200, { id, ...data });
+  }),
 
-export default router;
+  defineRoute("DELETE", "/api/recipe/recipes/:id", async ({ res, params }) => {
+    await recipes.deleteRecipe(Number(params.id));
+    sendNoContent(res);
+  }),
+
+  defineRoute("GET", "/api/recipe/ingredients", async ({ res }) => {
+    sendJson(res, 200, await recipes.listIngredients());
+  }),
+
+  defineRoute("GET", "/api/recipe/tags", async ({ res }) => {
+    sendJson(res, 200, await recipes.listTags());
+  }),
+];

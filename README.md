@@ -6,7 +6,7 @@ Actions.
 
 ## Tech Stack
 
-**Backend:** Node.js, Express, SQLite3/Postgres, OpenAPI 3.0 (Swagger)
+**Backend:** Node.js (`node:http`), SQLite3/Postgres, OpenAPI 3.0 (Swagger)
 **Frontend:** React (Vite), served by Nginx
 **Infrastructure:** Azure VMs (Ubuntu 22.04), Docker, Docker Compose,
 GitHub Actions, GitHub Container Registry
@@ -15,7 +15,7 @@ GitHub Actions, GitHub Container Registry
 
 ```text
 cookbook/
-├── backend/                      # Express API + Dockerfile
+├── backend/                      # Node HTTP API + Dockerfile
 ├── frontend/                     # React + nginx Dockerfile
 ├── infrastructure/               # Azure provisioning scripts
 │   ├── create_vm.sh              # single-VM setup
