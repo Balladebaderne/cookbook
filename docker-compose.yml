@@ -64,3 +64,4 @@ volumes:
 networks:
   cookbook-network:
     driver: bridge
+    name: cookbook-network   # fixed name — no project-prefix, so monitoring stack can join
