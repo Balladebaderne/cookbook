@@ -46,6 +46,7 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/dashboards:/var/lib/grafana/dashboards:ro
     ports:
       - "3001:3000"   # direct access for local debugging
     depends_on:
