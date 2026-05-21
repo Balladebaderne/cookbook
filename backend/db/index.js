@@ -186,8 +186,8 @@ export function postgresStatement(queryable, sql) {
 const selectedDb = hasPostgresConfig()
   ? new PostgresDatabase(postgresConfig())
   : (() => {
-      console.log("DB_PATH:", DB_PATH);
-      return new SQLiteDatabase(DB_PATH);
-    })();
+    console.log("DB_PATH:", DB_PATH);
+    return new SQLiteDatabase(DB_PATH);
+  })();
 
 export const db = selectedDb;
