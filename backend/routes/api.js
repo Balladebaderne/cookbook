@@ -1,16 +1,15 @@
-import { Router } from "express";
+import { defineRoute } from "../http/router.js";
+import { sendJson } from "../http/responses.js";
 
-const router = Router();
-
-router.get("/", (req, res) => {
-  console.log("Route invoked: GET /api");
-  res.status(200).json({
-    message: "Cookbook API",
-    version: "1.0.0",
-    endpoints: {
-      recipe: "/api/recipe"
-    }
-  });
-});
-
-export default router;
+export default [
+  defineRoute("GET", "/api", async ({ res }) => {
+    console.log("Route invoked: GET /api");
+    sendJson(res, 200, {
+      message: "Cookbook API",
+      version: "1.0.0",
+      endpoints: {
+        recipe: "/api/recipe",
+      },
+    });
+  }),
+];
