@@ -116,104 +116,104 @@ export default function RecipeForm() {
       {loading ? (
         <div className="loading"><div className="spinner" /> Henter opskrift…</div>
       ) : (
-      <div className="form-card">
+        <div className="form-card">
 
-        <div className="form-section">
-          <h2 className="form-section-title">Grundoplysninger</h2>
-          <div className="form-group">
-            <label>Navn *</label>
-            <input type="text" placeholder="f.eks. Spaghetti Carbonara"
-              value={form.title} onChange={e => set("title", e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label>Beskrivelse</label>
-            <textarea placeholder="Kort beskrivelse…"
-              value={form.description} onChange={e => set("description", e.target.value)} />
-          </div>
-          <div className="form-row">
+          <div className="form-section">
+            <h2 className="form-section-title">Grundoplysninger</h2>
             <div className="form-group">
-              <label>Tid (minutter)</label>
-              <input type="number" placeholder="30"
-                value={form.time_minutes} onChange={e => set("time_minutes", e.target.value)} />
+              <label>Navn *</label>
+              <input type="text" placeholder="f.eks. Spaghetti Carbonara"
+                value={form.title} onChange={e => set("title", e.target.value)} />
             </div>
             <div className="form-group">
-              <label>Pris (kr)</label>
-              <input type="text" placeholder="45.00"
-                value={form.price} onChange={e => set("price", e.target.value)} />
+              <label>Beskrivelse</label>
+              <textarea placeholder="Kort beskrivelse…"
+                value={form.description} onChange={e => set("description", e.target.value)} />
+            </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Tid (minutter)</label>
+                <input type="number" placeholder="30"
+                  value={form.time_minutes} onChange={e => set("time_minutes", e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label>Pris (kr)</label>
+                <input type="text" placeholder="45.00"
+                  value={form.price} onChange={e => set("price", e.target.value)} />
+              </div>
+            </div>
+            <div className="form-group">
+              <label>Link til kilde</label>
+              <input type="text" placeholder="https://…"
+                value={form.link} onChange={e => set("link", e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label>Billed-URL</label>
+              <input type="text" placeholder="https://… (link til et billede)"
+                value={form.image} onChange={e => set("image", e.target.value)} />
+              {form.image && (
+                <img src={form.image} alt="Forhåndsvisning" className="image-preview" />
+              )}
             </div>
           </div>
-          <div className="form-group">
-            <label>Link til kilde</label>
-            <input type="text" placeholder="https://…"
-              value={form.link} onChange={e => set("link", e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label>Billed-URL</label>
-            <input type="text" placeholder="https://… (link til et billede)"
-              value={form.image} onChange={e => set("image", e.target.value)} />
-            {form.image && (
-              <img src={form.image} alt="Forhåndsvisning" className="image-preview" />
-            )}
-          </div>
-        </div>
 
-        <div className="form-section">
-          <h2 className="form-section-title">Ingredienser</h2>
-          <div className="dynamic-list">
-            {form.ingredients.map((ing, i) => (
-              <div key={i} className="ingredient-row">
-                <input type="text" placeholder="Navn" value={ing.name}
-                  onChange={e => updateIng(i, "name", e.target.value)} />
-                <input type="text" placeholder="Mængde" value={ing.amount}
-                  onChange={e => updateIng(i, "amount", e.target.value)} />
-                <input type="text" placeholder="Enhed" value={ing.unit}
-                  onChange={e => updateIng(i, "unit", e.target.value)} />
-                <button className="btn-remove" onClick={() => removeIng(i)}
-                  disabled={form.ingredients.length === 1}>×</button>
-              </div>
-            ))}
+          <div className="form-section">
+            <h2 className="form-section-title">Ingredienser</h2>
+            <div className="dynamic-list">
+              {form.ingredients.map((ing, i) => (
+                <div key={i} className="ingredient-row">
+                  <input type="text" placeholder="Navn" value={ing.name}
+                    onChange={e => updateIng(i, "name", e.target.value)} />
+                  <input type="text" placeholder="Mængde" value={ing.amount}
+                    onChange={e => updateIng(i, "amount", e.target.value)} />
+                  <input type="text" placeholder="Enhed" value={ing.unit}
+                    onChange={e => updateIng(i, "unit", e.target.value)} />
+                  <button className="btn-remove" onClick={() => removeIng(i)}
+                    disabled={form.ingredients.length === 1}>×</button>
+                </div>
+              ))}
+            </div>
+            <button className="btn-add" onClick={addIng}>+ Tilføj ingrediens</button>
           </div>
-          <button className="btn-add" onClick={addIng}>+ Tilføj ingrediens</button>
-        </div>
 
-        <div className="form-section">
-          <h2 className="form-section-title">Fremgangsmåde</h2>
-          <div className="dynamic-list">
-            {form.instructions.map((step, i) => (
-              <div key={i} className="dynamic-item">
-                <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", minWidth: 20 }}>{i + 1}.</span>
-                <textarea placeholder={`Trin ${i + 1}…`} value={step}
-                  onChange={e => updateStep(i, e.target.value)} style={{ minHeight: 60 }} />
-                <button className="btn-remove" onClick={() => removeStep(i)}
-                  disabled={form.instructions.length === 1}>×</button>
-              </div>
-            ))}
+          <div className="form-section">
+            <h2 className="form-section-title">Fremgangsmåde</h2>
+            <div className="dynamic-list">
+              {form.instructions.map((step, i) => (
+                <div key={i} className="dynamic-item">
+                  <span style={{ color: "var(--text-muted)", fontSize: "0.8rem", minWidth: 20 }}>{i + 1}.</span>
+                  <textarea placeholder={`Trin ${i + 1}…`} value={step}
+                    onChange={e => updateStep(i, e.target.value)} style={{ minHeight: 60 }} />
+                  <button className="btn-remove" onClick={() => removeStep(i)}
+                    disabled={form.instructions.length === 1}>×</button>
+                </div>
+              ))}
+            </div>
+            <button className="btn-add" onClick={addStep}>+ Tilføj trin</button>
           </div>
-          <button className="btn-add" onClick={addStep}>+ Tilføj trin</button>
-        </div>
 
-        <div className="form-section">
-          <h2 className="form-section-title">Tags</h2>
-          <div className="dynamic-list">
-            {form.tags.map((tag, i) => (
-              <div key={i} className="dynamic-item">
-                <input type="text" placeholder="f.eks. italiensk" value={tag.name}
-                  onChange={e => updateTag(i, e.target.value)} />
-                <button className="btn-remove" onClick={() => removeTag(i)}
-                  disabled={form.tags.length === 1}>×</button>
-              </div>
-            ))}
+          <div className="form-section">
+            <h2 className="form-section-title">Tags</h2>
+            <div className="dynamic-list">
+              {form.tags.map((tag, i) => (
+                <div key={i} className="dynamic-item">
+                  <input type="text" placeholder="f.eks. italiensk" value={tag.name}
+                    onChange={e => updateTag(i, e.target.value)} />
+                  <button className="btn-remove" onClick={() => removeTag(i)}
+                    disabled={form.tags.length === 1}>×</button>
+                </div>
+              ))}
+            </div>
+            <button className="btn-add" onClick={addTag}>+ Tilføj tag</button>
           </div>
-          <button className="btn-add" onClick={addTag}>+ Tilføj tag</button>
-        </div>
 
-        <div className="form-actions">
-          <button className="btn-secondary" onClick={handleCancel}>Annullér</button>
-          <button className="btn-primary" onClick={handleSubmit} disabled={saving}>
-            {saving ? "Gemmer…" : isEdit ? "Gem ændringer" : "Opret opskrift"}
-          </button>
+          <div className="form-actions">
+            <button className="btn-secondary" onClick={handleCancel}>Annullér</button>
+            <button className="btn-primary" onClick={handleSubmit} disabled={saving}>
+              {saving ? "Gemmer…" : isEdit ? "Gem ændringer" : "Opret opskrift"}
+            </button>
+          </div>
         </div>
-      </div>
       )}
     </main>
   );

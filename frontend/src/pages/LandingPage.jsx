@@ -76,17 +76,17 @@ export default function LandingPage() {
             <span className="continent-label">{group.continent}</span>
             <div className="continent-buttons">
               {group.ids.map(id => {
-                const c = COUNTRIES.find(x => x.id === id)
+                const c = COUNTRIES.find(x => x.id === id);
                 return (
                   <button
                     key={c.id}
-                    className={`country-btn${selectedCountry?.id === c.id ? ' active' : ''}`}
+                    className={`country-btn${selectedCountry?.id === c.id ? " active" : ""}`}
                     onClick={() => handleCountryClick(c)}
                   >
                     <span className="country-btn-flag">{c.flag}</span>
                     {c.name}
                   </button>
-                )
+                );
               })}
             </div>
           </div>
@@ -96,5 +96,5 @@ export default function LandingPage() {
       {/* Slide-in panel */}
       <CountryPanel country={selectedCountry} onClose={handleClosePanel} />
     </div>
-  )
+  );
 }
