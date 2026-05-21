@@ -133,6 +133,24 @@ If asked to do one of these: refuse, name the rule, propose the correct path (e.
 
 ---
 
-## 8. When in doubt
+## 8. Definition of Done
+
+Work completed on this project must be reflected in [`definition-of-done.md`](./definition-of-done.md). After completing any feature, bug fix, or infrastructure work:
+
+1. **Review the checklist** in `definition-of-done.md` against your changes.
+2. **Check off completed items** by converting `- [ ]` to `- [x]` for any section items that are now done.
+3. **Include the update in your commit or PR** — Definition of Done is a living contract, not an afterthought.
+
+Examples:
+- Implemented a new API endpoint? Check off "Funktionalitet implementeret og matcher API‑kontrakten".
+- Added tests? Check off "Integrationstests for API endpoints".
+- Deployed to Azure? Check off "Kører på Azure VMs".
+- Added documentation? Check off "README opdateret med setup, run og deploy".
+
+The `definition-of-done.md` file is in **Danish** (project language) and organized by category. Keep it current — it's the team's single source of truth for project readiness.
+
+---
+
+## 9. When in doubt
 
 Stop. Ask. A thirty-second clarification beats a thirty-minute revert.
