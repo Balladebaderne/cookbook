@@ -1,9 +1,9 @@
-import { useState, useEffect, Suspense } from 'react'
-import { Canvas } from '@react-three/fiber'
-import { Link } from 'react-router-dom'
-import Globe, { COUNTRIES } from '../components/Globe'
-import CountryPanel from '../components/CountryPanel'
-import '../styles/landing.css'
+import { useState, useEffect, Suspense } from "react";
+import { Canvas } from "@react-three/fiber";
+import { Link } from "react-router-dom";
+import Globe, { COUNTRIES } from "../components/Globe";
+import CountryPanel from "../components/CountryPanel";
+import "../styles/landing.css";
 
 function GlobeLoader() {
   return (
@@ -11,21 +11,21 @@ function GlobeLoader() {
       <sphereGeometry args={[2.2, 32, 32]} />
       <meshBasicMaterial color="#0a1830" wireframe />
     </mesh>
-  )
+  );
 }
 
 export default function LandingPage() {
-  const [selectedCountry, setSelectedCountry]   = useState(null)
-  const [showIntro, setShowIntro]               = useState(true)
+  const [selectedCountry, setSelectedCountry]   = useState(null);
+  const [showIntro, setShowIntro]               = useState(true);
 
   // Hide intro text after animation completes (3 s)
   useEffect(() => {
-    const t = setTimeout(() => setShowIntro(false), 3100)
-    return () => clearTimeout(t)
-  }, [])
+    const t = setTimeout(() => setShowIntro(false), 3100);
+    return () => clearTimeout(t);
+  }, []);
 
-  const handleCountryClick = (country) => setSelectedCountry(country)
-  const handleClosePanel   = ()        => setSelectedCountry(null)
+  const handleCountryClick = (country) => setSelectedCountry(country);
+  const handleClosePanel   = ()        => setSelectedCountry(null);
 
   return (
     <div className="landing">
