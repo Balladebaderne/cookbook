@@ -34,7 +34,7 @@ export default function LandingPage() {
       {/* Intro animation */}
       {showIntro && (
         <div className="intro-overlay">
-          <p className="intro-text">Hvilket land skal vi spise i dag?</p>
+          <p className="intro-text">Which country shall we eat in today?</p>
         </div>
       )}
 
@@ -42,23 +42,23 @@ export default function LandingPage() {
       <header className="landing-header">
         <div className="landing-logo">
           <span className="landing-logo-title">Cookbook</span>
-          <span className="landing-logo-sub">Verdenskøkkenet</span>
+          <span className="landing-logo-sub">World Cuisine</span>
         </div>
         <nav className="landing-nav">
-          <Link to="/recipes" className="landing-nav-link">Alle opskrifter</Link>
+          <Link to="/recipes" className="landing-nav-link">All recipes</Link>
           {user ? (
             <button className="landing-nav-link landing-nav-button" onClick={logout}>
-              Log ud
+              Log out
             </button>
           ) : (
-            <Link to="/login" className="landing-nav-link">Log ind</Link>
+            <Link to="/login" className="landing-nav-link">Log in</Link>
           )}
         </nav>
       </header>
 
       {/* Hint */}
       {!showIntro && (
-        <p className="globe-hint">Klik på et pin for at se opskrifter</p>
+        <p className="globe-hint">Click a pin to see recipes</p>
       )}
 
       {/* 3D Globe */}
@@ -76,10 +76,10 @@ export default function LandingPage() {
       {/* Bottom-left country buttons grouped by continent */}
       <div className="country-bar">
         {[
-          { continent: "Europa", ids: ["italy", "france", "denmark"] },
-          { continent: "Asien",  ids: ["japan", "india", "thailand"] },
-          { continent: "Afrika", ids: ["morocco"] },
-          { continent: "Amerika", ids: ["mexico"] },
+          { continent: "Europe",   ids: ["italy", "france", "denmark"] },
+          { continent: "Asia",     ids: ["japan", "india", "thailand"] },
+          { continent: "Africa",   ids: ["morocco"] },
+          { continent: "Americas", ids: ["mexico"] },
         ].map(group => (
           <div key={group.continent} className="continent-group">
             <span className="continent-label">{group.continent}</span>

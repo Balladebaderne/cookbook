@@ -15,28 +15,28 @@ export default function RecipeDetail() {
     setLoading(true);
     getRecipe(id)
       .then(data => { setRecipe(data); setLoading(false); })
-      .catch(() => { setError("Kunne ikke hente opskrift."); setLoading(false); });
+      .catch(() => { setError("Could not load recipe."); setLoading(false); });
   }, [id]);
 
   const handleDelete = async () => {
-    if (!confirm(`Slet "${recipe.title}"?`)) return;
+    if (!confirm(`Delete "${recipe.title}"?`)) return;
     try {
       await deleteRecipe(id);
       navigate("/recipes");
     } catch {
-      setError("Kunne ikke slette opskriften. Prøv igen.");
+      setError("Could not delete the recipe. Please try again.");
     }
   };
 
   if (loading) return (
     <main className="main">
-      <div className="loading"><div className="spinner" /> Henter…</div>
+      <div className="loading"><div className="spinner" /> Loading…</div>
     </main>
   );
 
   if (error) return (
     <main className="main">
-      <button className="back-btn" onClick={() => navigate("/recipes")}>← Tilbage</button>
+      <button className="back-btn" onClick={() => navigate("/recipes")}>← Back</button>
       <div className="error-msg">{error}</div>
     </main>
   );
@@ -45,7 +45,7 @@ export default function RecipeDetail() {
 
   return (
     <main className="main">
-      <button className="back-btn" onClick={() => navigate("/recipes")}>← Alle opskrifter</button>
+      <button className="back-btn" onClick={() => navigate("/recipes")}>← All recipes</button>
 
       {recipe.image && (
         <div className="detail-image">
@@ -56,7 +56,7 @@ export default function RecipeDetail() {
       <h1 className="detail-title">{recipe.title}</h1>
 
       <div className="detail-meta">
-        {recipe.time_minutes && <span>⏱ {recipe.time_minutes} minutter</span>}
+        {recipe.time_minutes && <span>⏱ {recipe.time_minutes} minutes</span>}
         {recipe.price && <span>💰 {recipe.price} kr</span>}
       </div>
 
@@ -77,16 +77,16 @@ export default function RecipeDetail() {
               className="btn-primary"
               onClick={() => navigate(`/recipes/${id}/edit`, { state: { recipe } })}
             >
-              Rediger
+              Edit
             </button>
             <button className="btn-danger" onClick={handleDelete}>
-              Slet
+              Delete
             </button>
           </>
         )}
         {recipe.link && (
           <a href={recipe.link} target="_blank" rel="noopener noreferrer" className="recipe-link">
-            ↗ Originalkilde
+            ↗ Original source
           </a>
         )}
       </div>
@@ -94,7 +94,7 @@ export default function RecipeDetail() {
       <div className="detail-body">
         {recipe.ingredients?.length > 0 && (
           <aside className="ingredients-card">
-            <h2 className="section-title">Ingredienser</h2>
+            <h2 className="section-title">Ingredients</h2>
             <ul className="ingredient-list">
               {recipe.ingredients.map(ing => (
                 <li key={ing.id} className="ingredient-item">
@@ -108,7 +108,7 @@ export default function RecipeDetail() {
 
         {steps.length > 0 && (
           <section>
-            <h2 className="section-title">Fremgangsmåde</h2>
+            <h2 className="section-title">Instructions</h2>
             {steps.map((step, i) => (
               <div key={i} className="instruction-step">
                 <div className="step-number">{i + 1}</div>
