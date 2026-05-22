@@ -7,9 +7,9 @@ beforeAll(async () => {
 });
 
 describe("services/recipes", () => {
-  it("listRecipes returns all 9 seeded recipes with the expected shape", async () => {
+  it("listRecipes returns all seeded recipes with the expected shape", async () => {
     const all = await recipes.listRecipes();
-    expect(all).toHaveLength(9);
+    expect(all).toHaveLength(20);
     expect(all[0]).toMatchObject({
       id: expect.any(Number),
       title: expect.any(String),

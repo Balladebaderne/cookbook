@@ -1,0 +1,1277 @@
+{
+  "recipes": [
+    {
+      "title": "Spaghetti Carbonara",
+      "country": "italy",
+      "time_minutes": 30,
+      "price": "38.00",
+      "link": "https://www.seriouseats.com/the-best-spaghetti-alla-carbonara-recipe",
+      "image": "https://i.pinimg.com/1200x/f2/9f/f7/f29ff752fe9b098e8a3c9e73d5de2dec.jpg",
+      "description": "A proper Roman carbonara with no cream and no shortcuts. Guanciale, eggs, Pecorino, and patient stirring create a glossy sauce without scrambling.",
+      "instructions": [
+        "Cook the spaghetti in heavily salted water until al dente. Reserve 200 ml of pasta water before draining.",
+        "Cut the guanciale into thick strips and cook it in a dry pan over medium-high heat until golden and crisp. Turn off the heat and let the pan cool slightly.",
+        "Whisk the eggs, egg yolks, finely grated Pecorino Romano, and Parmigiano Reggiano in a bowl. Season generously with freshly ground black pepper.",
+        "Add the hot pasta to the pan with the guanciale, away from the heat. Add the egg mixture and stir quickly while adding pasta water a little at a time until the sauce is silky and creamy.",
+        "Serve immediately on warm plates with extra Pecorino and a final grind of black pepper."
+      ],
+      "ingredients": [
+        {
+          "name": "Spaghetti",
+          "amount": "400",
+          "unit": "g"
+        },
+        {
+          "name": "Guanciale",
+          "amount": "150",
+          "unit": "g"
+        },
+        {
+          "name": "Eggs",
+          "amount": "2",
+          "unit": "pcs"
+        },
+        {
+          "name": "Egg yolks",
+          "amount": "4",
+          "unit": "pcs"
+        },
+        {
+          "name": "Pecorino Romano",
+          "amount": "60",
+          "unit": "g"
+        },
+        {
+          "name": "Parmigiano Reggiano",
+          "amount": "40",
+          "unit": "g"
+        },
+        {
+          "name": "Black pepper",
+          "amount": "1",
+          "unit": "tsp"
+        }
+      ],
+      "tags": [
+        "Italian",
+        "Classic"
+      ]
+    },
+    {
+      "title": "Butter-Braised Lamb Shanks with Red Wine",
+      "country": "denmark",
+      "time_minutes": 195,
+      "price": "85.00",
+      "link": "https://www.bbcgoodfood.com/recipes/braised-lamb-shanks",
+      "image": "https://i.pinimg.com/1200x/97/05/d6/9705d67b884b9bab4ad06858468666bb.jpg",
+      "description": "A slow-cooked dinner that rewards patience. The lamb braises for hours until it falls from the bone and the sauce turns deep, glossy, and rich.",
+      "instructions": [
+        "Heat the oven to 160 C. Season the lamb shanks generously with salt and pepper on all sides.",
+        "Brown the shanks in olive oil in a heavy pot over high heat for 3 to 4 minutes per side, then set them aside.",
+        "Lower the heat to medium and cook chopped onions, carrots, and whole garlic cloves in the same pot for 8 minutes. Stir in the tomato paste and cook for 2 minutes.",
+        "Add rosemary, thyme, and red wine. Scrape up the browned bits from the bottom of the pot and reduce the wine by half.",
+        "Return the shanks to the pot, cover, and braise in the oven for 2.5 to 3 hours, turning once. The meat is ready when it falls from the bone.",
+        "Remove the shanks and reduce the sauce on the stove until thick and shiny. Season to taste and serve with mashed potatoes or polenta."
+      ],
+      "ingredients": [
+        {
+          "name": "Lamb shanks",
+          "amount": "4",
+          "unit": "pcs"
+        },
+        {
+          "name": "Red wine",
+          "amount": "500",
+          "unit": "ml"
+        },
+        {
+          "name": "Garlic",
+          "amount": "6",
+          "unit": "cloves"
+        },
+        {
+          "name": "Rosemary",
+          "amount": "2",
+          "unit": "sprigs"
+        },
+        {
+          "name": "Thyme",
+          "amount": "4",
+          "unit": "sprigs"
+        },
+        {
+          "name": "Onions",
+          "amount": "2",
+          "unit": "pcs"
+        },
+        {
+          "name": "Carrots",
+          "amount": "2",
+          "unit": "pcs"
+        },
+        {
+          "name": "Tomato paste",
+          "amount": "2",
+          "unit": "tbsp"
+        }
+      ],
+      "tags": [
+        "Dinner",
+        "Slow Cooking",
+        "Weekend Project"
+      ]
+    },
+    {
+      "title": "Rustic Sourdough Bread",
+      "country": "denmark",
+      "time_minutes": 60,
+      "price": "12.00",
+      "link": "https://www.theperfectloaf.com/beginners-sourdough-bread/",
+      "image": "https://i.pinimg.com/1200x/53/2c/ea/532cea66f74f8b7f546cd471ee8f5573.jpg",
+      "description": "A two-day bread with very little active work. The long cold proof develops a gentle tang, an open crumb, and a crisp caramelized crust.",
+      "instructions": [
+        "On Friday evening, mix wheat flour, rye flour, lukewarm water, and active sourdough starter in a bowl. Rest for 30 minutes.",
+        "Add salt dissolved in a little water. Fold the dough by stretching it up and over itself, repeating several times over 2 hours.",
+        "Shape the dough gently into a round without knocking out the air. Place it in a floured proofing basket or towel-lined bowl and refrigerate overnight.",
+        "On Saturday morning, heat the oven to 250 C with a cast-iron pot inside for at least 45 minutes.",
+        "Turn the cold dough into the hot pot, score the top, bake covered for 20 minutes, then uncover and bake for another 20 to 25 minutes.",
+        "Cool the bread on a rack for at least 1 hour before slicing so the crumb can set."
+      ],
+      "ingredients": [
+        {
+          "name": "Wheat flour",
+          "amount": "450",
+          "unit": "g"
+        },
+        {
+          "name": "Rye flour",
+          "amount": "50",
+          "unit": "g"
+        },
+        {
+          "name": "Water",
+          "amount": "375",
+          "unit": "g"
+        },
+        {
+          "name": "Salt",
+          "amount": "10",
+          "unit": "g"
+        },
+        {
+          "name": "Sourdough starter",
+          "amount": "100",
+          "unit": "g"
+        }
+      ],
+      "tags": [
+        "Baking",
+        "Weekend Project"
+      ]
+    },
+    {
+      "title": "Pan-Fried Cod Loins with Beurre Blanc",
+      "country": "france",
+      "time_minutes": 25,
+      "price": "95.00",
+      "link": "https://www.greatbritishchefs.com/recipes/pan-fried-cod-beurre-blanc-recipe",
+      "image": "https://i.pinimg.com/1200x/11/ca/71/11ca71a2b2ae94f5d19697695b75409e.jpg",
+      "description": "A simple dish built around good ingredients: golden pan-fried cod loins with a classic French butter sauce.",
+      "instructions": [
+        "Take the cod out of the refrigerator 20 minutes before cooking. Pat it dry and season with salt.",
+        "For the beurre blanc, reduce white wine, finely chopped shallots, and lemon juice in a small pan until almost dry. Add cream and reduce by half.",
+        "Whisk cold butter into the warm reduction a few cubes at a time until the sauce is glossy and emulsified. Season with salt and lemon juice.",
+        "Heat olive oil in a pan until very hot. Add the cod presentation-side down and press gently for the first 10 seconds.",
+        "Cook for 4 to 5 minutes until golden, then turn carefully and cook for 1 to 2 minutes more.",
+        "Serve the cod golden-side up and spoon the beurre blanc over it at the table."
+      ],
+      "ingredients": [
+        {
+          "name": "Cod",
+          "amount": "600",
+          "unit": "g"
+        },
+        {
+          "name": "White wine",
+          "amount": "150",
+          "unit": "ml"
+        },
+        {
+          "name": "Shallots",
+          "amount": "2",
+          "unit": "pcs"
+        },
+        {
+          "name": "Butter",
+          "amount": "150",
+          "unit": "g"
+        },
+        {
+          "name": "Cream",
+          "amount": "2",
+          "unit": "tbsp"
+        },
+        {
+          "name": "Lemon juice",
+          "amount": "1",
+          "unit": "pc"
+        }
+      ],
+      "tags": [
+        "Fish",
+        "Dinner",
+        "French"
+      ]
+    },
+    {
+      "title": "Chicken Katsu Curry",
+      "country": "japan",
+      "time_minutes": 50,
+      "price": "55.00",
+      "link": "https://www.justonecookbook.com/katsu-curry/",
+      "image": "https://i.pinimg.com/1200x/bb/7c/97/bb7c9754d6a10f5742fd52f8e59b6a65.jpg",
+      "description": "Japanese comfort food: crisp panko-coated chicken over steamed rice with a thick, gently sweet curry sauce.",
+      "instructions": [
+        "Cook the curry sauce by softening onion and carrot in butter, adding Japanese curry roux and water, and simmering until thick.",
+        "Pound the chicken breasts flat and season with salt and pepper.",
+        "Bread the chicken in flour, beaten egg, and panko. Press the panko firmly onto the meat.",
+        "Fry the chicken in plenty of oil at 170 C for 5 to 6 minutes per side until deeply golden and cooked through.",
+        "Rest the chicken on a rack for 2 minutes, then slice it thickly on the diagonal.",
+        "Serve over steamed rice with curry sauce on the side so the breading stays crisp."
+      ],
+      "ingredients": [
+        {
+          "name": "Chicken breast",
+          "amount": "2",
+          "unit": "pcs"
+        },
+        {
+          "name": "Panko breadcrumbs",
+          "amount": "100",
+          "unit": "g"
+        },
+        {
+          "name": "Japanese curry roux",
+          "amount": "80",
+          "unit": "g"
+        },
+        {
+          "name": "Onions",
+          "amount": "1",
+          "unit": "pc"
+        },
+        {
+          "name": "Carrots",
+          "amount": "1",
+          "unit": "pc"
+        },
+        {
+          "name": "Rice",
+          "amount": "300",
+          "unit": "g"
+        },
+        {
+          "name": "Eggs",
+          "amount": "2",
+          "unit": "pcs"
+        },
+        {
+          "name": "Wheat flour",
+          "amount": "50",
+          "unit": "g"
+        }
+      ],
+      "tags": [
+        "Japanese",
+        "Dinner"
+      ]
+    },
+    {
+      "title": "Tacos al Pastor",
+      "country": "mexico",
+      "time_minutes": 75,
+      "price": "65.00",
+      "link": "https://www.seriouseats.com/tacos-al-pastor-recipe",
+      "image": "https://i.pinimg.com/1200x/8f/41/fd/8f41fd55427d5ddff6f637299064f142.jpg",
+      "description": "Iconic Mexico City street food with thin slices of pork marinated in achiote and chili, grilled until caramelized, and served with pineapple.",
+      "instructions": [
+        "Blend achiote paste, chipotle in adobo, garlic, orange juice, vinegar, and spices into a smooth marinade.",
+        "Slice the pork thinly, coat it in the marinade, cover, and marinate for at least 2 hours or overnight.",
+        "Heat a grill pan or grill until very hot and cook the pork for 2 to 3 minutes per side until caramelized.",
+        "Grill pineapple slices until marked, then dice them.",
+        "Warm the tortillas directly over a flame or in a dry pan until soft and lightly charred.",
+        "Assemble tacos with pork, pineapple, finely chopped onion, cilantro, and a generous squeeze of lime."
+      ],
+      "ingredients": [
+        {
+          "name": "Pork shoulder",
+          "amount": "600",
+          "unit": "g"
+        },
+        {
+          "name": "Pineapple",
+          "amount": "4",
+          "unit": "slices"
+        },
+        {
+          "name": "Chipotle in adobo",
+          "amount": "2",
+          "unit": "pcs"
+        },
+        {
+          "name": "Achiote paste",
+          "amount": "50",
+          "unit": "g"
+        },
+        {
+          "name": "Cilantro",
+          "amount": "1",
+          "unit": "bunch"
+        },
+        {
+          "name": "Lime",
+          "amount": "3",
+          "unit": "pcs"
+        },
+        {
+          "name": "Onions",
+          "amount": "1",
+          "unit": "pc"
+        },
+        {
+          "name": "Wheat tortillas",
+          "amount": "12",
+          "unit": "pcs"
+        }
+      ],
+      "tags": [
+        "Mexican",
+        "Street Food"
+      ]
+    },
+    {
+      "title": "Butter Chicken",
+      "country": "india",
+      "time_minutes": 60,
+      "price": "72.00",
+      "link": "https://www.indianhealthyrecipes.com/butter-chicken/",
+      "image": "https://i.pinimg.com/1200x/a0/48/4c/a0484cc5bc54fd2d7298f8bb56b257ae.jpg",
+      "description": "A creamy Delhi classic with spiced yogurt-marinated chicken folded into a silky tomato, butter, and cream sauce.",
+      "instructions": [
+        "Marinate the chicken thighs in yogurt, garam masala, chili, ginger, and garlic for at least 1 hour, preferably 4.",
+        "Grill or sear the chicken over high heat for 5 to 6 minutes per side until lightly charred. Set aside.",
+        "For the sauce, cook onion, ginger, and garlic in butter until golden. Add canned tomatoes and garam masala and simmer for 20 minutes.",
+        "Blend the sauce until smooth, then strain it back into the pot for a silky texture.",
+        "Add cream and butter, then simmer the chicken in the sauce for 10 minutes until thick and well coated.",
+        "Season with salt and serve with naan or basmati rice."
+      ],
+      "ingredients": [
+        {
+          "name": "Boneless chicken thighs",
+          "amount": "800",
+          "unit": "g"
+        },
+        {
+          "name": "Plain yogurt",
+          "amount": "150",
+          "unit": "g"
+        },
+        {
+          "name": "Garam masala",
+          "amount": "2",
+          "unit": "tbsp"
+        },
+        {
+          "name": "Canned tomatoes",
+          "amount": "400",
+          "unit": "g"
+        },
+        {
+          "name": "Butter",
+          "amount": "60",
+          "unit": "g"
+        },
+        {
+          "name": "Cream",
+          "amount": "100",
+          "unit": "ml"
+        },
+        {
+          "name": "Garlic",
+          "amount": "4",
+          "unit": "cloves"
+        },
+        {
+          "name": "Fresh ginger",
+          "amount": "3",
+          "unit": "cm"
+        },
+        {
+          "name": "Green chili",
+          "amount": "2",
+          "unit": "pcs"
+        }
+      ],
+      "tags": [
+        "Indian",
+        "Dinner"
+      ]
+    },
+    {
+      "title": "Lamb Tagine with Dates and Almonds",
+      "country": "morocco",
+      "time_minutes": 150,
+      "price": "88.00",
+      "link": "https://www.bbcgoodfood.com/recipes/lamb-tagine",
+      "image": "https://i.pinimg.com/1200x/b1/a5/68/b1a5685cc332e1c047b67adce392790b.jpg",
+      "description": "Moroccan slow cooking with tender lamb, sweet dates, toasted almonds, and a fragrant sauce of saffron, cinnamon, and cumin.",
+      "instructions": [
+        "Cut the lamb shoulder into large cubes. Season with salt, cumin, and cinnamon, then brown it in batches in olive oil.",
+        "Cook onion and garlic in the same pot until soft. Add saffron bloomed in warm water, the remaining spices, and tomato paste.",
+        "Return the lamb to the pot, add water, bring to a simmer, cover, and cook gently for 1.5 hours.",
+        "Add dates and drained chickpeas and simmer for another 30 minutes until the meat is tender and the sauce is thick.",
+        "Toast almonds in a dry pan until golden.",
+        "Serve the tagine with toasted almonds and fresh cilantro, with couscous or bread on the side."
+      ],
+      "ingredients": [
+        {
+          "name": "Lamb shoulder",
+          "amount": "800",
+          "unit": "g"
+        },
+        {
+          "name": "Dried dates",
+          "amount": "100",
+          "unit": "g"
+        },
+        {
+          "name": "Whole almonds",
+          "amount": "60",
+          "unit": "g"
+        },
+        {
+          "name": "Saffron",
+          "amount": "1",
+          "unit": "pinch"
+        },
+        {
+          "name": "Cinnamon stick",
+          "amount": "1",
+          "unit": "pc"
+        },
+        {
+          "name": "Cumin",
+          "amount": "2",
+          "unit": "tsp"
+        },
+        {
+          "name": "Onions",
+          "amount": "2",
+          "unit": "pcs"
+        },
+        {
+          "name": "Canned chickpeas",
+          "amount": "1",
+          "unit": "can"
+        },
+        {
+          "name": "Cilantro",
+          "amount": "1",
+          "unit": "bunch"
+        }
+      ],
+      "tags": [
+        "Moroccan",
+        "Slow Cooking"
+      ]
+    },
+    {
+      "title": "Pad Thai",
+      "country": "thailand",
+      "time_minutes": 30,
+      "price": "58.00",
+      "link": "https://hot-thai-kitchen.com/pad-thai/",
+      "image": "https://i.pinimg.com/1200x/86/36/0d/86360d6aa83b4570417451bcb4d03350.jpg",
+      "description": "Bangkok-style rice noodles tossed in a balanced tamarind, fish sauce, and sugar sauce with shrimp, peanuts, sprouts, and lime.",
+      "instructions": [
+        "Soak the rice noodles in warm water for 15 to 20 minutes until flexible but still firm, then drain.",
+        "Mix tamarind paste, fish sauce, sugar, and water until the sugar dissolves.",
+        "Heat a wok until smoking. Cook the shrimp for 1 minute and set aside. Add oil and beaten eggs, then stir into large curds and set aside.",
+        "Add a little more oil to the wok, then add the noodles and sauce. Toss for 2 to 3 minutes until the noodles absorb the sauce and soften.",
+        "Add shrimp, eggs, half the bean sprouts, and scallions. Toss quickly to combine.",
+        "Serve with roasted peanuts, the remaining sprouts, lime wedges, and fresh cilantro."
+      ],
+      "ingredients": [
+        {
+          "name": "Wide rice noodles",
+          "amount": "250",
+          "unit": "g"
+        },
+        {
+          "name": "Shrimp",
+          "amount": "200",
+          "unit": "g"
+        },
+        {
+          "name": "Tamarind paste",
+          "amount": "3",
+          "unit": "tbsp"
+        },
+        {
+          "name": "Fish sauce",
+          "amount": "2",
+          "unit": "tbsp"
+        },
+        {
+          "name": "Roasted peanuts",
+          "amount": "50",
+          "unit": "g"
+        },
+        {
+          "name": "Bean sprouts",
+          "amount": "100",
+          "unit": "g"
+        },
+        {
+          "name": "Eggs",
+          "amount": "2",
+          "unit": "pcs"
+        },
+        {
+          "name": "Lime",
+          "amount": "2",
+          "unit": "pcs"
+        },
+        {
+          "name": "Scallions",
+          "amount": "3",
+          "unit": "pcs"
+        }
+      ],
+      "tags": [
+        "Thai",
+        "Street Food"
+      ]
+    },
+    {
+      "title": "Cacio e Pepe",
+      "country": "italy",
+      "time_minutes": 25,
+      "price": "32.00",
+      "link": "https://www.seriouseats.com/spaghetti-cacio-e-pepe-recipe",
+      "image": "https://www.seriouseats.com/thmb/WMhJW4xxZYgHaBWDn4CZCaRXLYE%3D/1500x0/filters%3Ano_upscale%28%29%3Amax_bytes%28150000%29%3Astrip_icc%28%29%3Aformat%28webp%29/spaghetti-cacio-e-pepe-recipe-hero-02_1-70880518badb4d428f5d5b03d303fabc.JPG",
+      "description": "A minimalist Roman pasta classic made with Pecorino Romano, black pepper, and starchy pasta water. Simple ingredients, but the technique creates a glossy, creamy sauce without cream.",
+      "instructions": [
+        "Cook the pasta in heavily salted water until al dente. Reserve pasta water before draining.",
+        "Toast freshly cracked black pepper in a dry pan until fragrant.",
+        "Add a splash of pasta water to the pan and let it bubble with the pepper.",
+        "Add the pasta and toss quickly while adding grated Pecorino little by little.",
+        "Keep tossing and adding pasta water until the cheese emulsifies into a smooth sauce.",
+        "Serve immediately with extra Pecorino and black pepper."
+      ],
+      "ingredients": [
+        {
+          "name": "Spaghetti",
+          "amount": "400",
+          "unit": "g"
+        },
+        {
+          "name": "Pecorino Romano",
+          "amount": "120",
+          "unit": "g"
+        },
+        {
+          "name": "Black pepper",
+          "amount": "2",
+          "unit": "tsp"
+        },
+        {
+          "name": "Salt",
+          "amount": "1",
+          "unit": "tbsp"
+        }
+      ],
+      "tags": [
+        "Italian",
+        "Classic",
+        "Pasta",
+        "Quick Meal"
+      ]
+    },
+    {
+      "title": "Pasta Amatriciana",
+      "country": "italy",
+      "time_minutes": 35,
+      "price": "42.00",
+      "link": "https://www.seriouseats.com/bucatini-pasta-amatriciana-recipe",
+      "image": "https://www.seriouseats.com/thmb/URaY_rAROmn5wG1UeqqikBvzpNo%3D/1500x0/filters%3Ano_upscale%28%29%3Amax_bytes%28150000%29%3Astrip_icc%28%29%3Aformat%28webp%29/20230714-SEA-Bucatini-allAmatriciana-MaureenCelestinehero-566ee9d18a1e4a0ca62de8158162c7f3.jpg",
+      "description": "A Roman pasta classic with guanciale, tomato, Pecorino Romano, and chili. Rich, salty, sharp, and deeply satisfying.",
+      "instructions": [
+        "Cut guanciale into strips and cook slowly until the fat renders and the meat becomes crisp.",
+        "Add chili flakes and cook briefly.",
+        "Add crushed tomatoes and simmer until thickened.",
+        "Cook the pasta until al dente and reserve pasta water.",
+        "Toss the pasta with the sauce, adding pasta water as needed.",
+        "Finish with grated Pecorino Romano and serve immediately."
+      ],
+      "ingredients": [
+        {
+          "name": "Bucatini",
+          "amount": "400",
+          "unit": "g"
+        },
+        {
+          "name": "Guanciale",
+          "amount": "150",
+          "unit": "g"
+        },
+        {
+          "name": "Canned tomatoes",
+          "amount": "400",
+          "unit": "g"
+        },
+        {
+          "name": "Pecorino Romano",
+          "amount": "80",
+          "unit": "g"
+        },
+        {
+          "name": "Chili flakes",
+          "amount": "1",
+          "unit": "tsp"
+        },
+        {
+          "name": "Black pepper",
+          "amount": "1",
+          "unit": "tsp"
+        }
+      ],
+      "tags": [
+        "Italian",
+        "Classic",
+        "Pasta",
+        "Dinner"
+      ]
+    },
+    {
+      "title": "Lasagna alla Bolognese",
+      "country": "italy",
+      "time_minutes": 180,
+      "price": "95.00",
+      "link": "https://www.bbcgoodfood.com/recipes/classic-lasagne",
+      "image": "https://images.immediate.co.uk/production/volatile/sites/30/2020/08/classic-lasange-4a66137.jpg?resize=440%2C230",
+      "description": "A layered Italian classic with slow-cooked meat ragu, creamy bechamel, pasta sheets, and Parmigiano baked until golden.",
+      "instructions": [
+        "Cook onion, carrot, and celery in olive oil until softened.",
+        "Add minced beef and pork and brown thoroughly.",
+        "Add tomato paste, canned tomatoes, and milk, then simmer the ragu until rich.",
+        "Make a bechamel with butter, flour, and milk.",
+        "Layer ragu, bechamel, pasta sheets, and Parmigiano in a baking dish.",
+        "Bake until bubbling and golden, then rest before slicing."
+      ],
+      "ingredients": [
+        {
+          "name": "Lasagna sheets",
+          "amount": "300",
+          "unit": "g"
+        },
+        {
+          "name": "Minced beef",
+          "amount": "400",
+          "unit": "g"
+        },
+        {
+          "name": "Minced pork",
+          "amount": "300",
+          "unit": "g"
+        },
+        {
+          "name": "Canned tomatoes",
+          "amount": "800",
+          "unit": "g"
+        },
+        {
+          "name": "Tomato paste",
+          "amount": "2",
+          "unit": "tbsp"
+        },
+        {
+          "name": "Onions",
+          "amount": "1",
+          "unit": "pc"
+        },
+        {
+          "name": "Carrots",
+          "amount": "1",
+          "unit": "pc"
+        },
+        {
+          "name": "Celery",
+          "amount": "2",
+          "unit": "stalks"
+        },
+        {
+          "name": "Milk",
+          "amount": "700",
+          "unit": "ml"
+        },
+        {
+          "name": "Butter",
+          "amount": "60",
+          "unit": "g"
+        },
+        {
+          "name": "Wheat flour",
+          "amount": "60",
+          "unit": "g"
+        },
+        {
+          "name": "Parmigiano Reggiano",
+          "amount": "100",
+          "unit": "g"
+        }
+      ],
+      "tags": [
+        "Italian",
+        "Classic",
+        "Dinner",
+        "Weekend Project"
+      ]
+    },
+    {
+      "title": "Boeuf Bourguignon",
+      "country": "france",
+      "time_minutes": 210,
+      "price": "110.00",
+      "link": "https://www.bbcgoodfood.com/recipes/beef-bourguignon",
+      "image": "https://images.immediate.co.uk/production/volatile/sites/30/2020/08/beef-bourguignon-78b34d8.jpg",
+      "description": "A deep, slow-cooked French beef stew with red wine, mushrooms, onions, carrots, and herbs. Rich, glossy, and built for cold evenings.",
+      "instructions": [
+        "Cut beef into large cubes and season with salt and pepper.",
+        "Brown the beef in batches in a heavy pot until deeply caramelized.",
+        "Cook bacon, onions, carrots, and garlic in the same pot.",
+        "Add tomato paste and cook briefly.",
+        "Add red wine, beef stock, thyme, and bay leaf, then return the beef.",
+        "Braise gently until tender, adding mushrooms near the end."
+      ],
+      "ingredients": [
+        {
+          "name": "Beef chuck",
+          "amount": "1",
+          "unit": "kg"
+        },
+        {
+          "name": "Red wine",
+          "amount": "750",
+          "unit": "ml"
+        },
+        {
+          "name": "Beef stock",
+          "amount": "500",
+          "unit": "ml"
+        },
+        {
+          "name": "Bacon",
+          "amount": "150",
+          "unit": "g"
+        },
+        {
+          "name": "Mushrooms",
+          "amount": "300",
+          "unit": "g"
+        },
+        {
+          "name": "Carrots",
+          "amount": "3",
+          "unit": "pcs"
+        },
+        {
+          "name": "Onions",
+          "amount": "2",
+          "unit": "pcs"
+        },
+        {
+          "name": "Garlic",
+          "amount": "4",
+          "unit": "cloves"
+        },
+        {
+          "name": "Tomato paste",
+          "amount": "2",
+          "unit": "tbsp"
+        },
+        {
+          "name": "Thyme",
+          "amount": "4",
+          "unit": "sprigs"
+        }
+      ],
+      "tags": [
+        "French",
+        "Classic",
+        "Slow Cooking",
+        "Weekend Project"
+      ]
+    },
+    {
+      "title": "French Onion Soup",
+      "country": "france",
+      "time_minutes": 75,
+      "price": "35.00",
+      "link": "https://www.bbcgoodfood.com/recipes/french-onion-soup",
+      "image": "https://images.immediate.co.uk/production/volatile/sites/30/2020/08/french-onion-soup-74e3379.jpg",
+      "description": "A classic French soup made from deeply caramelized onions, beef stock, toasted bread, and a bubbling layer of melted cheese.",
+      "instructions": [
+        "Slice the onions thinly.",
+        "Cook the onions slowly in butter until deeply golden and caramelized.",
+        "Add flour and stir for 1 minute.",
+        "Add white wine and reduce slightly.",
+        "Add beef stock and simmer until rich and sweet.",
+        "Top with toasted bread and cheese, then broil until bubbling."
+      ],
+      "ingredients": [
+        {
+          "name": "Onions",
+          "amount": "6",
+          "unit": "pcs"
+        },
+        {
+          "name": "Butter",
+          "amount": "60",
+          "unit": "g"
+        },
+        {
+          "name": "Beef stock",
+          "amount": "1",
+          "unit": "l"
+        },
+        {
+          "name": "White wine",
+          "amount": "150",
+          "unit": "ml"
+        },
+        {
+          "name": "Wheat flour",
+          "amount": "1",
+          "unit": "tbsp"
+        },
+        {
+          "name": "Baguette",
+          "amount": "8",
+          "unit": "slices"
+        },
+        {
+          "name": "Gruyere",
+          "amount": "150",
+          "unit": "g"
+        }
+      ],
+      "tags": [
+        "French",
+        "Classic",
+        "Soup",
+        "Comfort Food"
+      ]
+    },
+    {
+      "title": "Tonkotsu Ramen",
+      "country": "japan",
+      "time_minutes": 240,
+      "price": "78.00",
+      "link": "https://www.justonecookbook.com/easy-tonkotsu-ramen-recipe/",
+      "image": "https://cdn.justonecookbook.com/spai/q_glossy%2Bret_img%2Bto_auto/www.justonecookbook.com/wp-content/uploads/2025/05/Easy-Tonkotsu-Ramen-Recipe-8630-III.jpg",
+      "description": "A Japanese ramen classic with rich pork broth, noodles, chashu pork, soft-boiled egg, scallions, and aromatic toppings.",
+      "instructions": [
+        "Prepare or heat a rich pork broth.",
+        "Cook ramen noodles according to package instructions.",
+        "Warm sliced chashu pork gently in broth or sauce.",
+        "Prepare soft-boiled eggs and slice scallions.",
+        "Add tare to the bowl, then ladle in hot broth.",
+        "Add noodles, pork, egg, scallions, and toppings before serving."
+      ],
+      "ingredients": [
+        {
+          "name": "Ramen noodles",
+          "amount": "400",
+          "unit": "g"
+        },
+        {
+          "name": "Pork broth",
+          "amount": "1.5",
+          "unit": "l"
+        },
+        {
+          "name": "Chashu pork",
+          "amount": "300",
+          "unit": "g"
+        },
+        {
+          "name": "Eggs",
+          "amount": "4",
+          "unit": "pcs"
+        },
+        {
+          "name": "Scallions",
+          "amount": "4",
+          "unit": "pcs"
+        },
+        {
+          "name": "Soy sauce",
+          "amount": "4",
+          "unit": "tbsp"
+        },
+        {
+          "name": "Mirin",
+          "amount": "2",
+          "unit": "tbsp"
+        },
+        {
+          "name": "Garlic",
+          "amount": "3",
+          "unit": "cloves"
+        }
+      ],
+      "tags": [
+        "Japanese",
+        "Classic",
+        "Noodles",
+        "Weekend Project"
+      ]
+    },
+    {
+      "title": "Gyoza",
+      "country": "japan",
+      "time_minutes": 60,
+      "price": "45.00",
+      "link": "https://www.justonecookbook.com/gyoza/",
+      "image": "https://cdn.justonecookbook.com/spai/q_glossy%2Bret_img%2Bto_auto/www.justonecookbook.com/wp-content/uploads/2027/05/Gyoza-Recipe-7420-II.jpg",
+      "description": "Japanese pan-fried dumplings filled with pork, cabbage, garlic, ginger, and scallions. Crisp on the bottom, juicy inside.",
+      "instructions": [
+        "Finely chop cabbage and squeeze out excess moisture.",
+        "Mix pork, cabbage, garlic, ginger, scallions, soy sauce, and sesame oil.",
+        "Place filling in each wrapper and fold tightly.",
+        "Fry the dumplings in oil until the bottoms are golden.",
+        "Add water, cover, and steam until cooked through.",
+        "Uncover and crisp the bottoms again before serving."
+      ],
+      "ingredients": [
+        {
+          "name": "Gyoza wrappers",
+          "amount": "40",
+          "unit": "pcs"
+        },
+        {
+          "name": "Minced pork",
+          "amount": "400",
+          "unit": "g"
+        },
+        {
+          "name": "Cabbage",
+          "amount": "300",
+          "unit": "g"
+        },
+        {
+          "name": "Scallions",
+          "amount": "3",
+          "unit": "pcs"
+        },
+        {
+          "name": "Garlic",
+          "amount": "3",
+          "unit": "cloves"
+        },
+        {
+          "name": "Fresh ginger",
+          "amount": "2",
+          "unit": "cm"
+        },
+        {
+          "name": "Soy sauce",
+          "amount": "2",
+          "unit": "tbsp"
+        },
+        {
+          "name": "Sesame oil",
+          "amount": "1",
+          "unit": "tbsp"
+        }
+      ],
+      "tags": [
+        "Japanese",
+        "Classic",
+        "Street Food",
+        "Dumplings"
+      ]
+    },
+    {
+      "title": "Palak Paneer",
+      "country": "india",
+      "time_minutes": 50,
+      "price": "48.00",
+      "link": "https://www.indianhealthyrecipes.com/palak-paneer-recipe-easy-paneer-recipes-step-by-step-pics/",
+      "image": "https://www.indianhealthyrecipes.com/wp-content/uploads/2020/06/palak-paneer-recipe.jpg",
+      "description": "A North Indian classic with paneer cubes folded into a smooth spinach sauce flavored with garlic, ginger, spices, and cream.",
+      "instructions": [
+        "Blanch spinach briefly, then cool and blend into a smooth puree.",
+        "Cook onion, garlic, ginger, and green chili in oil or ghee.",
+        "Add spices and cook until fragrant.",
+        "Add the spinach puree and simmer gently.",
+        "Add paneer cubes and cook until warmed through.",
+        "Finish with cream and serve with naan or rice."
+      ],
+      "ingredients": [
+        {
+          "name": "Paneer",
+          "amount": "300",
+          "unit": "g"
+        },
+        {
+          "name": "Spinach",
+          "amount": "500",
+          "unit": "g"
+        },
+        {
+          "name": "Onions",
+          "amount": "1",
+          "unit": "pc"
+        },
+        {
+          "name": "Garlic",
+          "amount": "4",
+          "unit": "cloves"
+        },
+        {
+          "name": "Fresh ginger",
+          "amount": "3",
+          "unit": "cm"
+        },
+        {
+          "name": "Green chili",
+          "amount": "1",
+          "unit": "pc"
+        },
+        {
+          "name": "Garam masala",
+          "amount": "1",
+          "unit": "tsp"
+        },
+        {
+          "name": "Cream",
+          "amount": "50",
+          "unit": "ml"
+        }
+      ],
+      "tags": [
+        "Indian",
+        "Classic",
+        "Vegetarian",
+        "Dinner"
+      ]
+    },
+    {
+      "title": "Chicken Biryani",
+      "country": "india",
+      "time_minutes": 120,
+      "price": "75.00",
+      "link": "https://www.indianhealthyrecipes.com/chicken-biryani-recipe/",
+      "image": "https://www.indianhealthyrecipes.com/wp-content/uploads/2021/12/chicken-biryani-recipe.jpg",
+      "description": "A layered Indian rice dish with marinated chicken, basmati rice, fried onions, saffron, herbs, and warm spices.",
+      "instructions": [
+        "Marinate chicken with yogurt, garlic, ginger, chili, and biryani spices.",
+        "Rinse and partially cook basmati rice until just underdone.",
+        "Fry onions until golden and crisp.",
+        "Cook the marinated chicken until partly done.",
+        "Layer chicken, rice, fried onions, herbs, and saffron milk in a heavy pot.",
+        "Cover tightly and steam on low heat until the rice is fluffy and the chicken is tender."
+      ],
+      "ingredients": [
+        {
+          "name": "Boneless chicken thighs",
+          "amount": "800",
+          "unit": "g"
+        },
+        {
+          "name": "Basmati rice",
+          "amount": "400",
+          "unit": "g"
+        },
+        {
+          "name": "Plain yogurt",
+          "amount": "200",
+          "unit": "g"
+        },
+        {
+          "name": "Onions",
+          "amount": "3",
+          "unit": "pcs"
+        },
+        {
+          "name": "Garlic",
+          "amount": "5",
+          "unit": "cloves"
+        },
+        {
+          "name": "Fresh ginger",
+          "amount": "4",
+          "unit": "cm"
+        },
+        {
+          "name": "Garam masala",
+          "amount": "2",
+          "unit": "tsp"
+        },
+        {
+          "name": "Saffron",
+          "amount": "1",
+          "unit": "pinch"
+        },
+        {
+          "name": "Cilantro",
+          "amount": "1",
+          "unit": "bunch"
+        }
+      ],
+      "tags": [
+        "Indian",
+        "Classic",
+        "Rice",
+        "Weekend Project"
+      ]
+    },
+    {
+      "title": "Thai Green Curry",
+      "country": "thailand",
+      "time_minutes": 45,
+      "price": "58.00",
+      "link": "https://hot-thai-kitchen.com/green-curry-new-2/",
+      "image": "https://hot-thai-kitchen.com/wp-content/uploads/2022/04/green-curry-new-sq.jpg",
+      "description": "A Thai classic with green curry paste, coconut milk, chicken, vegetables, fish sauce, basil, and lime. Fragrant, spicy, and creamy.",
+      "instructions": [
+        "Fry green curry paste in thick coconut milk until fragrant.",
+        "Add chicken and coat it in the curry paste.",
+        "Add the remaining coconut milk and simmer gently.",
+        "Add vegetables and cook until just tender.",
+        "Season with fish sauce, sugar, and lime.",
+        "Finish with Thai basil and serve with jasmine rice."
+      ],
+      "ingredients": [
+        {
+          "name": "Chicken breast",
+          "amount": "500",
+          "unit": "g"
+        },
+        {
+          "name": "Green curry paste",
+          "amount": "3",
+          "unit": "tbsp"
+        },
+        {
+          "name": "Coconut milk",
+          "amount": "400",
+          "unit": "ml"
+        },
+        {
+          "name": "Fish sauce",
+          "amount": "2",
+          "unit": "tbsp"
+        },
+        {
+          "name": "Thai basil",
+          "amount": "1",
+          "unit": "bunch"
+        },
+        {
+          "name": "Eggplant",
+          "amount": "1",
+          "unit": "pc"
+        },
+        {
+          "name": "Green beans",
+          "amount": "150",
+          "unit": "g"
+        },
+        {
+          "name": "Lime",
+          "amount": "1",
+          "unit": "pc"
+        },
+        {
+          "name": "Jasmine rice",
+          "amount": "300",
+          "unit": "g"
+        }
+      ],
+      "tags": [
+        "Thai",
+        "Classic",
+        "Curry",
+        "Dinner"
+      ]
+    },
+    {
+      "title": "Crispy Pork Belly with Parsley Sauce",
+      "country": "denmark",
+      "time_minutes": 60,
+      "price": "55.00",
+      "link": "https://madensverden.dk/stegt-flaesk-persillesovs/",
+      "image": "https://madensverden.dk/wp-content/uploads/2016/11/stegt-flaesk-med-persillesovs.jpg",
+      "description": "One of Denmark's most iconic dishes: crispy slices of pork belly served with boiled potatoes and creamy parsley sauce.",
+      "instructions": [
+        "Season the pork belly slices with salt.",
+        "Roast or fry the slices until deeply crisp and golden.",
+        "Boil potatoes in salted water until tender.",
+        "Make a white sauce by whisking butter, flour, and milk together.",
+        "Stir chopped parsley into the sauce and season with salt and pepper.",
+        "Serve the crispy pork with potatoes and parsley sauce."
+      ],
+      "ingredients": [
+        {
+          "name": "Pork belly slices",
+          "amount": "700",
+          "unit": "g"
+        },
+        {
+          "name": "Potatoes",
+          "amount": "800",
+          "unit": "g"
+        },
+        {
+          "name": "Butter",
+          "amount": "40",
+          "unit": "g"
+        },
+        {
+          "name": "Wheat flour",
+          "amount": "40",
+          "unit": "g"
+        },
+        {
+          "name": "Milk",
+          "amount": "500",
+          "unit": "ml"
+        },
+        {
+          "name": "Parsley",
+          "amount": "1",
+          "unit": "bunch"
+        },
+        {
+          "name": "Salt",
+          "amount": "1",
+          "unit": "tsp"
+        },
+        {
+          "name": "Black pepper",
+          "amount": "1",
+          "unit": "tsp"
+        }
+      ],
+      "tags": [
+        "Danish",
+        "Classic",
+        "Dinner",
+        "Comfort Food"
+      ]
+    }
+  ]
+}

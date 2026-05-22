@@ -15,7 +15,7 @@
 - [x] Understøtter både SQLite (dev) og PostgreSQL (prod).  
 - [x] Migration gennemført uden datatab.  
 - [ ] Rollback‑plan dokumenteret.  
-- [ ] Feature branch bevaret for sporbarhed.
+- [x] Feature branch bevaret for sporbarhed.
 
 ---
 

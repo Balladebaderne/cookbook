@@ -32,9 +32,9 @@ export async function initDb() {
 
     // Backfill country for recipes that were seeded before the column existed
     await db.exec("UPDATE recipes SET country = 'italy'   WHERE title = 'Spaghetti Carbonara' AND country IS NULL");
-    await db.exec("UPDATE recipes SET country = 'denmark'  WHERE title LIKE 'Smørbraiseret%'    AND country IS NULL");
-    await db.exec("UPDATE recipes SET country = 'denmark'  WHERE title LIKE 'Rustikt%'          AND country IS NULL");
-    await db.exec("UPDATE recipes SET country = 'france'   WHERE title LIKE 'Pandestegte%'      AND country IS NULL");
+    await db.exec("UPDATE recipes SET country = 'denmark'  WHERE title LIKE 'Sm\u00f8rbraiseret%' AND country IS NULL");
+    await db.exec("UPDATE recipes SET country = 'denmark'  WHERE title LIKE 'Rustic%'          AND country IS NULL");
+    await db.exec("UPDATE recipes SET country = 'france'   WHERE title LIKE 'Pan-Fried%'       AND country IS NULL");
 
     await db.exec(`
       CREATE TABLE IF NOT EXISTS ingredients (
