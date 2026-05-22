@@ -7,6 +7,7 @@ import client from "prom-client";
 
 import apiRoutes from "./routes/api.js";
 import recipeRoutes from "./routes/recipes.js";
+import userRoutes from "./routes/users.js";
 import { createRouter, defineRoute } from "./http/router.js";
 import { sendJson } from "./http/responses.js";
 import { createSwaggerRoutes } from "./http/swagger.js";
@@ -50,6 +51,7 @@ function createRoutes() {
     }),
     ...createSwaggerRoutes(swaggerDocument),
     ...apiRoutes,
+    ...userRoutes,
     ...recipeRoutes,
   ];
 }

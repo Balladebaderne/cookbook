@@ -190,6 +190,114 @@ describe("backend HTTP server", () => {
     });
   });
 
+  it("supports user registration, login, and authenticated profile updates", async () => {
+    const unique = Date.now();
+    const email = `auth-${unique}@example.com`;
+    const password = "correct-password";
+
+    const created = await request("/api/user/create/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        name: "Test User",
+      }),
+    });
+
+    expect(created.response.status).toBe(201);
+    expect(created.json.token).toEqual(expect.any(String));
+    expect(created.json.user).toEqual({
+      id: expect.any(Number),
+      email,
+      name: "Test User",
+    });
+    expect(JSON.stringify(created.json)).not.toContain(password);
+
+    const duplicate = await request("/api/user/create/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        name: "Duplicate",
+      }),
+    });
+    expect(duplicate.response.status).toBe(409);
+
+    const badLogin = await request("/api/user/token/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password: "wrong-password",
+      }),
+    });
+    expect(badLogin.response.status).toBe(401);
+
+    const login = await request("/api/user/token/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
+    expect(login.response.status).toBe(200);
+    expect(login.json.token).toEqual(expect.any(String));
+    expect(login.json.user.email).toBe(email);
+
+    const missingToken = await request("/api/user/me/");
+    expect(missingToken.response.status).toBe(401);
+
+    const me = await request("/api/user/me/", {
+      headers: {
+        Authorization: `Bearer ${login.json.token}`,
+      },
+    });
+    expect(me.response.status).toBe(200);
+    expect(me.json).toEqual(login.json.user);
+
+    const updatedEmail = `auth-updated-${unique}@example.com`;
+    const updated = await request("/api/user/me/", {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${login.json.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: updatedEmail,
+        name: "Updated User",
+      }),
+    });
+    expect(updated.response.status).toBe(200);
+    expect(updated.json).toEqual({
+      id: login.json.user.id,
+      email: updatedEmail,
+      name: "Updated User",
+    });
+
+    const relogin = await request("/api/user/token/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: updatedEmail,
+        password,
+      }),
+    });
+    expect(relogin.response.status).toBe(200);
+  });
+
   it("returns 404 for unknown routes", async () => {
     const missing = await request("/missing");
     expect(missing.response.status).toBe(404);

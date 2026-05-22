@@ -3,6 +3,7 @@ import { Canvas } from "@react-three/fiber";
 import { Link } from "react-router-dom";
 import Globe, { COUNTRIES } from "../components/Globe";
 import CountryPanel from "../components/CountryPanel";
+import { useAuth } from "../auth/AuthContext";
 import "../styles/landing.css";
 
 function GlobeLoader() {
@@ -15,6 +16,7 @@ function GlobeLoader() {
 }
 
 export default function LandingPage() {
+  const { user, logout } = useAuth();
   const [selectedCountry, setSelectedCountry]   = useState(null);
   const [showIntro, setShowIntro]               = useState(true);
 
@@ -44,6 +46,13 @@ export default function LandingPage() {
         </div>
         <nav className="landing-nav">
           <Link to="/recipes" className="landing-nav-link">Alle opskrifter</Link>
+          {user ? (
+            <button className="landing-nav-link landing-nav-button" onClick={logout}>
+              Log ud
+            </button>
+          ) : (
+            <Link to="/login" className="landing-nav-link">Log ind</Link>
+          )}
         </nav>
       </header>
 
