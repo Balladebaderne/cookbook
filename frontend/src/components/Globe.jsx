@@ -6,13 +6,13 @@ import * as THREE from "three";
 const RADIUS = 2.2;
 
 export const COUNTRIES = [
-  { id: "italy",    name: "Italien",  flag: "🇮🇹", lat: 42.5,  lng: 12.5,   color: "#FF4D4D" },
-  { id: "france",   name: "Frankrig", flag: "🇫🇷", lat: 46.6,  lng: 2.2,    color: "#5B9BD5" },
-  { id: "denmark",  name: "Danmark",  flag: "🇩🇰", lat: 55.7,  lng: 9.5,    color: "#FF6B6B" },
+  { id: "italy",    name: "Italy",    flag: "🇮🇹", lat: 42.5,  lng: 12.5,   color: "#FF4D4D" },
+  { id: "france",   name: "France",   flag: "🇫🇷", lat: 46.6,  lng: 2.2,    color: "#5B9BD5" },
+  { id: "denmark",  name: "Denmark",  flag: "🇩🇰", lat: 55.7,  lng: 9.5,    color: "#FF6B6B" },
   { id: "japan",    name: "Japan",    flag: "🇯🇵", lat: 36.2,  lng: 138.2,  color: "#FF4D6A" },
   { id: "mexico",   name: "Mexico",   flag: "🇲🇽", lat: 23.6,  lng: -102.5, color: "#4DCB8A" },
-  { id: "india",    name: "Indien",   flag: "🇮🇳", lat: 20.6,  lng: 79.0,   color: "#FFB347" },
-  { id: "morocco",  name: "Marokko",  flag: "🇲🇦", lat: 31.8,  lng: -7.1,   color: "#E85D5D" },
+  { id: "india",    name: "India",    flag: "🇮🇳", lat: 20.6,  lng: 79.0,   color: "#FFB347" },
+  { id: "morocco",  name: "Morocco",  flag: "🇲🇦", lat: 31.8,  lng: -7.1,   color: "#E85D5D" },
   { id: "thailand", name: "Thailand", flag: "🇹🇭", lat: 15.9,  lng: 100.9,  color: "#47A0FF" },
 ];
 

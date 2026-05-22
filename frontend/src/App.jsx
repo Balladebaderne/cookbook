@@ -17,20 +17,20 @@ function RecipeLayout({ children }) {
             ✦ Cookbook
           </Link>
           <nav>
-            <Link to="/recipes" className="nav-link">Opskrifter</Link>
+            <Link to="/recipes" className="nav-link">Recipes</Link>
             {user ? (
               <div className="nav-actions">
                 <span className="nav-user">{user.name || user.email}</span>
                 <button className="btn-secondary" onClick={logout}>
-                  Log ud
+                  Log out
                 </button>
                 <button className="btn-primary" onClick={() => navigate("/recipes/new")}>
-                  + Ny opskrift
+                  + New recipe
                 </button>
               </div>
             ) : (
               <button className="btn-primary" onClick={() => navigate("/login")}>
-                Log ind
+                Log in
               </button>
             )}
           </nav>
@@ -49,7 +49,7 @@ function RequireAuth({ children }) {
     return (
       <RecipeLayout>
         <main className="main">
-          <div className="loading"><div className="spinner" /> Henter bruger...</div>
+          <div className="loading"><div className="spinner" /> Loading user...</div>
         </main>
       </RecipeLayout>
     );

@@ -3,12 +3,12 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import RecipeList from "../pages/RecipeList";
 
-// Mock API-laget så testen aldrig rammer netværket
+// Mock the API layer so the test never hits the network
 vi.mock("../api/recipes", () => ({
   listRecipes: vi.fn(),
 }));
 
-// Hent mock-referencen EFTER vi.mock er sat op
+// Grab the mock reference AFTER vi.mock is set up
 import { listRecipes } from "../api/recipes";
 
 describe("RecipeList", () => {
@@ -16,8 +16,8 @@ describe("RecipeList", () => {
     vi.clearAllMocks();
   });
 
-  it("viser loading-state med det samme", () => {
-    // Returner et løfte der aldrig resolverer → spinner forbliver synlig
+  it("shows the loading state immediately", () => {
+    // Return a promise that never resolves → the spinner stays visible
     listRecipes.mockReturnValue(new Promise(() => {}));
 
     render(
@@ -26,16 +26,16 @@ describe("RecipeList", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText(/Henter opskrifter/i)).toBeInTheDocument();
+    expect(screen.getByText(/Loading recipes/i)).toBeInTheDocument();
   });
 
-  it("viser opskrifter når API-kaldet lykkes", async () => {
+  it("shows recipes when the API call succeeds", async () => {
     listRecipes.mockResolvedValue([
       {
         id: 1,
         title: "Pasta Bolognese",
-        tags: [{ id: 1, name: "Italiensk" }],
-        ingredients: [{ name: "Spaghetti" }, { name: "Hakket oksekød" }],
+        tags: [{ id: 1, name: "Italian" }],
+        ingredients: [{ name: "Spaghetti" }, { name: "Ground beef" }],
         time_minutes: 30,
         price: null,
         image: null,
@@ -52,11 +52,11 @@ describe("RecipeList", () => {
       expect(screen.getByText("Pasta Bolognese")).toBeInTheDocument();
     });
 
-    // Tagget vises både i filter-bjælken og på kortet — brug getAllByText
-    expect(screen.getAllByText("Italiensk").length).toBeGreaterThan(0);
+    // The tag appears both in the filter bar and on the card — use getAllByText
+    expect(screen.getAllByText("Italian").length).toBeGreaterThan(0);
   });
 
-  it("viser fejlbesked når API-kaldet fejler", async () => {
+  it("shows an error message when the API call fails", async () => {
     listRecipes.mockRejectedValue(new Error("Network error"));
 
     render(
@@ -67,12 +67,12 @@ describe("RecipeList", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Kunne ikke hente opskrifter/i)
+        screen.getByText(/Could not load recipes/i)
       ).toBeInTheDocument();
     });
   });
 
-  it("viser \"Ingen opskrifter endnu\" når listen er tom", async () => {
+  it("shows \"No recipes yet\" when the list is empty", async () => {
     listRecipes.mockResolvedValue([]);
 
     render(
@@ -82,7 +82,7 @@ describe("RecipeList", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText(/Ingen opskrifter endnu/i)).toBeInTheDocument();
+      expect(screen.getByText(/No recipes yet/i)).toBeInTheDocument();
     });
   });
 });

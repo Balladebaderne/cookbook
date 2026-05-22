@@ -13,7 +13,7 @@ export default function RecipeList() {
   useEffect(() => {
     listRecipes()
       .then(data => { setRecipes(data); setLoading(false); })
-      .catch(() => { setError("Kunne ikke hente opskrifter."); setLoading(false); });
+      .catch(() => { setError("Could not load recipes."); setLoading(false); });
   }, []);
 
   const allTags = useMemo(() => {
@@ -33,14 +33,14 @@ export default function RecipeList() {
   return (
     <main className="main">
       <button className="back-btn" onClick={() => navigate("/")}>
-        ← Verdenskøkkenet
+        ← World Cuisine
       </button>
 
       <div className="section-header">
-        <h1 className="section-title-lg">Alle opskrifter</h1>
+        <h1 className="section-title-lg">All recipes</h1>
         {!loading && (
           <span className="section-count">
-            {filtered.length} {filtered.length === 1 ? "opskrift" : "opskrifter"}
+            {filtered.length} {filtered.length === 1 ? "recipe" : "recipes"}
           </span>
         )}
       </div>
@@ -49,7 +49,7 @@ export default function RecipeList() {
         <div className="search-wrap">
           <input
             type="text"
-            placeholder="Søg i opskrifter eller tags…"
+            placeholder="Search recipes or tags…"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -60,7 +60,7 @@ export default function RecipeList() {
               className={`tag-filter-btn${!activeTag ? " active" : ""}`}
               onClick={() => setActiveTag(null)}
             >
-              Alle
+              All
             </button>
             {allTags.map(tag => (
               <button
@@ -75,14 +75,14 @@ export default function RecipeList() {
         )}
       </div>
 
-      {loading && <div className="loading"><div className="spinner" /> Henter opskrifter…</div>}
+      {loading && <div className="loading"><div className="spinner" /> Loading recipes…</div>}
       {error && <div className="error-msg">{error}</div>}
 
       {!loading && !error && filtered.length === 0 && (
         <div className="empty">
           <div className="empty-icon">🍽</div>
-          <h3>{search || activeTag ? "Ingen resultater" : "Ingen opskrifter endnu"}</h3>
-          <p>{search || activeTag ? "Prøv et andet søgeord eller filter" : "Tilføj din første opskrift!"}</p>
+          <h3>{search || activeTag ? "No results" : "No recipes yet"}</h3>
+          <p>{search || activeTag ? "Try a different search term or filter" : "Add your first recipe!"}</p>
         </div>
       )}
 
@@ -112,7 +112,7 @@ export default function RecipeList() {
                 {recipe.ingredients?.length > 0 && (
                   <p className="card-ingredients">
                     {recipe.ingredients.slice(0, 4).map(i => i.name).join(", ")}
-                    {recipe.ingredients.length > 4 && ` +${recipe.ingredients.length - 4} mere`}
+                    {recipe.ingredients.length > 4 && ` +${recipe.ingredients.length - 4} more`}
                   </p>
                 )}
                 <div className="card-footer">
