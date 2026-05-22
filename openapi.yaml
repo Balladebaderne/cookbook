@@ -16,6 +16,7 @@ tags:
   - name: Recipes
   - name: Ingredients
   - name: Tags
+  - name: Users
 
 paths:
   /health:
@@ -81,6 +82,8 @@ paths:
       summary: Create a new recipe
       operationId: createRecipe
       tags: [Recipes]
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -94,6 +97,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Recipe'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -145,6 +150,8 @@ paths:
       summary: Update a recipe
       operationId: updateRecipe
       tags: [Recipes]
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/RecipeId'
       requestBody:
@@ -160,6 +167,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Recipe'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -169,11 +178,15 @@ paths:
       summary: Delete a recipe
       operationId: deleteRecipe
       tags: [Recipes]
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/RecipeId'
       responses:
         '204':
           description: Recipe deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -211,7 +224,110 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
+  /api/user/create/:
+    post:
+      summary: Create a user account
+      operationId: createUser
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created and token returned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/user/token/:
+    post:
+      summary: Log in and get an authentication token
+      operationId: createUserToken
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthRequest'
+      responses:
+        '200':
+          description: Token created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+  /api/user/me/:
+    get:
+      summary: Get the authenticated user
+      operationId: getCurrentUser
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
+    put:
+      summary: Update the authenticated user
+      operationId: updateCurrentUser
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: Updated authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   parameters:
     RecipeId:
       name: id
@@ -223,6 +339,24 @@ components:
         example: 1
 
   responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     NotFound:
       description: Resource not found
       content:
@@ -351,6 +485,74 @@ components:
         name:
           type: string
           example: Italian
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        email:
+          type: string
+          format: email
+          example: anna@example.com
+        name:
+          type: string
+          example: Anna Jensen
+
+    CreateUserRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: anna@example.com
+        name:
+          type: string
+          example: Anna Jensen
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: correct-horse-battery
+
+    AuthRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: anna@example.com
+        password:
+          type: string
+          format: password
+          example: correct-horse-battery
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        user:
+          $ref: '#/components/schemas/User'
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: anna@example.com
+        name:
+          type: string
+          example: Anna Jensen
 
     Error:
       type: object

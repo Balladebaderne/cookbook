@@ -21,6 +21,17 @@ export async function initDb() {
       )
     `);
 
+    await db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id ${idColumn},
+        email TEXT NOT NULL UNIQUE,
+        name TEXT,
+        password_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     // Add country column to existing databases that were created before this column existed
     if (db.dialect === "postgres") {
       await db.exec("ALTER TABLE recipes ADD COLUMN IF NOT EXISTS country TEXT");

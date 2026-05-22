@@ -48,6 +48,25 @@ async function request(path, init) {
   return { response, text, json };
 }
 
+async function createAuthHeaders() {
+  const unique = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const created = await request("/api/user/create/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: `recipe-auth-${unique}@example.com`,
+      password: "correct-password",
+      name: "Recipe Editor",
+    }),
+  });
+
+  return {
+    Authorization: `Bearer ${created.json.token}`,
+  };
+}
+
 describe("backend HTTP server", () => {
   it("serves health and API metadata endpoints", async () => {
     const health = await request("/health/");
@@ -97,7 +116,52 @@ describe("backend HTTP server", () => {
     expect(Array.isArray(tags.json)).toBe(true);
   });
 
+  it("requires authentication for recipe mutations", async () => {
+    const payload = {
+      title: `Unauthorized Recipe ${Date.now()}`,
+      description: "should not be created",
+      time_minutes: 10,
+      price: "10",
+    };
+    const recipes = await request("/api/recipe/recipes/");
+    const recipeId = recipes.json[0].id;
+
+    const create = await request("/api/recipe/recipes/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    expect(create.response.status).toBe(401);
+
+    const invalidToken = await request("/api/recipe/recipes/", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer not-a-real-token",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    expect(invalidToken.response.status).toBe(401);
+
+    const update = await request(`/api/recipe/recipes/${recipeId}/`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    expect(update.response.status).toBe(401);
+
+    const deleted = await request(`/api/recipe/recipes/${recipeId}/`, {
+      method: "DELETE",
+    });
+    expect(deleted.response.status).toBe(401);
+  });
+
   it("supports recipe CRUD through the node:http routing layer", async () => {
+    const authHeaders = await createAuthHeaders();
     const payload = {
       title: `HTTP Test Recipe ${Date.now()}`,
       description: "created through http server test",
@@ -113,6 +177,7 @@ describe("backend HTTP server", () => {
     const created = await request("/api/recipe/recipes/", {
       method: "POST",
       headers: {
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
@@ -141,6 +206,7 @@ describe("backend HTTP server", () => {
     const updated = await request(`/api/recipe/recipes/${recipeId}/`, {
       method: "PUT",
       headers: {
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(updatedPayload),
@@ -153,6 +219,7 @@ describe("backend HTTP server", () => {
 
     const deleted = await request(`/api/recipe/recipes/${recipeId}/`, {
       method: "DELETE",
+      headers: authHeaders,
     });
     expect(deleted.response.status).toBe(204);
     expect(deleted.text).toBe("");
@@ -165,9 +232,11 @@ describe("backend HTTP server", () => {
   });
 
   it("returns 400 for invalid payloads", async () => {
+    const authHeaders = await createAuthHeaders();
     const missingTitle = await request("/api/recipe/recipes/", {
       method: "POST",
       headers: {
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ description: "missing title" }),
@@ -188,6 +257,114 @@ describe("backend HTTP server", () => {
     expect(invalidJson.json).toEqual({
       error: "Invalid JSON body.",
     });
+  });
+
+  it("supports user registration, login, and authenticated profile updates", async () => {
+    const unique = Date.now();
+    const email = `auth-${unique}@example.com`;
+    const password = "correct-password";
+
+    const created = await request("/api/user/create/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        name: "Test User",
+      }),
+    });
+
+    expect(created.response.status).toBe(201);
+    expect(created.json.token).toEqual(expect.any(String));
+    expect(created.json.user).toEqual({
+      id: expect.any(Number),
+      email,
+      name: "Test User",
+    });
+    expect(JSON.stringify(created.json)).not.toContain(password);
+
+    const duplicate = await request("/api/user/create/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        name: "Duplicate",
+      }),
+    });
+    expect(duplicate.response.status).toBe(409);
+
+    const badLogin = await request("/api/user/token/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password: "wrong-password",
+      }),
+    });
+    expect(badLogin.response.status).toBe(401);
+
+    const login = await request("/api/user/token/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
+    expect(login.response.status).toBe(200);
+    expect(login.json.token).toEqual(expect.any(String));
+    expect(login.json.user.email).toBe(email);
+
+    const missingToken = await request("/api/user/me/");
+    expect(missingToken.response.status).toBe(401);
+
+    const me = await request("/api/user/me/", {
+      headers: {
+        Authorization: `Bearer ${login.json.token}`,
+      },
+    });
+    expect(me.response.status).toBe(200);
+    expect(me.json).toEqual(login.json.user);
+
+    const updatedEmail = `auth-updated-${unique}@example.com`;
+    const updated = await request("/api/user/me/", {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${login.json.token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: updatedEmail,
+        name: "Updated User",
+      }),
+    });
+    expect(updated.response.status).toBe(200);
+    expect(updated.json).toEqual({
+      id: login.json.user.id,
+      email: updatedEmail,
+      name: "Updated User",
+    });
+
+    const relogin = await request("/api/user/token/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: updatedEmail,
+        password,
+      }),
+    });
+    expect(relogin.response.status).toBe(200);
   });
 
   it("returns 404 for unknown routes", async () => {

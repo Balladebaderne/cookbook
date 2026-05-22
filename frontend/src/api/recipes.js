@@ -1,7 +1,16 @@
+import { getAuthToken } from "./auth";
+
 const BASE = "/api/recipe/recipes";
 
 async function request(url, options) {
-  const res = await fetch(url, options);
+  const token = getAuthToken();
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...options?.headers,
+    },
+  });
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   if (res.status === 204) return null;
   return res.json();
