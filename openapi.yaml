@@ -106,10 +106,10 @@ paths:
         - name: country
           in: path
           required: true
-          description: Country name (matches the recipes.country column)
+          description: Country slug (matches the recipes.country column)
           schema:
             type: string
-            example: Italien
+            example: italy
       responses:
         '200':
           description: List of recipes for that country
@@ -248,7 +248,7 @@ components:
           example: Spaghetti Carbonara
         description:
           type: string
-          example: En klassisk italiensk pastaret
+          example: A classic Italian pasta dish
         time_minutes:
           type: integer
           example: 25
@@ -263,8 +263,8 @@ components:
           items:
             type: string
           example:
-            - Kog spaghetti i saltet vand
-            - Steg pancetta
+            - Cook spaghetti in salted water
+            - Fry pancetta
         ingredients:
           type: array
           items:
@@ -317,7 +317,7 @@ components:
             properties:
               name:
                 type: string
-                example: Italiensk
+                example: Italian
 
     RecipeIngredient:
       type: object
@@ -350,7 +350,7 @@ components:
           type: integer
         name:
           type: string
-          example: Italiensk
+          example: Italian
 
     Error:
       type: object
