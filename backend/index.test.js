@@ -48,6 +48,25 @@ async function request(path, init) {
   return { response, text, json };
 }
 
+async function createAuthHeaders() {
+  const unique = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const created = await request("/api/user/create/", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: `recipe-auth-${unique}@example.com`,
+      password: "correct-password",
+      name: "Recipe Editor",
+    }),
+  });
+
+  return {
+    Authorization: `Bearer ${created.json.token}`,
+  };
+}
+
 describe("backend HTTP server", () => {
   it("serves health and API metadata endpoints", async () => {
     const health = await request("/health/");
@@ -97,7 +116,52 @@ describe("backend HTTP server", () => {
     expect(Array.isArray(tags.json)).toBe(true);
   });
 
+  it("requires authentication for recipe mutations", async () => {
+    const payload = {
+      title: `Unauthorized Recipe ${Date.now()}`,
+      description: "should not be created",
+      time_minutes: 10,
+      price: "10",
+    };
+    const recipes = await request("/api/recipe/recipes/");
+    const recipeId = recipes.json[0].id;
+
+    const create = await request("/api/recipe/recipes/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    expect(create.response.status).toBe(401);
+
+    const invalidToken = await request("/api/recipe/recipes/", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer not-a-real-token",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    expect(invalidToken.response.status).toBe(401);
+
+    const update = await request(`/api/recipe/recipes/${recipeId}/`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    expect(update.response.status).toBe(401);
+
+    const deleted = await request(`/api/recipe/recipes/${recipeId}/`, {
+      method: "DELETE",
+    });
+    expect(deleted.response.status).toBe(401);
+  });
+
   it("supports recipe CRUD through the node:http routing layer", async () => {
+    const authHeaders = await createAuthHeaders();
     const payload = {
       title: `HTTP Test Recipe ${Date.now()}`,
       description: "created through http server test",
@@ -113,6 +177,7 @@ describe("backend HTTP server", () => {
     const created = await request("/api/recipe/recipes/", {
       method: "POST",
       headers: {
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
@@ -141,6 +206,7 @@ describe("backend HTTP server", () => {
     const updated = await request(`/api/recipe/recipes/${recipeId}/`, {
       method: "PUT",
       headers: {
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(updatedPayload),
@@ -153,6 +219,7 @@ describe("backend HTTP server", () => {
 
     const deleted = await request(`/api/recipe/recipes/${recipeId}/`, {
       method: "DELETE",
+      headers: authHeaders,
     });
     expect(deleted.response.status).toBe(204);
     expect(deleted.text).toBe("");
@@ -165,9 +232,11 @@ describe("backend HTTP server", () => {
   });
 
   it("returns 400 for invalid payloads", async () => {
+    const authHeaders = await createAuthHeaders();
     const missingTitle = await request("/api/recipe/recipes/", {
       method: "POST",
       headers: {
+        ...authHeaders,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ description: "missing title" }),

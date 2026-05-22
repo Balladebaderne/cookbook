@@ -82,6 +82,8 @@ paths:
       summary: Create a new recipe
       operationId: createRecipe
       tags: [Recipes]
+      security:
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -95,6 +97,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Recipe'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/ServerError'
 
@@ -146,6 +150,8 @@ paths:
       summary: Update a recipe
       operationId: updateRecipe
       tags: [Recipes]
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/RecipeId'
       requestBody:
@@ -161,6 +167,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Recipe'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -170,11 +178,15 @@ paths:
       summary: Delete a recipe
       operationId: deleteRecipe
       tags: [Recipes]
+      security:
+        - bearerAuth: []
       parameters:
         - $ref: '#/components/parameters/RecipeId'
       responses:
         '204':
           description: Recipe deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/ServerError'
 
