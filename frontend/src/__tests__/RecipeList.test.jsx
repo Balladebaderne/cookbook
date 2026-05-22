@@ -1,22 +1,22 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
-import RecipeList from '../pages/RecipeList';
+import { render, screen, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter } from "react-router-dom";
+import RecipeList from "../pages/RecipeList";
 
 // Mock API-laget så testen aldrig rammer netværket
-vi.mock('../api/recipes', () => ({
+vi.mock("../api/recipes", () => ({
   listRecipes: vi.fn(),
 }));
 
 // Hent mock-referencen EFTER vi.mock er sat op
-import { listRecipes } from '../api/recipes';
+import { listRecipes } from "../api/recipes";
 
-describe('RecipeList', () => {
+describe("RecipeList", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('viser loading-state med det samme', () => {
+  it("viser loading-state med det samme", () => {
     // Returner et løfte der aldrig resolverer → spinner forbliver synlig
     listRecipes.mockReturnValue(new Promise(() => {}));
 
@@ -29,13 +29,13 @@ describe('RecipeList', () => {
     expect(screen.getByText(/Henter opskrifter/i)).toBeInTheDocument();
   });
 
-  it('viser opskrifter når API-kaldet lykkes', async () => {
+  it("viser opskrifter når API-kaldet lykkes", async () => {
     listRecipes.mockResolvedValue([
       {
         id: 1,
-        title: 'Pasta Bolognese',
-        tags: [{ id: 1, name: 'Italiensk' }],
-        ingredients: [{ name: 'Spaghetti' }, { name: 'Hakket oksekød' }],
+        title: "Pasta Bolognese",
+        tags: [{ id: 1, name: "Italiensk" }],
+        ingredients: [{ name: "Spaghetti" }, { name: "Hakket oksekød" }],
         time_minutes: 30,
         price: null,
         image: null,
@@ -49,15 +49,15 @@ describe('RecipeList', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('Pasta Bolognese')).toBeInTheDocument();
+      expect(screen.getByText("Pasta Bolognese")).toBeInTheDocument();
     });
 
     // Tagget vises både i filter-bjælken og på kortet — brug getAllByText
-    expect(screen.getAllByText('Italiensk').length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Italiensk").length).toBeGreaterThan(0);
   });
 
-  it('viser fejlbesked når API-kaldet fejler', async () => {
-    listRecipes.mockRejectedValue(new Error('Network error'));
+  it("viser fejlbesked når API-kaldet fejler", async () => {
+    listRecipes.mockRejectedValue(new Error("Network error"));
 
     render(
       <MemoryRouter>
@@ -72,7 +72,7 @@ describe('RecipeList', () => {
     });
   });
 
-  it('viser "Ingen opskrifter endnu" når listen er tom', async () => {
+  it("viser \"Ingen opskrifter endnu\" når listen er tom", async () => {
     listRecipes.mockResolvedValue([]);
 
     render(
