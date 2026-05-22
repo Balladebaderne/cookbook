@@ -1,4 +1,5 @@
 import * as recipes from "../services/recipes.js";
+import { requireAuth } from "../middleware/auth.js";
 import { HttpError } from "../middleware/error.js";
 import { sendJson, sendNoContent } from "../http/responses.js";
 import { defineRoute } from "../http/router.js";
@@ -8,13 +9,13 @@ export default [
     sendJson(res, 200, await recipes.listRecipes());
   }),
 
-  defineRoute("POST", "/api/recipe/recipes", async ({ res, body }) => {
+  defineRoute("POST", "/api/recipe/recipes", requireAuth(async ({ res, body }) => {
     const data = body || {};
     if (!data.title?.trim()) throw new HttpError(400, "Opskriften skal have et navn.");
 
     const id = await recipes.createRecipe(data);
     sendJson(res, 201, { id, ...data });
-  }),
+  })),
 
   defineRoute("GET", "/api/recipe/recipes/country/:country", async ({ res, params }) => {
     sendJson(res, 200, await recipes.listRecipesByCountry(params.country));
@@ -27,7 +28,7 @@ export default [
     sendJson(res, 200, recipe);
   }),
 
-  defineRoute("PUT", "/api/recipe/recipes/:id", async ({ res, params, body }) => {
+  defineRoute("PUT", "/api/recipe/recipes/:id", requireAuth(async ({ res, params, body }) => {
     const id = Number(params.id);
     const data = body || {};
     if (!data.title?.trim()) throw new HttpError(400, "Opskriften skal have et navn.");
@@ -36,12 +37,12 @@ export default [
     if (!ok) throw new HttpError(404, "Opskriften blev ikke fundet.");
 
     sendJson(res, 200, { id, ...data });
-  }),
+  })),
 
-  defineRoute("DELETE", "/api/recipe/recipes/:id", async ({ res, params }) => {
+  defineRoute("DELETE", "/api/recipe/recipes/:id", requireAuth(async ({ res, params }) => {
     await recipes.deleteRecipe(Number(params.id));
     sendNoContent(res);
-  }),
+  })),
 
   defineRoute("GET", "/api/recipe/ingredients", async ({ res }) => {
     sendJson(res, 200, await recipes.listIngredients());

@@ -50,6 +50,8 @@ describe("db/index Postgres SQL adapter", () => {
   it("adds RETURNING id to inserts that need generated ids", () => {
     expect(sqlWithReturningId("INSERT INTO recipes (title) VALUES (?)"))
       .toBe("INSERT INTO recipes (title) VALUES (?) RETURNING id");
+    expect(sqlWithReturningId("INSERT INTO users (email) VALUES (?)"))
+      .toBe("INSERT INTO users (email) VALUES (?) RETURNING id");
     expect(sqlWithReturningId("INSERT INTO ingredients (name) VALUES (?) RETURNING id"))
       .toBe("INSERT INTO ingredients (name) VALUES (?) RETURNING id");
     expect(sqlWithReturningId("INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)"))

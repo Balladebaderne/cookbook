@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getRecipe, deleteRecipe } from "../api/recipes";
+import { useAuth } from "../auth/AuthContext";
 
 export default function RecipeDetail() {
   const { id }       = useParams();
   const navigate     = useNavigate();
+  const { user }     = useAuth();
   const [recipe, setRecipe]   = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
@@ -69,15 +71,19 @@ export default function RecipeDetail() {
       )}
 
       <div className="detail-actions">
-        <button
-          className="btn-primary"
-          onClick={() => navigate(`/recipes/${id}/edit`, { state: { recipe } })}
-        >
-          ✏ Rediger
-        </button>
-        <button className="btn-danger" onClick={handleDelete}>
-          🗑 Slet
-        </button>
+        {user && (
+          <>
+            <button
+              className="btn-primary"
+              onClick={() => navigate(`/recipes/${id}/edit`, { state: { recipe } })}
+            >
+              Rediger
+            </button>
+            <button className="btn-danger" onClick={handleDelete}>
+              Slet
+            </button>
+          </>
+        )}
         {recipe.link && (
           <a href={recipe.link} target="_blank" rel="noopener noreferrer" className="recipe-link">
             ↗ Originalkilde

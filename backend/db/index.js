@@ -41,7 +41,7 @@ export function toPostgresSql(sql) {
 
 export function sqlWithReturningId(sql) {
   if (/returning\s+/i.test(sql)) return sql;
-  if (!/^\s*insert\s+into\s+(recipes|ingredients|tags)\b/i.test(sql)) return sql;
+  if (!/^\s*insert\s+into\s+(recipes|ingredients|tags|users)\b/i.test(sql)) return sql;
   return `${sql.trim().replace(/;$/, "")} RETURNING id`;
 }
 
