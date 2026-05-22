@@ -44,6 +44,20 @@ docker compose --profile dev down            # stop
 - Backend API: http://localhost:3000/api
 - Swagger: http://localhost:3000/apidocs
 
+## Authentication
+
+The app supports user registration, login, JWT-backed sessions, and protected
+recipe write routes. Users can browse recipes without logging in, but creating,
+editing, and deleting recipes requires:
+
+```text
+Authorization: Bearer <jwt>
+```
+
+The implementation is documented in [`docs/authentication.md`](./docs/authentication.md),
+including endpoint examples, frontend token storage, backend middleware flow,
+and local curl tests.
+
 ## Linting
 
 ESLint is configured for both backend and frontend.
