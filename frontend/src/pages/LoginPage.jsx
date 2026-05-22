@@ -56,21 +56,21 @@ export default function LoginPage() {
             className={`auth-tab${!isRegister ? " active" : ""}`}
             onClick={() => { setMode("login"); setError(""); }}
           >
-            Log ind
+            Log in
           </button>
           <button
             type="button"
             className={`auth-tab${isRegister ? " active" : ""}`}
             onClick={() => { setMode("register"); setError(""); }}
           >
-            Opret bruger
+            Create account
           </button>
         </div>
 
         <form onSubmit={submit} className="auth-form">
           {isRegister && (
             <div className="form-group">
-              <label htmlFor="name">Navn</label>
+              <label htmlFor="name">Name</label>
               <input
                 id="name"
                 type="text"
@@ -109,7 +109,7 @@ export default function LoginPage() {
           {error && <div className="error-msg">{error}</div>}
 
           <button className="btn-primary auth-submit" type="submit" disabled={saving}>
-            {saving ? "Gemmer..." : isRegister ? "Opret bruger" : "Log ind"}
+            {saving ? "Saving..." : isRegister ? "Create account" : "Log in"}
           </button>
         </form>
       </section>
