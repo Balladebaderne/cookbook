@@ -199,74 +199,74 @@ For three-VM operations, rollback, and database migration constraints, see
 
 ## Monitoring (Prometheus + Grafana)
 
-> **Forudsætning:** Monitoring-stacken kræver, at hoved-app-stacken kører først,
-> fordi Prometheus og Grafana deler `cookbook-network` med backend-containeren.
+> **Prerequisite:** The monitoring stack requires the main app stack to be
+> running first, because Prometheus and Grafana share `cookbook-network` with
+> the backend container.
 
-### Start monitoring-stacken
+### Starting the monitoring stack
 
 ```bash
-# 1. Start hovedappen (opretter cookbook-network)
+# 1. Start the main app (creates cookbook-network)
 docker compose --profile dev up -d
 
-# 2. Start monitoring-stacken ovenpå
+# 2. Start the monitoring stack on top
 docker compose -f docker-compose.monitoring.yml up -d
 ```
 
-### URL'er
+### URLs
 
-| Miljø | Grafana | Prometheus |
-|-------|---------|------------|
-| **Lokal** (via nginx) | http://localhost/grafana | http://localhost:9090 |
-| **Lokal** (direkte) | http://localhost:3001 | http://localhost:9090 |
-| **Prod VM** | `http://<VM_IP>/grafana` | Kun internt (ikke eksponeret) |
+| Environment | Grafana | Prometheus |
+|-------------|---------|------------|
+| **Local** (via nginx) | http://localhost/grafana | http://localhost:9090 |
+| **Local** (direct) | http://localhost:3001 | http://localhost:9090 |
+| **Prod VM** | `http://<VM_IP>/grafana` | Internal only (not exposed) |
 
-### Login-credentials
+### Login credentials
 
-Grafana bruger miljøvariablerne `GF_ADMIN_USER` og `GF_ADMIN_PASSWORD` fra
-`.env`-filen (eller Docker-secrets i prod). Hvis de ikke er sat, falder den
-tilbage til standardværdierne:
+Grafana reads `GF_ADMIN_USER` and `GF_ADMIN_PASSWORD` from your `.env` file
+(or Docker secrets in prod). If neither is set, it falls back to the defaults:
 
-| Variabel | Standard |
-|----------|----------|
+| Variable | Default |
+|----------|---------|
 | `GF_ADMIN_USER` | `admin` |
 | `GF_ADMIN_PASSWORD` | `admin` |
 
-> ⚠️ **Skift adgangskoden ved første login i prod.** Sæt `GF_ADMIN_USER` og
-> `GF_ADMIN_PASSWORD` i din `.env` eller som GitHub Secret — commit dem aldrig.
-> Selvregistrering er slået fra (`GF_USERS_ALLOW_SIGN_UP=false`).
+> ⚠️ **Change the password on first login in prod.** Set `GF_ADMIN_USER` and
+> `GF_ADMIN_PASSWORD` in your `.env` or as a GitHub Secret — never commit them.
+> Self-registration is disabled (`GF_USERS_ALLOW_SIGN_UP=false`).
 
-### Metrics vi tracker
+### Metrics we track
 
-Dashboardet **"Cookbook — Application Overview"** provisjoneres automatisk og
-viser fire panels:
+The **"Cookbook — Application Overview"** dashboard is provisioned automatically
+and shows four panels:
 
-| Panel | PromQL-udtryk | Enhed |
-|-------|--------------|-------|
+| Panel | PromQL expression | Unit |
+|-------|------------------|------|
 | **Request Rate** | `sum by (method, route) (rate(http_request_duration_seconds_count[1m]))` | req/s |
-| **P95 Latency** | `histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket[5m])))` | sekunder |
+| **P95 Latency** | `histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket[5m])))` | seconds |
 | **5xx Error Rate** | `sum by (route) (rate(http_request_duration_seconds_count{status_code=~"5.."}[1m]))` | req/s |
 | **Container Up/Down** | `up` | UP / DOWN |
 
-Prometheus skraber `backend:3000/metrics` hvert **15. sekund** og gemmer data i
-**15 dage** (`--storage.tsdb.retention.time=15d`).
+Prometheus scrapes `backend:3000/metrics` every **15 seconds** and retains data
+for **15 days** (`--storage.tsdb.retention.time=15d`).
 
-### Hvorfor disse metrics
+### Why these metrics
 
-| Metric | Begrundelse |
-|--------|-------------|
-| **Request Rate** | Viser den aktuelle trafikbelastning fordelt på rute og HTTP-metode. Uventede spikes kan indikere fejl i klienten eller et angreb. |
-| **P95 Latency** | Fanger langsomme endpoints, som gennemsnittet ofte skjuler. Et p95 > 500 ms er typisk et signal om et ydelsesprob­lem, der påvirker slutbrugerne. |
-| **5xx Error Rate** | Server­fejl skal opdages hurtigt. En stigning her kan betyde en buggy deploy, en fuld disk eller en database-timeout. |
-| **Container Up/Down** | Bekræfter at Prometheus faktisk kan nå backend-containeren. Viser `DOWN` med det samme, hvis en container crasher eller slet ikke er startet. |
+| Metric | Rationale |
+|--------|-----------|
+| **Request Rate** | Shows the current traffic load broken down by route and HTTP method. Unexpected spikes can indicate client-side bugs or an attack. |
+| **P95 Latency** | Catches slow endpoints that the average often hides. A p95 > 500 ms is typically a signal of a performance problem affecting end users. |
+| **5xx Error Rate** | Server errors need to be caught quickly. A spike here can mean a bad deploy, a full disk, or a database timeout. |
+| **Container Up/Down** | Confirms that Prometheus can actually reach the backend container. Shows `DOWN` immediately if a container crashes or was never started. |
 
-### Stop monitoring-stacken
+### Stopping the monitoring stack
 
 ```bash
 docker compose -f docker-compose.monitoring.yml down
 ```
 
-Data persisteres i Docker volumes (`prometheus_data`, `grafana_data`) og
-overlever en genstart.
+Data is persisted in Docker volumes (`prometheus_data`, `grafana_data`) and
+survives a restart.
 
 ---
 
