@@ -197,6 +197,79 @@ for the full flow and the `FORCE=1` override.
 For three-VM operations, rollback, and database migration constraints, see
 [`deploy/README-blue-green.md`](./deploy/README-blue-green.md).
 
+## Monitoring (Prometheus + Grafana)
+
+> **Prerequisite:** The monitoring stack requires the main app stack to be
+> running first, because Prometheus and Grafana share `cookbook-network` with
+> the backend container.
+
+### Starting the monitoring stack
+
+```bash
+# 1. Start the main app (creates cookbook-network)
+docker compose --profile dev up -d
+
+# 2. Start the monitoring stack on top
+docker compose -f docker-compose.monitoring.yml up -d
+```
+
+### URLs
+
+| Environment | Grafana | Prometheus |
+|-------------|---------|------------|
+| **Local** (via nginx) | http://localhost/grafana | http://localhost:9090 |
+| **Local** (direct) | http://localhost:3001 | http://localhost:9090 |
+| **Prod VM** | `http://<VM_IP>/grafana` | Internal only (not exposed) |
+
+### Login credentials
+
+Grafana reads `GF_ADMIN_USER` and `GF_ADMIN_PASSWORD` from your `.env` file
+(or Docker secrets in prod). If neither is set, it falls back to the defaults:
+
+| Variable | Default |
+|----------|---------|
+| `GF_ADMIN_USER` | `admin` |
+| `GF_ADMIN_PASSWORD` | `admin` |
+
+> ⚠️ **Change the password on first login in prod.** Set `GF_ADMIN_USER` and
+> `GF_ADMIN_PASSWORD` in your `.env` or as a GitHub Secret — never commit them.
+> Self-registration is disabled (`GF_USERS_ALLOW_SIGN_UP=false`).
+
+### Metrics we track
+
+The **"Cookbook — Application Overview"** dashboard is provisioned automatically
+and shows four panels:
+
+| Panel | PromQL expression | Unit |
+|-------|------------------|------|
+| **Request Rate** | `sum by (method, route) (rate(http_request_duration_seconds_count[1m]))` | req/s |
+| **P95 Latency** | `histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket[5m])))` | seconds |
+| **5xx Error Rate** | `sum by (route) (rate(http_request_duration_seconds_count{status_code=~"5.."}[1m]))` | req/s |
+| **Container Up/Down** | `up` | UP / DOWN |
+
+Prometheus scrapes `backend:3000/metrics` every **15 seconds** and retains data
+for **15 days** (`--storage.tsdb.retention.time=15d`).
+
+### Why these metrics
+
+| Metric | Rationale |
+|--------|-----------|
+| **Request Rate** | Shows the current traffic load broken down by route and HTTP method. Unexpected spikes can indicate client-side bugs or an attack. |
+| **P95 Latency** | Catches slow endpoints that the average often hides. A p95 > 500 ms is typically a signal of a performance problem affecting end users. |
+| **5xx Error Rate** | Server errors need to be caught quickly. A spike here can mean a bad deploy, a full disk, or a database timeout. |
+| **Container Up/Down** | Confirms that Prometheus can actually reach the backend container. Shows `DOWN` immediately if a container crashes or was never started. |
+
+### Stopping the monitoring stack
+
+```bash
+docker compose -f docker-compose.monitoring.yml down
+```
+
+Data is persisted in Docker volumes (`prometheus_data`, `grafana_data`) and
+survives a restart.
+
+---
+
 ## For contributors
 
 See [`AGENTS.md`](./AGENTS.md) for branching rules, the security gate,
