@@ -9,9 +9,6 @@ RUN npm ci --omit=dev
 # Copy the rest of the backend source
 COPY backend/ ./
 
-# Create data directory for SQLite
-RUN mkdir -p /app/data
-
 # Copy the OpenAPI spec into the runtime image so `index.js` can find it
 COPY openapi.yaml /app/
 

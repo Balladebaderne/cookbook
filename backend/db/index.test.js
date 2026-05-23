@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  hasPostgresConfig,
   postgresConfig,
   postgresStatement,
   PostgresDatabase,
@@ -9,12 +8,7 @@ import {
 } from "./index.js";
 
 describe("db/index Postgres configuration", () => {
-  it("keeps SQLite as the default when no Postgres env is present", () => {
-    expect(hasPostgresConfig({})).toBe(false);
-  });
-
-  it("selects Postgres when DATABASE_URL is present", () => {
-    expect(hasPostgresConfig({ DATABASE_URL: "postgres://user:pass@db/app" })).toBe(true);
+  it("uses DATABASE_URL as a connection string when present", () => {
     expect(postgresConfig({ DATABASE_URL: "postgres://user:pass@db/app" })).toEqual({
       connectionString: "postgres://user:pass@db/app",
     });
@@ -42,7 +36,7 @@ describe("db/index Postgres configuration", () => {
 });
 
 describe("db/index Postgres SQL adapter", () => {
-  it("converts SQLite placeholders to Postgres placeholders in order", () => {
+  it("converts `?` placeholders to Postgres placeholders in order", () => {
     expect(toPostgresSql("SELECT * FROM recipes WHERE country = ? AND id IN (?, ?)"))
       .toBe("SELECT * FROM recipes WHERE country = $1 AND id IN ($2, $3)");
   });

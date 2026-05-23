@@ -1,19 +1,6 @@
-import sqlite3 from "sqlite3";
 import pg from "pg";
-import path from "path";
-import { fileURLToPath } from "url";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Default fallback puts app.db in backend/ to match the pre-split layout.
-// In Docker, DB_PATH is set to /app/data/app.db so this fallback is unused.
-const DB_PATH = process.env.DB_PATH || path.join(__dirname, "..", "app.db");
 const POSTGRES_REQUIRED_ENV = ["POSTGRES_HOST", "POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD"];
-
-export function hasPostgresConfig(env = process.env) {
-  return Boolean(env.DATABASE_URL || POSTGRES_REQUIRED_ENV.some((name) => env[name]));
-}
 
 export function postgresConfig(env = process.env) {
   if (env.DATABASE_URL) {
@@ -34,79 +21,17 @@ export function postgresConfig(env = process.env) {
   };
 }
 
+// Queries are written with `?` placeholders; translate them to Postgres `$n`.
 export function toPostgresSql(sql) {
   let index = 0;
   return sql.replace(/\?/g, () => `$${++index}`);
 }
 
+// INSERTs need `RETURNING id` so run() can report the generated id.
 export function sqlWithReturningId(sql) {
   if (/returning\s+/i.test(sql)) return sql;
   if (!/^\s*insert\s+into\s+(recipes|ingredients|tags|users)\b/i.test(sql)) return sql;
   return `${sql.trim().replace(/;$/, "")} RETURNING id`;
-}
-
-class SQLiteDatabase {
-  constructor(filename) {
-    this.dialect = "sqlite";
-    this.db = new sqlite3.Database(filename, (err) => {
-      if (err) console.error("Database connection error:", err);
-      else console.log("Connected to SQLite database at", filename);
-    });
-    this.db.run("PRAGMA foreign_keys = ON");
-  }
-
-  prepare(sql) {
-    return {
-      run: (...params) => new Promise((resolve, reject) => {
-        this.db.run(sql, params, function(err) {
-          if (err) reject(err);
-          else resolve({ lastInsertRowid: this.lastID, lastID: this.lastID });
-        });
-      }),
-      all: (...params) => new Promise((resolve, reject) => {
-        this.db.all(sql, params, (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows || []);
-        });
-      }),
-      get: (...params) => new Promise((resolve, reject) => {
-        this.db.get(sql, params, (err, row) => {
-          if (err) reject(err);
-          else resolve(row);
-        });
-      })
-    };
-  }
-
-  exec(sql) {
-    return new Promise((resolve, reject) => {
-      this.db.exec(sql, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-  }
-
-  async transaction(callback) {
-    await this.exec("BEGIN TRANSACTION");
-    try {
-      const result = await callback(this);
-      await this.exec("COMMIT");
-      return result;
-    } catch (err) {
-      await this.exec("ROLLBACK").catch(() => {});
-      throw err;
-    }
-  }
-
-  close() {
-    return new Promise((resolve, reject) => {
-      this.db.close((err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-  }
 }
 
 export class PostgresDatabase {
@@ -183,11 +108,4 @@ export function postgresStatement(queryable, sql) {
   };
 }
 
-const selectedDb = hasPostgresConfig()
-  ? new PostgresDatabase(postgresConfig())
-  : (() => {
-    console.log("DB_PATH:", DB_PATH);
-    return new SQLiteDatabase(DB_PATH);
-  })();
-
-export const db = selectedDb;
+export const db = new PostgresDatabase(postgresConfig());
