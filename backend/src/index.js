@@ -30,7 +30,7 @@ const httpRequestDuration = new client.Histogram({
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Load OpenAPI spec
-const swaggerDocument = YAML.load(path.join(__dirname, "..", "openapi.yaml"));
+const swaggerDocument = YAML.load(path.join(__dirname, "..", "..", "openapi.yaml"));
 
 function createRoutes() {
   return [

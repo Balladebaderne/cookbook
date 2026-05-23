@@ -16,11 +16,14 @@ GitHub Actions, GitHub Container Registry
 ```text
 cookbook/
 ├── backend/                       # Node HTTP API (node:http) + Dockerfile
-│   ├── db/                        # connection, schema, seed
-│   ├── http/                      # router, responses, swagger
-│   ├── routes/                    # route definitions
-│   ├── services/                  # recipes + users domain logic
-│   └── middleware/                # auth + error handling
+│   ├── src/                       # application source
+│   │   ├── index.js               # server bootstrap + routing
+│   │   ├── db/                    # connection, schema, seed, queries
+│   │   ├── http/                  # router, responses, swagger
+│   │   ├── routes/                # route definitions
+│   │   ├── services/              # recipes + users domain logic
+│   │   └── middleware/            # auth + error handling
+│   └── test/                      # cross-cutting tests (blue-green deploy script)
 ├── frontend/                      # React (Vite) + nginx Dockerfile
 ├── infrastructure/                # Azure provisioning scripts (three-VM)
 │   ├── create_three_vms.sh        # nginx + backend + database VM setup

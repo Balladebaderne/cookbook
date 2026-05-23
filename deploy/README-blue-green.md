@@ -109,7 +109,7 @@ setup — data lives in the named volume `cookbook_pgdata`
 CI flow, so an app deploy never risks the database.
 
 The app creates its schema and seeds itself on first boot
-([`backend/db/schema.js`](../backend/db/schema.js) runs `CREATE TABLE IF NOT
+([`backend/src/db/schema.js`](../backend/src/db/schema.js) runs `CREATE TABLE IF NOT
 EXISTS` + seeds when empty), so **no manual schema load or migration is
 needed** — only an empty database and a user that owns it.
 

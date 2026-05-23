@@ -430,7 +430,7 @@ jobs:
           code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 --retry 5 --retry-delay 3 --retry-all-errors "$BASE/")
           echo "Frontend returned HTTP $code"
           [ "$code" = "200" ] || { echo "Frontend smoke test failed"; exit 1; }
-          body=$(curl -s --max-time 15 --retry 5 --retry-delay 3 --retry-all-errors "$BASE/api/recipe/recipes/")
+          body=$(curl -s --max-time 15 --retry 5 --retry-delay 3 --retry-all-errors "$BASE/api/recipes/")
           echo "$body" | head -c 200; echo
           echo "$body" | grep -q '"title"' || { echo "API smoke test failed (no recipes returned)"; exit 1; }
           echo "Smoke test passed: frontend 200 + API serving recipes"

@@ -1,6 +1,6 @@
 import { getAuthToken } from "./auth";
 
-const BASE = "/api/recipe/recipes";
+const BASE = "/api/recipes";
 
 async function request(url, options) {
   const token = getAuthToken();

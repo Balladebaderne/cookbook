@@ -82,7 +82,9 @@ describe("backend HTTP server", () => {
       message: "Cookbook API",
       version: "1.0.0",
       endpoints: {
-        recipe: "/api/recipe",
+        recipes: "/api/recipes",
+        ingredients: "/api/ingredients",
+        tags: "/api/tags",
       },
     });
   });
@@ -99,19 +101,19 @@ describe("backend HTTP server", () => {
   });
 
   it("lists recipe resources", async () => {
-    const recipes = await request("/api/recipe/recipes/");
+    const recipes = await request("/api/recipes/");
     expect(recipes.response.status).toBe(200);
     expect(recipes.json.length).toBeGreaterThan(0);
 
-    const countryRecipes = await request("/api/recipe/recipes/country/italy/");
+    const countryRecipes = await request("/api/recipes/country/italy/");
     expect(countryRecipes.response.status).toBe(200);
     expect(countryRecipes.json.length).toBeGreaterThan(0);
 
-    const ingredients = await request("/api/recipe/ingredients/");
+    const ingredients = await request("/api/ingredients/");
     expect(ingredients.response.status).toBe(200);
     expect(Array.isArray(ingredients.json)).toBe(true);
 
-    const tags = await request("/api/recipe/tags/");
+    const tags = await request("/api/tags/");
     expect(tags.response.status).toBe(200);
     expect(Array.isArray(tags.json)).toBe(true);
   });
@@ -123,10 +125,10 @@ describe("backend HTTP server", () => {
       time_minutes: 10,
       price: "10",
     };
-    const recipes = await request("/api/recipe/recipes/");
+    const recipes = await request("/api/recipes/");
     const recipeId = recipes.json[0].id;
 
-    const create = await request("/api/recipe/recipes/", {
+    const create = await request("/api/recipes/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -135,7 +137,7 @@ describe("backend HTTP server", () => {
     });
     expect(create.response.status).toBe(401);
 
-    const invalidToken = await request("/api/recipe/recipes/", {
+    const invalidToken = await request("/api/recipes/", {
       method: "POST",
       headers: {
         Authorization: "Bearer not-a-real-token",
@@ -145,7 +147,7 @@ describe("backend HTTP server", () => {
     });
     expect(invalidToken.response.status).toBe(401);
 
-    const update = await request(`/api/recipe/recipes/${recipeId}/`, {
+    const update = await request(`/api/recipes/${recipeId}/`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -154,7 +156,7 @@ describe("backend HTTP server", () => {
     });
     expect(update.response.status).toBe(401);
 
-    const deleted = await request(`/api/recipe/recipes/${recipeId}/`, {
+    const deleted = await request(`/api/recipes/${recipeId}/`, {
       method: "DELETE",
     });
     expect(deleted.response.status).toBe(401);
@@ -174,7 +176,7 @@ describe("backend HTTP server", () => {
       country: "denmark",
     };
 
-    const created = await request("/api/recipe/recipes/", {
+    const created = await request("/api/recipes/", {
       method: "POST",
       headers: {
         ...authHeaders,
@@ -188,7 +190,7 @@ describe("backend HTTP server", () => {
 
     const recipeId = created.json.id;
 
-    const fetched = await request(`/api/recipe/recipes/${recipeId}/`);
+    const fetched = await request(`/api/recipes/${recipeId}/`);
     expect(fetched.response.status).toBe(200);
     expect(fetched.json).toMatchObject({
       id: recipeId,
@@ -203,7 +205,7 @@ describe("backend HTTP server", () => {
       tags: [{ name: "Updated Tag" }],
     };
 
-    const updated = await request(`/api/recipe/recipes/${recipeId}/`, {
+    const updated = await request(`/api/recipes/${recipeId}/`, {
       method: "PUT",
       headers: {
         ...authHeaders,
@@ -217,14 +219,14 @@ describe("backend HTTP server", () => {
       title: updatedPayload.title,
     });
 
-    const deleted = await request(`/api/recipe/recipes/${recipeId}/`, {
+    const deleted = await request(`/api/recipes/${recipeId}/`, {
       method: "DELETE",
       headers: authHeaders,
     });
     expect(deleted.response.status).toBe(204);
     expect(deleted.text).toBe("");
 
-    const missing = await request(`/api/recipe/recipes/${recipeId}/`);
+    const missing = await request(`/api/recipes/${recipeId}/`);
     expect(missing.response.status).toBe(404);
     expect(missing.json).toEqual({
       error: "Opskriften blev ikke fundet.",
@@ -233,7 +235,7 @@ describe("backend HTTP server", () => {
 
   it("returns 400 for invalid payloads", async () => {
     const authHeaders = await createAuthHeaders();
-    const missingTitle = await request("/api/recipe/recipes/", {
+    const missingTitle = await request("/api/recipes/", {
       method: "POST",
       headers: {
         ...authHeaders,
@@ -246,7 +248,7 @@ describe("backend HTTP server", () => {
       error: "Opskriften skal have et navn.",
     });
 
-    const invalidJson = await request("/api/recipe/recipes/", {
+    const invalidJson = await request("/api/recipes/", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -376,7 +378,7 @@ describe("backend HTTP server", () => {
   });
 
   it("responds to CORS preflight requests", async () => {
-    const response = await fetch(`${baseUrl}/api/recipe/recipes/`, {
+    const response = await fetch(`${baseUrl}/api/recipes/`, {
       method: "OPTIONS",
       headers: {
         Origin: "http://localhost:5173",
