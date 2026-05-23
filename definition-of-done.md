@@ -20,7 +20,7 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 ---
 
 ## 3. Kodekvalitet
-- [ ] ESLint og Prettier passerer.
+- [x] ESLint passerer (kører grønt i CI).
 - [x] Ingen secrets i repo.
 - [x] Konventionelle commits bruges.
 - [x] Koden er læsbar og organiseret.

@@ -54,7 +54,7 @@ docker compose --profile dev down             # stop
 
 Frontend: <http://localhost> · API: <http://localhost:3000/api> · Swagger: <http://localhost:3000/apidocs>
 
-If you change a `Dockerfile`, `package.json`, or any compose file, rebuild with `--build` and verify the stack still comes up clean. If you change the SQLite schema in `backend/initDb.js`, flag that local volumes may need wiping (`docker compose --profile dev down -v`).
+If you change a `Dockerfile`, `package.json`, or any compose file, rebuild with `--build` and verify the stack still comes up clean. If you change the database schema in `backend/db/schema.js`, flag that local volumes may need wiping (`docker compose --profile dev down -v`).
 
 ---
 
