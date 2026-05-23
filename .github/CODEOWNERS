@@ -6,10 +6,9 @@
 # Expand this list with the rest of the group as PRs come in.
 *                       @KINGINTHECASTE123
 
-# Sensitive areas: CI/CD, infra, prod compose files, and the legacy reference
-# implementation. AGENTS.md forbids modifying these without explicit approval —
-# CODEOWNERS makes the review requirement explicit on the GitHub side too.
+# Sensitive areas: CI/CD, infra, and prod compose files. AGENTS.md forbids
+# modifying these without explicit approval — CODEOWNERS makes the review
+# requirement explicit on the GitHub side too.
 /.github/workflows/     @KINGINTHECASTE123
 /infrastructure/        @KINGINTHECASTE123
 /deploy/                @KINGINTHECASTE123
-/legacy/                @KINGINTHECASTE123

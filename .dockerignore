@@ -14,9 +14,6 @@ Thumbs.db
 # Logs
 *.log
 
-# Legacy app
-legacy/
-
 # Environment files
 .env*
 

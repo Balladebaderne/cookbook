@@ -115,7 +115,6 @@ The Kanban board (<https://github.com/orgs/Balladebaderne/projects/2>) auto-upda
 - Commit secrets, `.env` files, private keys, or the SQLite DB.
 - Commit `node_modules/` or `dist/`.
 - Modify `.github/workflows/ci-cd.yml`, `infrastructure/*`, or the prod compose files without explicit, in-conversation approval for that specific change.
-- Edit anything under `legacy/` unless explicitly told to.
 - Weaken `.gitignore`, disable `npm audit` in CI, or lower `--audit-level`.
 - Use `git commit --no-verify` or `git push --no-verify`.
 - Echo, log, or surface the contents of `~/.ssh/`, `secrets.*`, or CI secrets.
@@ -129,7 +128,6 @@ If asked to do one of these: refuse, name the rule, propose the correct path (e.
 - **Commits:** short, imperative, present tense. Conventional Commits preferred (`feat(...)`, `fix(...)`, `chore(...)`). One logical change per commit — don't mix formatting with logic.
 - **Dependencies:** commit `package.json` and `package-lock.json` together. Prefer exact versions for new direct deps. Run `npm audit --audit-level=high` after install. CI uses `npm ci` — don't change that.
 - **API contract:** [`openapi.yaml`](./openapi.yaml) is the source of truth. Update the spec in the same commit as the handler — Swagger UI serves this file directly, so drift is a user-visible bug.
-- **`legacy/`:** old Python/Flask reference implementation. Do not modify.
 
 ---
 
