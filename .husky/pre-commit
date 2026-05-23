@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Lint both packages before committing (fast, no database needed).
+npm --prefix backend run lint
+npm --prefix frontend run lint
