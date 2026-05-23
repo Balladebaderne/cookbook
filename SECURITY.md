@@ -20,7 +20,6 @@ We aim to acknowledge reports within 7 days. As a coursework project, we cannot 
 
 ## Out of scope
 
-- The `legacy/` Python/Flask reference implementation — kept for course continuity, not maintained.
 - Third-party dependencies — please report upstream. If a `npm audit` finding has no patched version, open an issue here so we can document the risk.
 - The underlying Azure VM and its OS-level configuration.
 

@@ -13,7 +13,7 @@ Short summary (authoritative version is `AGENTS.md`):
 - **Local dev uses Docker.** `docker compose --profile dev up -d --build` — not raw `npm start`.
 - **Security gate before every push.** Run `bash scripts/security-check.sh`. It must pass. No `--no-verify`, no audit bypass.
 - **Never commit:** secrets, `.env`, `*.db`, `*.pem`, `node_modules/`, `dist/`.
-- **Never modify** `.github/workflows/`, `infrastructure/`, or `legacy/` without explicit approval.
+- **Never modify** `.github/workflows/` or `infrastructure/` without explicit approval.
 - **Never push to `master`.** The only way in is a merged PR.
 - **Update Definition of Done.** After completing work, check off completed items in [`definition-of-done.md`](./definition-of-done.md) and include the update in your commit or PR.
 
