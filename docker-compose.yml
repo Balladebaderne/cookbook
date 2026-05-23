@@ -1,6 +1,6 @@
 services:
   postgres:
-    profiles: ["dev", "prod"]
+    profiles: ["dev"]
     image: postgres:16
     container_name: cookbook-postgres
     restart: unless-stopped
@@ -21,41 +21,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-
-  backend:
-    profiles: ["prod"]
-    image: ghcr.io/balladebaderne/cookbook-backend:latest
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=${POSTGRES_DB:-cookbook}
-      - POSTGRES_USER=${POSTGRES_USER:-cookbook}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-cookbook}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - cookbook-network
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-  frontend:
-    profiles: ["prod"]
-    image: ghcr.io/balladebaderne/cookbook-frontend:latest
-    restart: unless-stopped
-    ports:
-      - "80:80"
-    depends_on:
-      - backend
-    networks:
-      - cookbook-network
 
   backend-dev:
     profiles: ["dev"]
