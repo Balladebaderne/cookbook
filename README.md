@@ -282,6 +282,11 @@ and shows four panels:
 Prometheus scrapes `backend:3000/metrics` every **15 seconds** and retains data
 for **15 days** (`--storage.tsdb.retention.time=15d`).
 
+Alongside the app metrics, the stack also scrapes **cAdvisor** (per-container
+CPU / memory / network / filesystem) and **node_exporter** (host CPU / RAM /
+disk / network) — the infrastructure-level half of the "monitoring vs logging"
+picture.
+
 ### Why these metrics
 
 | Metric | Rationale |

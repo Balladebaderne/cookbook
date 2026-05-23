@@ -11,3 +11,13 @@ scrape_configs:
     static_configs:
       - targets: ["backend:3000"]
     metrics_path: /metrics
+
+  # Container metrics (Docker containers on the host).
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["cadvisor:8080"]
+
+  # Host metrics (VM CPU / RAM / disk / network).
+  - job_name: node-exporter
+    static_configs:
+      - targets: ["node-exporter:9100"]
