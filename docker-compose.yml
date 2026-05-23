@@ -1,4 +1,27 @@
 services:
+  postgres:
+    profiles: ["dev", "prod"]
+    image: postgres:16
+    container_name: cookbook-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-cookbook}
+      POSTGRES_USER: ${POSTGRES_USER:-cookbook}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cookbook}
+    ports:
+      # Published so host-run tests (npm test) can reach Postgres at 127.0.0.1:5432.
+      - "5432:5432"
+    volumes:
+      - cookbook_pgdata:/var/lib/postgresql/data
+    networks:
+      - cookbook-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cookbook} -d ${POSTGRES_DB:-cookbook}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   backend:
     profiles: ["prod"]
     image: ghcr.io/balladebaderne/cookbook-backend:latest
@@ -6,9 +29,14 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - DB_PATH=/app/data/app.db
-    volumes:
-      - cookbook_data:/app/data
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-cookbook}
+      - POSTGRES_USER=${POSTGRES_USER:-cookbook}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-cookbook}
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - cookbook-network
     healthcheck:
@@ -38,9 +66,14 @@ services:
     environment:
       - NODE_ENV=development
       - PORT=3000
-      - DB_PATH=/app/data/app.db
-    volumes:
-      - cookbook_data:/app/data
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=${POSTGRES_DB:-cookbook}
+      - POSTGRES_USER=${POSTGRES_USER:-cookbook}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-cookbook}
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - cookbook-network
 
@@ -58,7 +91,7 @@ services:
       - cookbook-network
 
 volumes:
-  cookbook_data:
+  cookbook_pgdata:
     driver: local
 
 networks:

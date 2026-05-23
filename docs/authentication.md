@@ -61,8 +61,7 @@ users
 Passwords are never stored in plain text. `POST /api/user/create/` hashes the
 password with bcrypt before inserting the user.
 
-The schema uses the existing database abstraction, so it works with local
-SQLite and the Postgres runtime path.
+The schema runs on PostgreSQL through the database abstraction in `backend/db/`.
 
 ## User Endpoints
 

@@ -87,9 +87,9 @@ recreates nginx. It does not stop either backend color.
 
 ## Database Runtime
 
-The backend still uses SQLite by default for local development and tests. In
-production it switches to Postgres when either `DATABASE_URL` or the Postgres
-environment variables are set:
+The backend runs on PostgreSQL everywhere — local development, tests, and
+production. Configure it with either `DATABASE_URL` or the Postgres
+environment variables:
 
 - `POSTGRES_HOST`
 - `POSTGRES_PORT`

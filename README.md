@@ -6,7 +6,7 @@ Actions.
 
 ## Tech Stack
 
-**Backend:** Node.js (`node:http`), SQLite3/Postgres, OpenAPI 3.0 (Swagger)
+**Backend:** Node.js (`node:http`), PostgreSQL, OpenAPI 3.0 (Swagger)
 **Frontend:** React (Vite), served by Nginx
 **Infrastructure:** Azure VMs (Ubuntu 22.04), Docker, Docker Compose,
 GitHub Actions, GitHub Container Registry
@@ -88,6 +88,22 @@ docker run --rm -v "${PWD}/frontend:/app" -w /app node:18-alpine sh -c "npm inst
 ```
 
 Lint also runs in CI/CD for every push to `dev` and `master`, and on all PRs to `master`.
+
+## Testing
+
+Backend tests run against a real PostgreSQL (the only supported database). Start
+the stack first so Postgres is reachable on `127.0.0.1:5432`, then run the suite
+from the host:
+
+```bash
+docker compose --profile dev up -d   # starts Postgres (+ the app)
+cd backend && npm test
+```
+
+CI runs the same suite against a `postgres:16` service container. Override the
+connection with `POSTGRES_HOST` / `POSTGRES_PORT` / `POSTGRES_DB` /
+`POSTGRES_USER` / `POSTGRES_PASSWORD` if your setup differs. The frontend tests
+(`cd frontend && npm test`) need no database.
 
 ## Deploying to Azure
 
