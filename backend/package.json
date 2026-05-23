@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "Cookbook web application built with Node.js (node:http) and PostgreSQL",
   "type": "module",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
     "test": "vitest run",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"

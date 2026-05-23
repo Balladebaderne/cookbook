@@ -2,7 +2,7 @@ import js from "@eslint/js";
 
 export default [
   {
-    ignores: ["node_modules/", "dist/", "*.test.js"],
+    ignores: ["node_modules/", "dist/"],
   },
   {
     files: ["**/*.js"],
@@ -14,6 +14,7 @@ export default [
         process: "readonly",
         Buffer: "readonly",
         URL: "readonly",
+        fetch: "readonly",
       },
     },
     rules: {

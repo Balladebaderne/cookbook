@@ -7,7 +7,9 @@ export default [
       message: "Cookbook API",
       version: "1.0.0",
       endpoints: {
-        recipe: "/api/recipe",
+        recipes: "/api/recipes",
+        ingredients: "/api/ingredients",
+        tags: "/api/tags",
       },
     });
   }),
