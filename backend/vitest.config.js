@@ -12,5 +12,16 @@ export default defineConfig({
       POSTGRES_USER: process.env.POSTGRES_USER || "cookbook",
       POSTGRES_PASSWORD: process.env.POSTGRES_PASSWORD || "cookbook",
     },
+    coverage: {
+      provider: "v8",
+      reportsDirectory: "./coverage",
+      reporter: ["text-summary", "html"],
+      include: ["src/**/*.js"],
+      exclude: ["**/*.test.js"],
+      thresholds: {
+        lines: 70,
+        statements: 70,
+      },
+    },
   },
 });

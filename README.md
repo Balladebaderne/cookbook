@@ -108,6 +108,9 @@ connection with `POSTGRES_HOST` / `POSTGRES_PORT` / `POSTGRES_DB` /
 `POSTGRES_USER` / `POSTGRES_PASSWORD` if your setup differs. The frontend tests
 (`cd frontend && npm test`) need no database.
 
+Backend coverage: `cd backend && npm run test:coverage` (currently ~84% line
+coverage; the config enforces a 70% line/statement threshold).
+
 ## Deploying to Azure
 
 End-to-end: install two CLIs, clone the repo, run one script, push to
