@@ -11,6 +11,17 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "c=$(jq -r '.tool_input.command // \"\"'); if printf '%s' \"$c\" | grep -Eq 'git[[:space:]]' && printf '%s' \"$c\" | grep -Eq '(push|merge)' && printf '%s' \"$c\" | grep -Eq '[[:space:]]dev([[:space:]]|$)'; then printf '%s' '{\"systemMessage\":\"🔔 Reminder: test the app locally in Docker before relying on this — `docker compose --profile dev up -d --build`\"}'; fi"
+          }
+        ]
+      }
     ]
   }
 }
