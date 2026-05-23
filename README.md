@@ -15,21 +15,31 @@ GitHub Actions, GitHub Container Registry
 
 ```text
 cookbook/
-├── backend/                      # Node HTTP API + Dockerfile
-├── frontend/                     # React + nginx Dockerfile
-├── infrastructure/               # Azure provisioning scripts
-│   ├── create_vm.sh              # single-VM setup
-│   ├── create_two_vms.sh         # two-VM (nginx + backend) setup
-│   ├── create_three_vms.sh       # three-VM (nginx + backend + database) setup
-│   ├── azure-teardown.sh         # deletes the resource group
+├── backend/                       # Node HTTP API (node:http) + Dockerfile
+│   ├── db/                        # connection, schema, seed
+│   ├── http/                      # router, responses, swagger
+│   ├── routes/                    # route definitions
+│   ├── services/                  # recipes + users domain logic
+│   └── middleware/                # auth + error handling
+├── frontend/                      # React (Vite) + nginx Dockerfile
+├── infrastructure/                # Azure provisioning scripts
+│   ├── create_vm.sh               # single-VM setup
+│   ├── create_two_vms.sh          # two-VM (nginx + backend) setup
+│   ├── create_three_vms.sh        # three-VM (nginx + backend + database) setup
+│   ├── azure-teardown.sh          # deletes the resource group
 │   └── README.md
-├── docker-compose.yml            # local dev
-├── deploy/                       # prod compose variants
-│   ├── single-vm.yml             # single VM
-│   ├── nginx.yml                 # two-VM, nginx host
-│   ├── backend.yml               # two-VM, backend host
-│   └── blue-green/               # three-VM blue/green deploy files
-├── openapi.yaml
+├── deploy/                        # prod compose variants
+│   ├── single-vm.yml              # single VM
+│   ├── nginx.yml                  # two-VM, nginx host
+│   ├── backend.yml                # two-VM, backend host
+│   ├── blue-green/                # three-VM blue/green deploy files
+│   └── README-blue-green.md
+├── monitoring/                    # Prometheus config + Grafana provisioning
+├── docs/                          # authentication.md, etc.
+├── scripts/                       # security-check.sh
+├── docker-compose.yml             # local dev (profiles: dev, prod)
+├── docker-compose.monitoring.yml  # Prometheus + Grafana stack
+├── openapi.yaml                   # API contract (source of truth)
 └── .github/workflows/ci-cd.yml
 ```
 
