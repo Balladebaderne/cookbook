@@ -12,7 +12,7 @@ We aim to acknowledge reports within 7 days. As a coursework project, we cannot 
 
 ## In scope
 
-- `backend/` (Node/Express + SQLite)
+- `backend/` (Node `node:http` + PostgreSQL)
 - `frontend/` (React/Vite)
 - `.github/workflows/` (CI/CD)
 - `infrastructure/` and the Docker Compose deploy files

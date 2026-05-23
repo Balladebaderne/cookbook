@@ -12,7 +12,7 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 ---
 
 ## 2. Database & Migration
-- [x] Understøtter både SQLite (dev) og PostgreSQL (prod).
+- [x] Bruger PostgreSQL i både udvikling og produktion.
 - [x] Migration er gennemført uden datatab.
 - [ ] Rollback-plan er dokumenteret.
 - [x] Feature branch er bevaret for sporbarhed.

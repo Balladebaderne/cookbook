@@ -112,7 +112,7 @@ The Kanban board (<https://github.com/orgs/Balladebaderne/projects/2>) auto-upda
 ## 6. Hard nevers — refuse even if asked
 
 - Push, force-push, or rebase `master`.
-- Commit secrets, `.env` files, private keys, or the SQLite DB.
+- Commit secrets, `.env` files, private keys, or any database file/dump.
 - Commit `node_modules/` or `dist/`.
 - Modify `.github/workflows/ci-cd.yml`, `infrastructure/*`, or the prod compose files without explicit, in-conversation approval for that specific change.
 - Weaken `.gitignore`, disable `npm audit` in CI, or lower `--audit-level`.

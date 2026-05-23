@@ -161,12 +161,11 @@ What it does:
    `DATABASE_PRIVATE_IP`, `SSH_USER`, `SSH_PRIVATE_KEY`.
 9. Sets repo variable `DEPLOY_MODE=three-vms`.
 
-Important limitation in this first phase:
+Notes:
 
-- This script provisions the Azure topology only.
-- The current CI/CD workflow does **not** deploy `three-vms` yet.
-- The backend still uses SQLite today; the Postgres runtime migration is a
-  later phase.
+- This script provisions the Azure topology and wires up the deploy secrets.
+- The CI/CD workflow deploys the `three-vms` topology (blue/green) on push to `master`.
+- The backend runs on PostgreSQL, hosted on the database VM provisioned here.
 
 ## Teardown
 
