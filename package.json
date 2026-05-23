@@ -1,0 +1,12 @@
+{
+  "name": "cookbook-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Root package for shared git hooks (Husky) across the backend and frontend packages.",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

@@ -313,11 +313,17 @@ survives a restart.
 ## For contributors
 
 See [`AGENTS.md`](./AGENTS.md) for branching rules, the security gate,
-and do-not-touch paths. One-time hook install per clone:
+and do-not-touch paths. Git hooks are managed by **Husky** — enable them once
+per clone by installing the root dev dependency:
 
 ```bash
-cp scripts/security-check.sh .git/hooks/pre-push && chmod +x .git/hooks/pre-push
+npm install        # at the repo root — sets up the Husky hooks
 ```
+
+- **pre-commit** lints both packages.
+- **pre-push** runs the frontend tests and `scripts/security-check.sh`.
+
+(Backend tests require PostgreSQL and run in CI, not in the hook.)
 
 ## Repository
 
