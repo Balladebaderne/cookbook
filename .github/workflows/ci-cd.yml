@@ -19,6 +19,22 @@ jobs:
     name: Dependency Audit
     runs-on: ubuntu-latest
 
+    # Postgres for the backend test suite (Postgres is the only database).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: cookbook
+          POSTGRES_USER: cookbook
+          POSTGRES_PASSWORD: cookbook
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cookbook -d cookbook"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,6 +54,12 @@ jobs:
 
       - name: Test backend
         working-directory: backend
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: cookbook
+          POSTGRES_USER: cookbook
+          POSTGRES_PASSWORD: cookbook
         run: npm test
 
       - name: Lint backend
