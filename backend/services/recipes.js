@@ -1,25 +1,23 @@
 import { db } from "../db/index.js";
+import { findOrCreateByName, groupBy } from "../db/queries.js";
 
-async function upsertIngredient(name, conn = db) {
-  let row = await conn.prepare("SELECT id FROM ingredients WHERE name = ?").get(name);
-  if (!row) {
-    row = { id: (await conn.prepare("INSERT INTO ingredients (name) VALUES (?)").run(name)).lastInsertRowid };
-  }
-  return row.id;
-}
+const INGREDIENTS_JOIN = `
+  SELECT ri.recipe_id, i.id, i.name, ri.amount, ri.unit
+  FROM ingredients i
+  JOIN recipe_ingredients ri ON i.id = ri.ingredient_id`;
 
-async function upsertTag(name, conn = db) {
-  let row = await conn.prepare("SELECT id FROM tags WHERE name = ?").get(name);
-  if (!row) {
-    row = { id: (await conn.prepare("INSERT INTO tags (name) VALUES (?)").run(name)).lastInsertRowid };
-  }
-  return row.id;
-}
+const TAGS_JOIN = `
+  SELECT rt.recipe_id, t.id, t.name
+  FROM tags t
+  JOIN recipe_tags rt ON t.id = rt.tag_id`;
+
+const toIngredient = (i) => ({ id: i.id, name: i.name, amount: i.amount, unit: i.unit });
+const toTag = (t) => ({ id: t.id, name: t.name });
 
 async function saveIngredients(recipeId, ingredients = [], conn = db) {
   for (const ing of ingredients) {
     if (!ing.name?.trim()) continue;
-    const ingredientId = await upsertIngredient(ing.name, conn);
+    const ingredientId = await findOrCreateByName(conn, "ingredients", ing.name);
     await conn.prepare("INSERT INTO recipe_ingredients (recipe_id, ingredient_id, amount, unit) VALUES (?, ?, ?, ?)")
       .run(recipeId, ingredientId, ing.amount || null, ing.unit || null);
   }
@@ -28,7 +26,7 @@ async function saveIngredients(recipeId, ingredients = [], conn = db) {
 async function saveTags(recipeId, tags = [], conn = db) {
   for (const t of tags) {
     if (!t.name?.trim()) continue;
-    const tagId = await upsertTag(t.name, conn);
+    const tagId = await findOrCreateByName(conn, "tags", t.name);
     await conn.prepare("INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)").run(recipeId, tagId);
   }
 }
@@ -38,27 +36,8 @@ export async function listRecipes() {
     "SELECT id, title, time_minutes, price, link, image FROM recipes"
   ).all();
 
-  const allIngredients = await db.prepare(`
-    SELECT ri.recipe_id, i.id, i.name, ri.amount, ri.unit
-    FROM ingredients i
-    JOIN recipe_ingredients ri ON i.id = ri.ingredient_id
-  `).all();
-
-  const allTags = await db.prepare(`
-    SELECT rt.recipe_id, t.id, t.name
-    FROM tags t
-    JOIN recipe_tags rt ON t.id = rt.tag_id
-  `).all();
-
-  const ingredientsByRecipe = allIngredients.reduce((acc, i) => {
-    (acc[i.recipe_id] ??= []).push({ id: i.id, name: i.name, amount: i.amount, unit: i.unit });
-    return acc;
-  }, {});
-
-  const tagsByRecipe = allTags.reduce((acc, t) => {
-    (acc[t.recipe_id] ??= []).push({ id: t.id, name: t.name });
-    return acc;
-  }, {});
+  const ingredientsByRecipe = groupBy(await db.prepare(INGREDIENTS_JOIN).all(), "recipe_id");
+  const tagsByRecipe = groupBy(await db.prepare(TAGS_JOIN).all(), "recipe_id");
 
   return recipes.map(r => ({
     id: r.id,
@@ -67,8 +46,8 @@ export async function listRecipes() {
     price: r.price,
     link: r.link || "",
     image: r.image || null,
-    ingredients: ingredientsByRecipe[r.id] || [],
-    tags: tagsByRecipe[r.id] || [],
+    ingredients: (ingredientsByRecipe[r.id] || []).map(toIngredient),
+    tags: (tagsByRecipe[r.id] || []).map(toTag),
   }));
 }
 
@@ -81,17 +60,10 @@ export async function listRecipesByCountry(country) {
   if (ids.length === 0) return [];
 
   const placeholders = ids.map(() => "?").join(",");
-  const allTags = await db.prepare(`
-    SELECT rt.recipe_id, t.id, t.name
-    FROM tags t
-    JOIN recipe_tags rt ON t.id = rt.tag_id
-    WHERE rt.recipe_id IN (${placeholders})
-  `).all(...ids);
-
-  const tagsByRecipe = allTags.reduce((acc, t) => {
-    (acc[t.recipe_id] ??= []).push({ id: t.id, name: t.name });
-    return acc;
-  }, {});
+  const tagsByRecipe = groupBy(
+    await db.prepare(`${TAGS_JOIN} WHERE rt.recipe_id IN (${placeholders})`).all(...ids),
+    "recipe_id"
+  );
 
   return recipes.map(r => ({
     id: r.id,
@@ -102,7 +74,7 @@ export async function listRecipesByCountry(country) {
     description: r.description || "",
     image: r.image || null,
     country: r.country,
-    tags: tagsByRecipe[r.id] || [],
+    tags: (tagsByRecipe[r.id] || []).map(toTag),
   }));
 }
 
@@ -113,19 +85,8 @@ export async function getRecipe(id) {
 
   if (!recipe) return null;
 
-  const ingredients = await db.prepare(`
-    SELECT i.id, i.name, ri.amount, ri.unit
-    FROM ingredients i
-    JOIN recipe_ingredients ri ON i.id = ri.ingredient_id
-    WHERE ri.recipe_id = ?
-  `).all(id);
-
-  const tags = await db.prepare(`
-    SELECT t.id, t.name
-    FROM tags t
-    JOIN recipe_tags rt ON t.id = rt.tag_id
-    WHERE rt.recipe_id = ?
-  `).all(id);
+  const ingredients = await db.prepare(`${INGREDIENTS_JOIN} WHERE ri.recipe_id = ?`).all(id);
+  const tags = await db.prepare(`${TAGS_JOIN} WHERE rt.recipe_id = ?`).all(id);
 
   return {
     id: recipe.id,
@@ -136,8 +97,8 @@ export async function getRecipe(id) {
     description: recipe.description || "",
     instructions: recipe.instructions ? JSON.parse(recipe.instructions) : [],
     image: recipe.image || null,
-    ingredients: ingredients.map(i => ({ id: i.id, name: i.name, amount: i.amount, unit: i.unit })),
-    tags: tags.map(t => ({ id: t.id, name: t.name })),
+    ingredients: ingredients.map(toIngredient),
+    tags: tags.map(toTag),
   };
 }
 
