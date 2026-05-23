@@ -1,5 +1,10 @@
 # Cookbook — Recipe Management Application
 
+[![CI/CD Pipeline](https://github.com/Balladebaderne/cookbook/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Balladebaderne/cookbook/actions/workflows/ci-cd.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/Balladebaderne/cookbook)](https://github.com/Balladebaderne/cookbook/commits)
+![Deploy](https://img.shields.io/badge/deploy-Azure%20three--VM%20blue%2Fgreen-0078D4)
+
 A full-stack recipe management web application where users can browse,
 view, and manage recipes. Deployed on Azure VMs via Docker and GitHub
 Actions.
