@@ -2,6 +2,7 @@ import { readFile } from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 import { db } from "./index.js";
+import { findOrCreateByName } from "./queries.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,18 +35,6 @@ export async function loadSeedData(seedPath = DEFAULT_SEED_PATH) {
   return data.recipes;
 }
 
-async function findOrCreateByName(conn, table, name) {
-  const cleanName = assertString(name, "name", table);
-  const existing = await conn.prepare(`SELECT id FROM ${table} WHERE name = ?`).get(cleanName);
-
-  if (existing) {
-    return existing.id;
-  }
-
-  const created = await conn.prepare(`INSERT INTO ${table} (name) VALUES (?)`).run(cleanName);
-  return created.lastInsertRowid;
-}
-
 async function insertRecipe(conn, recipe) {
   const title = assertString(recipe.title, "title");
   const instructions = assertArray(recipe.instructions, "instructions", title);
@@ -67,7 +56,7 @@ async function insertRecipe(conn, recipe) {
   );
 
   for (const ingredient of ingredients) {
-    const ingredientId = await findOrCreateByName(conn, "ingredients", ingredient.name);
+    const ingredientId = await findOrCreateByName(conn, "ingredients", assertString(ingredient.name, "name", "ingredients"));
     await conn.prepare(`
       INSERT INTO recipe_ingredients (recipe_id, ingredient_id, amount, unit)
       VALUES (?, ?, ?, ?)
@@ -80,7 +69,7 @@ async function insertRecipe(conn, recipe) {
   }
 
   for (const tag of tags) {
-    const tagId = await findOrCreateByName(conn, "tags", tag);
+    const tagId = await findOrCreateByName(conn, "tags", assertString(tag, "name", "tags"));
     await conn.prepare("INSERT INTO recipe_tags (recipe_id, tag_id) VALUES (?, ?)")
       .run(created.lastInsertRowid, tagId);
   }
