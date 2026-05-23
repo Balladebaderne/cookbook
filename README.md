@@ -22,22 +22,17 @@ cookbook/
 │   ├── services/                  # recipes + users domain logic
 │   └── middleware/                # auth + error handling
 ├── frontend/                      # React (Vite) + nginx Dockerfile
-├── infrastructure/                # Azure provisioning scripts
-│   ├── create_vm.sh               # single-VM setup
-│   ├── create_two_vms.sh          # two-VM (nginx + backend) setup
-│   ├── create_three_vms.sh        # three-VM (nginx + backend + database) setup
+├── infrastructure/                # Azure provisioning scripts (three-VM)
+│   ├── create_three_vms.sh        # nginx + backend + database VM setup
 │   ├── azure-teardown.sh          # deletes the resource group
 │   └── README.md
-├── deploy/                        # prod compose variants
-│   ├── single-vm.yml              # single VM
-│   ├── nginx.yml                  # two-VM, nginx host
-│   ├── backend.yml                # two-VM, backend host
-│   ├── blue-green/                # three-VM blue/green deploy files
+├── deploy/                        # three-VM blue/green prod compose + scripts
+│   ├── blue-green/                # backend/nginx/postgres compose + deploy/rollback
 │   └── README-blue-green.md
 ├── monitoring/                    # Prometheus config + Grafana provisioning
 ├── docs/                          # authentication.md, etc.
 ├── scripts/                       # security-check.sh
-├── docker-compose.yml             # local dev (profiles: dev, prod)
+├── docker-compose.yml             # local dev (Postgres + backend + frontend)
 ├── docker-compose.monitoring.yml  # Prometheus + Grafana stack
 ├── openapi.yaml                   # API contract (source of truth)
 └── .github/workflows/ci-cd.yml
@@ -163,14 +158,8 @@ cd cookbook
 
 ### 3. Run the setup script
 
-Pick one topology:
-
 ```bash
-bash infrastructure/create_two_vms.sh   # public nginx + private backend (recommended)
-# — or —
-bash infrastructure/create_three_vms.sh # public nginx + private backend + private database
-# — or —
-bash infrastructure/create_vm.sh        # single public VM
+bash infrastructure/create_three_vms.sh   # public nginx + private backend + private database
 ```
 
 The script will:
@@ -181,9 +170,9 @@ The script will:
 4. Provision the VMs, install Docker on them, and write the deploy
    secrets back to the GitHub repo.
 
-When it finishes it prints the public IP of the public entry VM. The
-three-VM path deploys the backend with a blue/green flow and Postgres
-runtime configuration; see [`deploy/README-blue-green.md`](./deploy/README-blue-green.md).
+When it finishes it prints the public IP of the nginx VM. The backend is
+deployed with a blue/green flow against PostgreSQL on the database VM; see
+[`deploy/README-blue-green.md`](./deploy/README-blue-green.md).
 
 ### 4. Trigger the deploy
 
@@ -224,15 +213,10 @@ for the full flow and the `FORCE=1` override.
 1. **dependency-audit** — `npm audit` on backend + frontend.
 2. **build-and-push** — builds backend + frontend images, pushes to
    `ghcr.io/balladebaderne/cookbook-{backend,frontend}`.
-3. **deploy** — only on `master` or manual dispatch. Picks one path
-   based on the `DEPLOY_MODE` repo variable:
-   - `single` → SSHs to `SSH_HOST`, runs `deploy/single-vm.yml`
-   - `two-vms` → SSHs to nginx directly, and to backend via nginx as
-     an SSH jump host (backend has no public IP), each with its own
-     compose file
-   - `three-vms` → deploys the inactive backend color on the backend VM,
-     health-checks it, then recreates nginx with the new `BACKEND_HOST`
-     from `deploy/blue-green/active-color.env`
+3. **deploy** — only on `master` or manual dispatch, when `DEPLOY_MODE` is
+   `three-vms`: deploys the inactive backend color on the backend VM,
+   health-checks it, then recreates nginx with the new `BACKEND_HOST`
+   from `deploy/blue-green/active-color.env`.
 
 For three-VM operations, rollback, and database migration constraints, see
 [`deploy/README-blue-green.md`](./deploy/README-blue-green.md).
