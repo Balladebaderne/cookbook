@@ -36,7 +36,7 @@ cookbook/
 ├── docs/                          # authentication.md, etc.
 ├── scripts/                       # security-check.sh
 ├── docker-compose.yml             # local dev (Postgres + backend + frontend)
-├── docker-compose.monitoring.yml  # Prometheus + Grafana stack
+├── docker-compose-monitoring.yml  # Prometheus + Grafana stack
 ├── openapi.yaml                   # API contract (source of truth)
 └── .github/workflows/ci-cd.yml
 ```
@@ -237,7 +237,7 @@ For three-VM operations, rollback, and database migration constraints, see
 docker compose --profile dev up -d
 
 # 2. Start the monitoring stack on top
-docker compose -f docker-compose.monitoring.yml up -d
+docker compose -f docker-compose-monitoring.yml up -d
 ```
 
 ### URLs
@@ -289,7 +289,7 @@ for **15 days** (`--storage.tsdb.retention.time=15d`).
 ### Stopping the monitoring stack
 
 ```bash
-docker compose -f docker-compose.monitoring.yml down
+docker compose -f docker-compose-monitoring.yml down
 ```
 
 Data is persisted in Docker volumes (`prometheus_data`, `grafana_data`) and

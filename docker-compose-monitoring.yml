@@ -5,13 +5,13 @@
 #
 # Local dev:
 #   docker compose --profile dev up -d          # start main app first
-#   docker compose -f docker-compose.monitoring.yml up -d
+#   docker compose -f docker-compose-monitoring.yml up -d
 #   Grafana: http://localhost/grafana  (via nginx)
 #   Grafana direct: http://localhost:3001
 #   Prometheus: http://localhost:9090
 #
 # Prod (nginx VM):
-#   docker compose -f docker-compose.monitoring.yml up -d
+#   docker compose -f docker-compose-monitoring.yml up -d
 #   Grafana: http://<vm>/grafana
 #   Default login: admin / admin  (change on first login!)
 
