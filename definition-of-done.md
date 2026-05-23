@@ -30,7 +30,7 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 ## 4. Tests
 - [x] Unit tests dækker kritisk logik.
 - [x] Integrationstests for API endpoints.
-- [ ] Coverage er over 70%.
+- [x] Coverage er over 70% (~84% line coverage; `npm run test:coverage`).
 - [x] Tests kører automatisk i CI.
 
 ---
