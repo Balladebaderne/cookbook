@@ -78,11 +78,10 @@ cookbook/
 ├── frontend/                      # React (Vite) + nginx Dockerfile
 ├── infrastructure/                # Azure provisioning (create_three_vms.sh, teardown)
 ├── deploy/blue-green/             # prod compose + deploy/rollback scripts
-├── monitoring/                    # Prometheus config + Grafana provisioning
-├── docs/                          # authentication.md, sla.md
+├── monitoring/                    # Prometheus/Grafana config + compose
+├── docs/                          # authentication.md, sla.md, definition-of-done.md
 ├── scripts/security-check.sh      # pre-push security gate
 ├── docker-compose.yml             # local dev (Postgres + backend + frontend)
-├── docker-compose-monitoring.yml  # Prometheus + Grafana stack
 ├── openapi.yaml                   # API contract (source of truth)
 └── .github/workflows/ci-cd.yml
 ```
@@ -165,7 +164,7 @@ Start the app first, then:
 
 ```bash
 docker compose --profile dev up -d                       # creates cookbook-network
-docker compose -f docker-compose-monitoring.yml up -d    # monitoring on top
+docker compose -f monitoring/docker-compose.yml up -d    # monitoring on top
 ```
 
 | | Grafana | Prometheus |
@@ -187,7 +186,7 @@ do-not-touch paths. Git hooks are managed by **Husky** — run `npm install` at
 the repo root once to enable them (pre-commit lints; pre-push runs frontend
 tests + `scripts/security-check.sh`). Work tracked on the
 [Kanban board](https://github.com/orgs/Balladebaderne/projects/2);
-progress is recorded in [`definition-of-done.md`](./definition-of-done.md).
+progress is recorded in [`definition-of-done.md`](./docs/definition-of-done.md).
 
 ## License
 

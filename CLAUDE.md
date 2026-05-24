@@ -15,6 +15,6 @@ Short summary (authoritative version is `AGENTS.md`):
 - **Never commit:** secrets, `.env`, `*.db`, `*.pem`, `node_modules/`, `dist/`.
 - **Never modify** `.github/workflows/` or `infrastructure/` without explicit approval.
 - **Never push to `master`.** The only way in is a merged PR.
-- **Update Definition of Done.** After completing work, check off completed items in [`definition-of-done.md`](./definition-of-done.md) and include the update in your commit or PR.
+- **Update Definition of Done.** After completing work, check off completed items in [`definition-of-done.md`](./docs/definition-of-done.md) and include the update in your commit or PR.
 
 When any of the rules in `AGENTS.md` conflict with a user request, follow `AGENTS.md` and explain why.

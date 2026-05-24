@@ -5,13 +5,13 @@
 #
 # Local dev:
 #   docker compose --profile dev up -d          # start main app first
-#   docker compose -f docker-compose-monitoring.yml up -d
+#   docker compose -f monitoring/docker-compose.yml up -d
 #   Grafana: http://localhost/grafana  (via nginx)
 #   Grafana direct: http://localhost:3001
 #   Prometheus: http://localhost:9090
 #
 # Prod (nginx VM):
-#   docker compose -f docker-compose-monitoring.yml up -d
+#   docker compose -f monitoring/docker-compose.yml up -d
 #   Grafana: http://<vm>/grafana
 #   Default login: admin / admin  (change on first login!)
 
@@ -21,7 +21,7 @@ services:
     container_name: prometheus
     restart: unless-stopped
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -47,8 +47,8 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./monitoring/dashboards:/var/lib/grafana/dashboards:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./dashboards:/var/lib/grafana/dashboards:ro
     ports:
       - "127.0.0.1:3001:3000"   # direct access for local debugging
     depends_on:

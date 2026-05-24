@@ -133,7 +133,7 @@ If asked to do one of these: refuse, name the rule, propose the correct path (e.
 
 ## 8. Definition of Done
 
-Work completed on this project must be reflected in [`definition-of-done.md`](./definition-of-done.md). After completing any feature, bug fix, or infrastructure work:
+Work completed on this project must be reflected in [`definition-of-done.md`](./docs/definition-of-done.md). After completing any feature, bug fix, or infrastructure work:
 
 1. **Review the checklist** in `definition-of-done.md` against your changes.
 2. **Check off completed items** by converting `- [ ]` to `- [x]` for any section items that are now done.
