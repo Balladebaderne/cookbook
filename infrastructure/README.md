@@ -24,7 +24,7 @@ itself (it calls `az login` / `gh auth login` for you on first run):
   `CR_PAT` (only needed if you pull images on the VM manually; the
   pipeline uses the ephemeral `GITHUB_TOKEN`)
 
-See the [root README](../README.md#1-install-prerequisites-one-time-per-machine)
+See the [root README](../README.md#prerequisites)
 for OS-specific install commands (`brew` / `winget` / `apt`).
 
 ### Operating systems
