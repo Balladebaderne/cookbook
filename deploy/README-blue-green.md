@@ -87,9 +87,9 @@ recreates nginx. It does not stop either backend color.
 
 ## Database Runtime
 
-The backend still uses SQLite by default for local development and tests. In
-production it switches to Postgres when either `DATABASE_URL` or the Postgres
-environment variables are set:
+The backend runs on PostgreSQL everywhere — local development, tests, and
+production. Configure it with either `DATABASE_URL` or the Postgres
+environment variables:
 
 - `POSTGRES_HOST`
 - `POSTGRES_PORT`
@@ -109,7 +109,7 @@ setup — data lives in the named volume `cookbook_pgdata`
 CI flow, so an app deploy never risks the database.
 
 The app creates its schema and seeds itself on first boot
-([`backend/db/schema.js`](../backend/db/schema.js) runs `CREATE TABLE IF NOT
+([`backend/src/db/schema.js`](../backend/src/db/schema.js) runs `CREATE TABLE IF NOT
 EXISTS` + seeds when empty), so **no manual schema load or migration is
 needed** — only an empty database and a user that owns it.
 

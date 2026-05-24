@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+# Before pushing: run the frontend tests (no DB) and the security gate.
+# Backend tests require PostgreSQL and run in CI (dependency-audit job with a
+# postgres service), so they are intentionally not in this hook.
+npm --prefix frontend test
+bash scripts/security-check.sh

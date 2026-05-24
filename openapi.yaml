@@ -61,7 +61,7 @@ paths:
                   endpoints:
                     type: object
 
-  /api/recipe/recipes/:
+  /api/recipes/:
     get:
       summary: Get all recipes
       operationId: getAllRecipes
@@ -102,7 +102,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/recipe/recipes/country/{country}/:
+  /api/recipes/country/{country}/:
     get:
       summary: Get recipes by country
       operationId: getRecipesByCountry
@@ -127,7 +127,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/recipe/recipes/{id}/:
+  /api/recipes/{id}/:
     get:
       summary: Get a recipe by ID
       operationId: getRecipeById
@@ -190,7 +190,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/recipe/ingredients/:
+  /api/ingredients/:
     get:
       summary: Get all ingredients
       operationId: getAllIngredients
@@ -207,7 +207,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/recipe/tags/:
+  /api/tags/:
     get:
       summary: Get all tags
       operationId: getAllTags

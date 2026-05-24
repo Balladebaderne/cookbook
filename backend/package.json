@@ -1,13 +1,14 @@
 {
   "name": "cookbook",
   "version": "1.0.0",
-  "description": "Cookbook web application built with Node.js, SQLite3, and Postgres",
+  "description": "Cookbook web application built with Node.js (node:http) and PostgreSQL",
   "type": "module",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
@@ -22,12 +23,12 @@
     "jsonwebtoken": "9.0.3",
     "pg": "8.21.0",
     "prom-client": "15.1.3",
-    "sqlite3": "^6.0.1",
     "swagger-ui-dist": "5.31.0",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@vitest/coverage-v8": "^4.1.7",
     "eslint": "^9.39.4",
     "nodemon": "^3.1.14",
     "vitest": "^4.1.5"

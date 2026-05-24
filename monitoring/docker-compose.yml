@@ -5,13 +5,13 @@
 #
 # Local dev:
 #   docker compose --profile dev up -d          # start main app first
-#   docker compose -f docker-compose.monitoring.yml up -d
+#   docker compose -f monitoring/docker-compose.yml up -d
 #   Grafana: http://localhost/grafana  (via nginx)
 #   Grafana direct: http://localhost:3001
 #   Prometheus: http://localhost:9090
 #
-# Prod VM  (single-vm or nginx VM):
-#   docker compose -f docker-compose.monitoring.yml up -d
+# Prod (nginx VM):
+#   docker compose -f monitoring/docker-compose.yml up -d
 #   Grafana: http://<vm>/grafana
 #   Default login: admin / admin  (change on first login!)
 
@@ -21,7 +21,7 @@ services:
     container_name: prometheus
     restart: unless-stopped
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -47,12 +47,47 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
-      - ./monitoring/dashboards:/var/lib/grafana/dashboards:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./dashboards:/var/lib/grafana/dashboards:ro
     ports:
       - "127.0.0.1:3001:3000"   # direct access for local debugging
     depends_on:
       - prometheus
+    networks:
+      - cookbook-network
+
+  # Container metrics (per-container CPU / memory / network / fs).
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - cookbook-network
+
+  # Host metrics (CPU / RAM / disk / network of the VM itself).
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: node-exporter
+    restart: unless-stopped
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/rootfs"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    ports:
+      - "127.0.0.1:9100:9100"
     networks:
       - cookbook-network
 

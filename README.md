@@ -1,298 +1,193 @@
 # Cookbook — Recipe Management Application
 
-A full-stack recipe management web application where users can browse,
-view, and manage recipes. Deployed on Azure VMs via Docker and GitHub
-Actions.
+[![CI/CD Pipeline](https://github.com/Balladebaderne/cookbook/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Balladebaderne/cookbook/actions/workflows/ci-cd.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Last commit](https://img.shields.io/github/last-commit/Balladebaderne/cookbook)](https://github.com/Balladebaderne/cookbook/commits)
+![Deploy](https://img.shields.io/badge/deploy-Azure%20three--VM%20blue%2Fgreen-0078D4)
+
+A full-stack recipe app — browse, view, and manage recipes. Runs on PostgreSQL
+and deploys to Azure with a three-VM blue/green pipeline.
+
+## Table of Contents
+
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Project Structure](#project-structure)
+- [Running Locally](#running-locally)
+- [Testing & Linting](#testing--linting)
+- [Authentication](#authentication)
+- [Deploying to Azure](#deploying-to-azure)
+- [CI/CD Pipeline](#cicd-pipeline)
+- [Monitoring](#monitoring)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Tech Stack
 
-**Backend:** Node.js (`node:http`), SQLite3/Postgres, OpenAPI 3.0 (Swagger)
-**Frontend:** React (Vite), served by Nginx
-**Infrastructure:** Azure VMs (Ubuntu 22.04), Docker, Docker Compose,
-GitHub Actions, GitHub Container Registry
+| Layer | Technology |
+|-------|------------|
+| Backend | Node.js — `node:http` standard library (no framework) |
+| Database | PostgreSQL 16 |
+| Frontend | React (Vite), served by Nginx |
+| API contract | OpenAPI 3.0 (Swagger UI) |
+| Containers | Docker + Docker Compose; images in GHCR |
+| CI/CD | GitHub Actions |
+| Cloud | Azure VMs (Ubuntu 22.04) |
+| Monitoring | Prometheus + Grafana (+ cAdvisor, node_exporter) |
+
+**Why:** the backend uses Node's built-in `node:http` — no Express — to keep the
+dependency surface small and the HTTP layer explicit. PostgreSQL is the single
+database across dev, test, and prod. Production runs a three-VM blue/green
+topology for zero-downtime deploys.
+
+## Architecture
+
+Production runs across three Azure VMs in a private VNet; only nginx is public.
+
+```text
+                 Internet  ──►  http://<NGINX_IP>
+                    │
+          ┌─────────▼──────────┐
+          │  nginx VM (public) │  ports 80/443 — reverse proxy
+          │  / → frontend      │  /api → backend · /apidocs → Swagger
+          │  /grafana → Grafana│
+          └─────────┬──────────┘
+                    │  private VNet 10.0.1.0/24 (no public IPs)
+          ┌─────────┴───────────┐
+          ▼                     ▼
+  ┌──────────────────┐   ┌──────────────┐
+  │  backend VM      │   │ database VM  │
+  │  blue  :3001 ───────►│ PostgreSQL   │
+  │  green :3002 ───────►│   :5432      │
+  └──────────────────┘   └──────────────┘
+```
+
+**Blue/green:** a deploy starts the inactive color, health-checks it, then nginx
+flips `BACKEND_HOST` to it — zero downtime, instant rollback. Monitoring runs as
+a separate stack, reached via nginx at `/grafana`. Full detail in
+[`infrastructure/README.md`](./infrastructure/README.md) and
+[`deploy/README-blue-green.md`](./deploy/README-blue-green.md).
 
 ## Project Structure
 
 ```text
 cookbook/
-├── backend/                      # Node HTTP API + Dockerfile
-├── frontend/                     # React + nginx Dockerfile
-├── infrastructure/               # Azure provisioning scripts
-│   ├── create_vm.sh              # single-VM setup
-│   ├── create_two_vms.sh         # two-VM (nginx + backend) setup
-│   ├── create_three_vms.sh       # three-VM (nginx + backend + database) setup
-│   ├── azure-teardown.sh         # deletes the resource group
-│   └── README.md
-├── docker-compose.yml            # local dev
-├── deploy/                       # prod compose variants
-│   ├── single-vm.yml             # single VM
-│   ├── nginx.yml                 # two-VM, nginx host
-│   ├── backend.yml               # two-VM, backend host
-│   └── blue-green/               # three-VM blue/green deploy files
-├── openapi.yaml
+├── backend/                       # Node HTTP API (node:http) + Dockerfile
+│   ├── src/                       # index.js, db/, http/, routes/, services/, middleware/
+│   └── test/                      # cross-cutting tests (blue-green deploy script)
+├── frontend/                      # React (Vite) + nginx Dockerfile
+├── infrastructure/                # Azure provisioning (create_three_vms.sh, teardown)
+├── deploy/blue-green/             # prod compose + deploy/rollback scripts
+├── monitoring/                    # Prometheus/Grafana config + compose
+├── docs/                          # authentication.md, sla.md, definition-of-done.md
+├── scripts/security-check.sh      # pre-push security gate
+├── docker-compose.yml             # local dev (Postgres + backend + frontend)
+├── openapi.yaml                   # API contract (source of truth)
 └── .github/workflows/ci-cd.yml
 ```
 
 ## Running Locally
 
 ```bash
-docker compose --profile dev up -d --build   # start
+docker compose --profile dev up -d --build   # start (Postgres + backend + frontend)
 docker compose --profile dev down            # stop
 ```
 
-- Frontend: http://localhost
-- Backend API: http://localhost:3000/api
-- Swagger: http://localhost:3000/apidocs
+- Frontend: <http://localhost>
+- API: <http://localhost/api> · Swagger: <http://localhost/apidocs> (via nginx)
+- Running the backend directly instead (`cd backend && npm run dev`) serves it on `:3000`.
+
+## Testing & Linting
+
+Backend tests run against a real PostgreSQL; start the stack first, then:
+
+```bash
+cd backend && npm test               # 26 tests
+cd backend && npm run test:coverage  # ~84% line coverage (70% enforced)
+cd frontend && npm test              # no database needed
+```
+
+ESLint runs per package (`npm run lint`) and on every Docker build and in CI.
 
 ## Authentication
 
-The app supports user registration, login, JWT-backed sessions, and protected
-recipe write routes. Users can browse recipes without logging in, but creating,
-editing, and deleting recipes requires:
-
-```text
-Authorization: Bearer <jwt>
-```
-
-The implementation is documented in [`docs/authentication.md`](./docs/authentication.md),
-including endpoint examples, frontend token storage, backend middleware flow,
-and local curl tests.
-
-## Linting
-
-ESLint is configured for both backend and frontend.
-
-**Backend** (runs in Docker or directly with Node):
-```bash
-docker compose --profile dev exec backend-dev npm run lint
-docker compose --profile dev exec backend-dev npm run lint:fix
-```
-
-**Frontend** (lint runs automatically during Docker build):
-```bash
-# Lint is enforced on every build — a failing lint will fail the build:
-docker compose --profile dev up -d --build
-
-# To auto-fix issues using a temporary node container:
-docker run --rm -v "${PWD}/frontend:/app" -w /app node:18-alpine sh -c "npm install && npm run lint:fix"
-```
-
-Lint also runs in CI/CD for every push to `dev` and `master`, and on all PRs to `master`.
+Browsing is open; creating/editing/deleting recipes needs a JWT
+(`Authorization: Bearer <jwt>`). Full flow in
+[`docs/authentication.md`](./docs/authentication.md).
 
 ## Deploying to Azure
 
-End-to-end: install two CLIs, clone the repo, run one script, push to
-`master`. The script handles everything else — including opening a
-browser for `az login` / `gh auth login` if you're not already signed in.
+One script provisions the three VMs, installs Docker, and writes the deploy
+secrets to GitHub; a push to `master` then deploys.
 
-### 1. Install prerequisites (one-time per machine)
+### Prerequisites
 
-You need three things on PATH: **Azure CLI** (`az`), **GitHub CLI**
-(`gh`), and an **SSH key pair** in `~/.ssh/`.
-
-#### macOS
+**Azure CLI** (`az`), **GitHub CLI** (`gh`), and an SSH key in `~/.ssh/`.
 
 ```bash
+# macOS
 brew install azure-cli gh
+# Windows (run from Git Bash / WSL, not PowerShell)
+winget install --id Microsoft.AzureCLI -e && winget install --id GitHub.cli -e
+# Linux (Debian/Ubuntu)
+curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash && sudo apt install gh
+# SSH key, if needed
+ssh-keygen -t ed25519 -C "you@example.com"
 ```
 
-#### Windows
-
-Open **Git Bash** (bundles bash + ssh, ships with [Git for Windows](https://git-scm.com/download/win)).
-Then in Git Bash:
+### Provision & deploy
 
 ```bash
-winget install --id Microsoft.AzureCLI -e
-winget install --id GitHub.cli -e
+git clone https://github.com/Balladebaderne/cookbook.git && cd cookbook
+bash infrastructure/create_three_vms.sh   # provisions VMs; sets DEPLOY_MODE=three-vms
+git push origin master                    # or merge a dev → master PR — this deploys
+bash infrastructure/azure-teardown.sh     # when done: deletes resources + clears the lock
 ```
 
-> Run the deploy script from **Git Bash** (or WSL) — not from
-> PowerShell or `cmd`. The script is bash and uses arrays, heredocs,
-> and `set -euo pipefail`.
+The script logs you into Azure/GitHub if needed and prints the nginx public IP.
+Only one live deployment at a time (a `DEPLOY_OWNER` lock prevents clashes). See
+[`infrastructure/README.md`](./infrastructure/README.md) for the topology, the
+lock, and the `FORCE=1` override.
 
-#### Linux (Debian / Ubuntu)
+## CI/CD Pipeline
+
+[`ci-cd.yml`](./.github/workflows/ci-cd.yml) runs on push to `master`/`dev`:
+
+1. **dependency-audit** — `npm audit`, lint, and tests (against a Postgres service) for both packages.
+2. **build-and-push** — builds backend + frontend images → `ghcr.io/balladebaderne/cookbook-*`.
+3. **deploy** — `master` only: deploys the inactive backend color, health-checks it, then switches nginx.
+
+## Monitoring
+
+Prometheus + Grafana run as a separate stack on the shared `cookbook-network`.
+Start the app first, then:
 
 ```bash
-curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
-sudo apt install gh
+docker compose --profile dev up -d                       # creates cookbook-network
+docker compose -f monitoring/docker-compose.yml up -d    # monitoring on top
 ```
 
-#### SSH key (all OSes)
+| | Grafana | Prometheus |
+|--|---------|------------|
+| Local | <http://localhost/grafana> (or `:3001`) | <http://localhost:9090> |
+| Prod | `http://<NGINX_IP>/grafana` | internal only |
 
-If `ls ~/.ssh/id_*` shows nothing, generate one:
+Grafana credentials come from `GF_ADMIN_USER` / `GF_ADMIN_PASSWORD` (default
+`admin`/`admin` — **change in prod**, self-sign-up is off). The provisioned
+**"Cookbook — Application Overview"** dashboard tracks request rate, p95 latency,
+5xx error rate, and container up/down (from the backend's `/metrics`). cAdvisor
+(containers) and node_exporter (host) add the infrastructure view. Data is
+retained 15 days in Docker volumes.
 
-```bash
-ssh-keygen -t ed25519 -C "your.email@example.com"
-```
+## Contributing
 
-Press Enter through the prompts (default path, empty passphrase is fine
-for class).
+See [`AGENTS.md`](./AGENTS.md) for the Git flow, the security gate, and
+do-not-touch paths. Git hooks are managed by **Husky** — run `npm install` at
+the repo root once to enable them (pre-commit lints; pre-push runs frontend
+tests + `scripts/security-check.sh`). Work tracked on the
+[Kanban board](https://github.com/orgs/Balladebaderne/projects/2);
+progress is recorded in [`definition-of-done.md`](./docs/definition-of-done.md).
 
-### 2. Clone the repo
+## License
 
-```bash
-git clone https://github.com/Balladebaderne/cookbook.git
-cd cookbook
-```
-
-### 3. Run the setup script
-
-Pick one topology:
-
-```bash
-bash infrastructure/create_two_vms.sh   # public nginx + private backend (recommended)
-# — or —
-bash infrastructure/create_three_vms.sh # public nginx + private backend + private database
-# — or —
-bash infrastructure/create_vm.sh        # single public VM
-```
-
-The script will:
-
-1. Open a browser for `az login` if you're not signed in to Azure.
-2. Walk you through `gh auth login` if you're not signed in to GitHub.
-3. Show a confirmation prompt with what it's about to provision (resource group, VMs, ports, GitHub secrets it will set). Type `y` to continue.
-4. Provision the VMs, install Docker on them, and write the deploy
-   secrets back to the GitHub repo.
-
-When it finishes it prints the public IP of the public entry VM. The
-three-VM path deploys the backend with a blue/green flow and Postgres
-runtime configuration; see [`deploy/README-blue-green.md`](./deploy/README-blue-green.md).
-
-### 4. Trigger the deploy
-
-```bash
-git push origin master   # or open & merge a dev → master PR
-```
-
-The pipeline ([`ci-cd.yml`](./.github/workflows/ci-cd.yml)) builds
-the Docker images, pushes them to GHCR, and deploys to your VMs. App
-goes live at `http://<NGINX_IP>` once the workflow finishes (~3 min).
-
-> `master` deploys automatically through CI/CD. Follow the branch rules in
-> [`AGENTS.md`](./AGENTS.md): merge to `master` only through a PR.
-
-### 5. Tear down when you're done
-
-```bash
-bash infrastructure/azure-teardown.sh
-```
-
-Stops the Azure billing and clears the deploy lock so the next teammate
-can run a create script.
-
-### Only one live deployment at a time
-
-The repo's deploy secrets and `DEPLOY_MODE` variable are shared team
-state — running `create_*.sh` overwrites them. The scripts enforce
-this by recording a `DEPLOY_OWNER` variable on the repo and refusing
-to run when someone else owns the current deployment. Teardown clears
-the lock. See [`infrastructure/README.md`](./infrastructure/README.md#one-active-deployment-at-a-time)
-for the full flow and the `FORCE=1` override.
-
-## Pipeline Overview
-
-[`ci-cd.yml`](./.github/workflows/ci-cd.yml) runs on push to
-`master`/`dev` and on `workflow_dispatch`:
-
-1. **dependency-audit** — `npm audit` on backend + frontend.
-2. **build-and-push** — builds backend + frontend images, pushes to
-   `ghcr.io/balladebaderne/cookbook-{backend,frontend}`.
-3. **deploy** — only on `master` or manual dispatch. Picks one path
-   based on the `DEPLOY_MODE` repo variable:
-   - `single` → SSHs to `SSH_HOST`, runs `deploy/single-vm.yml`
-   - `two-vms` → SSHs to nginx directly, and to backend via nginx as
-     an SSH jump host (backend has no public IP), each with its own
-     compose file
-   - `three-vms` → deploys the inactive backend color on the backend VM,
-     health-checks it, then recreates nginx with the new `BACKEND_HOST`
-     from `deploy/blue-green/active-color.env`
-
-For three-VM operations, rollback, and database migration constraints, see
-[`deploy/README-blue-green.md`](./deploy/README-blue-green.md).
-
-## Monitoring (Prometheus + Grafana)
-
-> **Prerequisite:** The monitoring stack requires the main app stack to be
-> running first, because Prometheus and Grafana share `cookbook-network` with
-> the backend container.
-
-### Starting the monitoring stack
-
-```bash
-# 1. Start the main app (creates cookbook-network)
-docker compose --profile dev up -d
-
-# 2. Start the monitoring stack on top
-docker compose -f docker-compose.monitoring.yml up -d
-```
-
-### URLs
-
-| Environment | Grafana | Prometheus |
-|-------------|---------|------------|
-| **Local** (via nginx) | http://localhost/grafana | http://localhost:9090 |
-| **Local** (direct) | http://localhost:3001 | http://localhost:9090 |
-| **Prod VM** | `http://<VM_IP>/grafana` | Internal only (not exposed) |
-
-### Login credentials
-
-Grafana reads `GF_ADMIN_USER` and `GF_ADMIN_PASSWORD` from your `.env` file
-(or Docker secrets in prod). If neither is set, it falls back to the defaults:
-
-| Variable | Default |
-|----------|---------|
-| `GF_ADMIN_USER` | `admin` |
-| `GF_ADMIN_PASSWORD` | `admin` |
-
-> ⚠️ **Change the password on first login in prod.** Set `GF_ADMIN_USER` and
-> `GF_ADMIN_PASSWORD` in your `.env` or as a GitHub Secret — never commit them.
-> Self-registration is disabled (`GF_USERS_ALLOW_SIGN_UP=false`).
-
-### Metrics we track
-
-The **"Cookbook — Application Overview"** dashboard is provisioned automatically
-and shows four panels:
-
-| Panel | PromQL expression | Unit |
-|-------|------------------|------|
-| **Request Rate** | `sum by (method, route) (rate(http_request_duration_seconds_count[1m]))` | req/s |
-| **P95 Latency** | `histogram_quantile(0.95, sum by (le, route) (rate(http_request_duration_seconds_bucket[5m])))` | seconds |
-| **5xx Error Rate** | `sum by (route) (rate(http_request_duration_seconds_count{status_code=~"5.."}[1m]))` | req/s |
-| **Container Up/Down** | `up` | UP / DOWN |
-
-Prometheus scrapes `backend:3000/metrics` every **15 seconds** and retains data
-for **15 days** (`--storage.tsdb.retention.time=15d`).
-
-### Why these metrics
-
-| Metric | Rationale |
-|--------|-----------|
-| **Request Rate** | Shows the current traffic load broken down by route and HTTP method. Unexpected spikes can indicate client-side bugs or an attack. |
-| **P95 Latency** | Catches slow endpoints that the average often hides. A p95 > 500 ms is typically a signal of a performance problem affecting end users. |
-| **5xx Error Rate** | Server errors need to be caught quickly. A spike here can mean a bad deploy, a full disk, or a database timeout. |
-| **Container Up/Down** | Confirms that Prometheus can actually reach the backend container. Shows `DOWN` immediately if a container crashes or was never started. |
-
-### Stopping the monitoring stack
-
-```bash
-docker compose -f docker-compose.monitoring.yml down
-```
-
-Data is persisted in Docker volumes (`prometheus_data`, `grafana_data`) and
-survives a restart.
-
----
-
-## For contributors
-
-See [`AGENTS.md`](./AGENTS.md) for branching rules, the security gate,
-and do-not-touch paths. One-time hook install per clone:
-
-```bash
-cp scripts/security-check.sh .git/hooks/pre-push && chmod +x .git/hooks/pre-push
-```
-
-## Repository
-
-https://github.com/Balladebaderne/cookbook
+[MIT](./LICENSE) © BalladeBaderne

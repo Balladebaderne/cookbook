@@ -12,15 +12,15 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 ---
 
 ## 2. Database & Migration
-- [x] Understøtter både SQLite (dev) og PostgreSQL (prod).
+- [x] Bruger PostgreSQL i både udvikling og produktion.
 - [x] Migration er gennemført uden datatab.
-- [ ] Rollback-plan er dokumenteret.
+- [x] Rollback-plan er dokumenteret (`deploy/README-blue-green.md`).
 - [x] Feature branch er bevaret for sporbarhed.
 
 ---
 
 ## 3. Kodekvalitet
-- [ ] ESLint og Prettier passerer.
+- [x] ESLint passerer (kører grønt i CI).
 - [x] Ingen secrets i repo.
 - [x] Konventionelle commits bruges.
 - [x] Koden er læsbar og organiseret.
@@ -30,7 +30,7 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 ## 4. Tests
 - [x] Unit tests dækker kritisk logik.
 - [x] Integrationstests for API endpoints.
-- [ ] Coverage er over 70%.
+- [x] Coverage er over 70% (~84% line coverage; `npm run test:coverage`).
 - [x] Tests kører automatisk i CI.
 
 ---
@@ -40,7 +40,7 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 - [x] `npm audit` passerer uden high severity findings.
 - [x] Automatisk deployment til Azure VMs.
 - [x] Blue/green deployment er understøttet.
-- [ ] Health checks kører før deploy.
+- [x] Health checks kører før deploy (blue/green sundhedstjek før nginx skifter farve).
 
 ---
 

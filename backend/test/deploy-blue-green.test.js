@@ -13,7 +13,7 @@ import { spawnSync } from "child_process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, "..");
+const repoRoot = path.resolve(__dirname, "..", "..");
 const deployScript = path.join(repoRoot, "deploy", "blue-green", "deploy-blue-green.sh");
 const rollbackScript = path.join(repoRoot, "deploy", "blue-green", "rollback-blue-green.sh");
 

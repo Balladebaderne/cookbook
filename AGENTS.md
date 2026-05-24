@@ -54,7 +54,7 @@ docker compose --profile dev down             # stop
 
 Frontend: <http://localhost> · API: <http://localhost:3000/api> · Swagger: <http://localhost:3000/apidocs>
 
-If you change a `Dockerfile`, `package.json`, or any compose file, rebuild with `--build` and verify the stack still comes up clean. If you change the SQLite schema in `backend/initDb.js`, flag that local volumes may need wiping (`docker compose --profile dev down -v`).
+If you change a `Dockerfile`, `package.json`, or any compose file, rebuild with `--build` and verify the stack still comes up clean. If you change the database schema in `backend/src/db/schema.js`, flag that local volumes may need wiping (`docker compose --profile dev down -v`).
 
 ---
 
@@ -112,10 +112,9 @@ The Kanban board (<https://github.com/orgs/Balladebaderne/projects/2>) auto-upda
 ## 6. Hard nevers — refuse even if asked
 
 - Push, force-push, or rebase `master`.
-- Commit secrets, `.env` files, private keys, or the SQLite DB.
+- Commit secrets, `.env` files, private keys, or any database file/dump.
 - Commit `node_modules/` or `dist/`.
 - Modify `.github/workflows/ci-cd.yml`, `infrastructure/*`, or the prod compose files without explicit, in-conversation approval for that specific change.
-- Edit anything under `legacy/` unless explicitly told to.
 - Weaken `.gitignore`, disable `npm audit` in CI, or lower `--audit-level`.
 - Use `git commit --no-verify` or `git push --no-verify`.
 - Echo, log, or surface the contents of `~/.ssh/`, `secrets.*`, or CI secrets.
@@ -129,13 +128,12 @@ If asked to do one of these: refuse, name the rule, propose the correct path (e.
 - **Commits:** short, imperative, present tense. Conventional Commits preferred (`feat(...)`, `fix(...)`, `chore(...)`). One logical change per commit — don't mix formatting with logic.
 - **Dependencies:** commit `package.json` and `package-lock.json` together. Prefer exact versions for new direct deps. Run `npm audit --audit-level=high` after install. CI uses `npm ci` — don't change that.
 - **API contract:** [`openapi.yaml`](./openapi.yaml) is the source of truth. Update the spec in the same commit as the handler — Swagger UI serves this file directly, so drift is a user-visible bug.
-- **`legacy/`:** old Python/Flask reference implementation. Do not modify.
 
 ---
 
 ## 8. Definition of Done
 
-Work completed on this project must be reflected in [`definition-of-done.md`](./definition-of-done.md). After completing any feature, bug fix, or infrastructure work:
+Work completed on this project must be reflected in [`definition-of-done.md`](./docs/definition-of-done.md). After completing any feature, bug fix, or infrastructure work:
 
 1. **Review the checklist** in `definition-of-done.md` against your changes.
 2. **Check off completed items** by converting `- [ ]` to `- [x]` for any section items that are now done.

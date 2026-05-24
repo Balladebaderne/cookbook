@@ -30,16 +30,16 @@ Browser stores token in localStorage
 
 The backend implementation lives in these files:
 
-- `backend/db/schema.js`
+- `backend/src/db/schema.js`
   Creates the `users` table during startup.
-- `backend/services/users.js`
+- `backend/src/services/users.js`
   Handles password hashing, login verification, JWT signing, JWT verification,
   current-user lookup, and profile updates.
-- `backend/routes/users.js`
+- `backend/src/routes/users.js`
   Exposes the user endpoints under `/api/user/...`.
-- `backend/middleware/auth.js`
+- `backend/src/middleware/auth.js`
   Provides `requireAuth(handler)` for protected routes.
-- `backend/routes/recipes.js`
+- `backend/src/routes/recipes.js`
   Uses `requireAuth` on recipe write routes.
 - `openapi.yaml`
   Documents the auth endpoints and bearer-token security requirements.
@@ -61,8 +61,7 @@ users
 Passwords are never stored in plain text. `POST /api/user/create/` hashes the
 password with bcrypt before inserting the user.
 
-The schema uses the existing database abstraction, so it works with local
-SQLite and the Postgres runtime path.
+The schema runs on PostgreSQL through the database abstraction in `backend/src/db/`.
 
 ## User Endpoints
 
@@ -152,7 +151,7 @@ The authenticated user can update their email and name. Duplicate email returns
 
 ## JWT Details
 
-JWTs are signed in `backend/services/users.js`.
+JWTs are signed in `backend/src/services/users.js`.
 
 The token payload includes:
 
@@ -179,24 +178,24 @@ Authorization: Bearer <jwt>
 
 Protected endpoints:
 
-- `POST /api/recipe/recipes/`
-- `PUT /api/recipe/recipes/{id}/`
-- `DELETE /api/recipe/recipes/{id}/`
+- `POST /api/recipes/`
+- `PUT /api/recipes/{id}/`
+- `DELETE /api/recipes/{id}/`
 
 Public endpoints:
 
-- `GET /api/recipe/recipes/`
-- `GET /api/recipe/recipes/{id}/`
-- `GET /api/recipe/recipes/country/{country}/`
-- `GET /api/recipe/ingredients/`
-- `GET /api/recipe/tags/`
+- `GET /api/recipes/`
+- `GET /api/recipes/{id}/`
+- `GET /api/recipes/country/{country}/`
+- `GET /api/ingredients/`
+- `GET /api/tags/`
 
 This means users can browse recipes without logging in, but cannot mutate data
 without a valid JWT.
 
 ## Middleware Flow
 
-`backend/middleware/auth.js` exports:
+`backend/src/middleware/auth.js` exports:
 
 ```js
 requireAuth(handler)
@@ -205,7 +204,7 @@ requireAuth(handler)
 Protected route handlers are wrapped with it:
 
 ```js
-defineRoute("POST", "/api/recipe/recipes", requireAuth(async ({ res, body }) => {
+defineRoute("POST", "/api/recipes", requireAuth(async ({ res, body }) => {
   // authenticated handler
 }));
 ```
@@ -307,7 +306,7 @@ curl -s http://127.0.0.1/api/user/me/ \
 Protected recipe create:
 
 ```bash
-curl -s -i http://127.0.0.1/api/recipe/recipes/ \
+curl -s -i http://127.0.0.1/api/recipes/ \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"title":"Demo Recipe","time_minutes":10,"price":"20"}'
