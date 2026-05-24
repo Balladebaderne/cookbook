@@ -37,7 +37,7 @@ leaves the current color serving.
 | ---- | ---------- |
 | Support hours | Weekdays 09:00–17:00 (CET), during term |
 | Acknowledge a reported issue | Within 1 business day |
-| Security vulnerabilities | Report via GitHub security advisory; triaged per [`SECURITY.md`](../SECURITY.md) |
+| Security vulnerabilities | Report via GitHub security advisory; triaged per [`SECURITY.md`](../.github/SECURITY.md) |
 
 ## Backup & recovery
 
