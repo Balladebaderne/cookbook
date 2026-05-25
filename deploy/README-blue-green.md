@@ -113,6 +113,22 @@ The app creates its schema and seeds itself on first boot
 EXISTS` + seeds when empty), so **no manual schema load or migration is
 needed** — only an empty database and a user that owns it.
 
+> ⚠️ **Seed changes require a manual re-seed.** Seeding only runs when the
+> `recipes` table is empty ([`schema.js`](../backend/src/db/schema.js)), and the
+> volume persists across deploys — so editing
+> [`seed.json`](../backend/src/db/seed.json) does **not** update an already-seeded
+> production database (a new image never touches existing data). To apply seed
+> changes, re-seed manually, then restart **one** backend color so `initDb()`
+> re-seeds (one at a time, to avoid a blue/green double-seed race):
+>
+> ```bash
+> # on the database VM — keeps users, replaces recipe data
+> sudo docker exec -i cookbook-postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+>   -c "TRUNCATE recipes, ingredients, tags, recipe_ingredients, recipe_tags RESTART IDENTITY CASCADE;"
+> # then on the backend VM, restart ONE color to trigger the re-seed
+> sudo docker restart cookbook-backend-blue
+> ```
+
 Credentials are read from a `chmod 600` env file on the VM that must match the
 GitHub secrets (`POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD`). The
 compose file never hard-codes the password.
