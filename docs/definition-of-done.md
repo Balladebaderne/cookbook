@@ -56,5 +56,5 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 ## 7. Projektdokumentation
 - [x] README er opdateret med setup, run og deploy.
 - [ ] Arkitekturdiagrammer er inkluderet.
-- [ ] Database migration er dokumenteret.
+- [x] Database migration er dokumenteret (`docs/exam_features.md`).
 - [x] CI/CD pipeline er dokumenteret.
