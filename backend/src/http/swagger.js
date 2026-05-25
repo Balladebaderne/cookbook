@@ -55,7 +55,7 @@ function swaggerHtml(spec) {
 async function serveSwaggerAsset(res, assetName) {
   const safeName = path.basename(assetName);
   if (safeName !== assetName || !swaggerUiAssets.has(safeName)) {
-    throw new HttpError(404, "Ikke fundet.");
+    throw new HttpError(404, "Not found.");
   }
 
   const extension = path.extname(safeName);
