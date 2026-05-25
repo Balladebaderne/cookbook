@@ -47,7 +47,7 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 ## 6. Infrastruktur & Drift
 - [x] Systemet kører på Azure VMs.
 - [ ] Netværk og firewall er korrekt konfigureret.
-- [ ] Monitoring er aktivt: logs, metrics og alerts.
+- [ ] Monitoring er aktivt: logs, metrics og alerts. _(Prometheus/Grafana-stakken kører lokalt og i prod; prod-scrapet af app-metrics er endnu ikke på plads — se #108.)_
 - [x] Health endpoint `/health` fungerer.
 - [x] Systemet er live og tilgængeligt.
 
@@ -55,6 +55,6 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 
 ## 7. Projektdokumentation
 - [x] README er opdateret med setup, run og deploy.
-- [ ] Arkitekturdiagrammer er inkluderet.
+- [x] Arkitekturdiagrammer er inkluderet (ASCII-topologidiagram i `README.md`).
 - [x] Database migration er dokumenteret (`docs/exam_features.md`).
 - [x] CI/CD pipeline er dokumenteret.
