@@ -64,7 +64,6 @@ describe("db/index Postgres SQL adapter", () => {
     const statement = postgresStatement(queryable, "INSERT INTO ingredients (name) VALUES (?)");
     await expect(statement.run("Pasta")).resolves.toEqual({
       lastInsertRowid: 42,
-      lastID: 42,
       rowCount: 1,
     });
 
