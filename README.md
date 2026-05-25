@@ -118,12 +118,15 @@ Postgres (see `.env.example`).
 Backend tests run against a real PostgreSQL; start the stack first, then:
 
 ```bash
-cd backend && npm test               # 26 tests
-cd backend && npm run test:coverage  # ~84% line coverage (70% enforced)
-cd frontend && npm test              # no database needed
+cd backend && npm test                # 26 tests
+cd backend && npm run test:coverage   # ~84% line coverage (70% enforced)
+cd frontend && npm test               # no database needed
+cd frontend && npm run test:coverage  # writes coverage/lcov.info for SonarQube
 ```
 
 ESLint runs per package (`npm run lint`) and on every Docker build and in CI.
+Both packages emit an `lcov.info` report (`npm run test:coverage`) that is fed to
+SonarQube Cloud in CI — see [CI/CD Pipeline](#cicd-pipeline).
 
 ## Authentication
 
@@ -172,6 +175,32 @@ lock, and the `FORCE=1` override.
 1. **dependency-audit** — `npm audit`, lint, and tests (against a Postgres service) for both packages.
 2. **build-and-push** — builds backend + frontend images → `ghcr.io/balladebaderne/cookbook-*`.
 3. **deploy** — `master` only: deploys the inactive backend color, health-checks it, then switches nginx.
+
+### Code quality — SonarQube Cloud
+
+[`sonarqube.yml`](./.github/workflows/sonarqube.yml) is a **separate** workflow
+(it never touches the deploy pipeline). On every push to `master`/`dev` and on
+every pull request it generates `lcov.info` for both packages and runs the
+[SonarQube Cloud](https://sonarcloud.io) scanner. On a PR, SonarQube Cloud
+decorates the pull request with a **Quality Gate** check — new bugs, code smells,
+security hotspots, duplication, and coverage on the changed lines — and can block
+the merge if the gate fails. The shared config lives in
+[`sonar-project.properties`](./sonar-project.properties).
+
+**One-time enablement (repo admin):**
+
+1. Sign in at <https://sonarcloud.io> with GitHub and create/confirm the
+   organization for `Balladebaderne`, then **Add project** → import `cookbook`.
+2. Under the project's *Administration → Analysis Method*, **turn off Automatic
+   Analysis** (CI-based analysis and Automatic Analysis are mutually exclusive).
+3. Verify `sonar.organization` / `sonar.projectKey` in `sonar-project.properties`
+   match the project's *Information* page.
+4. Generate a token (*My Account → Security*) and add it as the GitHub Actions
+   repository secret **`SONAR_TOKEN`**.
+
+After that, push or open a PR and the Quality Gate check appears automatically.
+Add the badge once the project exists:
+`[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=Balladebaderne_cookbook&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Balladebaderne_cookbook)`
 
 ## Monitoring
 

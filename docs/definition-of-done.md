@@ -24,6 +24,7 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 - [x] Ingen secrets i repo.
 - [x] Konventionelle commits bruges.
 - [x] Koden er læsbar og organiseret.
+- [ ] Statisk kodeanalyse med SonarQube Cloud kører på pushes og pull requests, og Quality Gate dekorerer PR'er. _(Workflow + config på plads i `.github/workflows/sonarqube.yml` og `sonar-project.properties`; afventer oprettelse af SonarCloud-projekt + `SONAR_TOKEN`-secret.)_
 
 ---
 
