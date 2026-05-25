@@ -113,7 +113,7 @@ once Postgres was green everywhere.
 ```mermaid
 flowchart LR
     R[routes / services] --> P["db.prepare(sql)"]
-    P --> A["adapter: ? → \$n  +  RETURNING id"]
+    P --> A["adapter: ? → $n  +  RETURNING id"]
     A --> PG[(PostgreSQL 16)]
 ```
 
