@@ -11,7 +11,7 @@ export default [
 
   defineRoute("POST", "/api/recipes", requireAuth(async ({ res, body }) => {
     const data = body || {};
-    if (!data.title?.trim()) throw new HttpError(400, "Opskriften skal have et navn.");
+    if (!data.title?.trim()) throw new HttpError(400, "A recipe must have a title.");
 
     const id = await recipes.createRecipe(data);
     sendJson(res, 201, { id, ...data });
@@ -23,7 +23,7 @@ export default [
 
   defineRoute("GET", "/api/recipes/:id", async ({ res, params }) => {
     const recipe = await recipes.getRecipe(Number(params.id));
-    if (!recipe) throw new HttpError(404, "Opskriften blev ikke fundet.");
+    if (!recipe) throw new HttpError(404, "Recipe not found.");
 
     sendJson(res, 200, recipe);
   }),
@@ -31,10 +31,10 @@ export default [
   defineRoute("PUT", "/api/recipes/:id", requireAuth(async ({ res, params, body }) => {
     const id = Number(params.id);
     const data = body || {};
-    if (!data.title?.trim()) throw new HttpError(400, "Opskriften skal have et navn.");
+    if (!data.title?.trim()) throw new HttpError(400, "A recipe must have a title.");
 
     const ok = await recipes.updateRecipe(id, data);
-    if (!ok) throw new HttpError(404, "Opskriften blev ikke fundet.");
+    if (!ok) throw new HttpError(404, "Recipe not found.");
 
     sendJson(res, 200, { id, ...data });
   })),

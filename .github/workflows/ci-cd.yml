@@ -10,6 +10,15 @@ on:
       - master
   workflow_dispatch:
 
+# Serialize runs per ref so two deploys can never race (course checklist 9.5).
+# A run holds the group for its whole lifetime, so the database→backend→nginx
+# deploy chain stays atomic; a second push to the same ref queues behind it.
+# cancel-in-progress: false — never abort an in-flight deploy.
+# (Separate from the infra-level DEPLOY_OWNER lock, which guards provisioning.)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}

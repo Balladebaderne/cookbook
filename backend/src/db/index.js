@@ -95,7 +95,7 @@ export function postgresStatement(queryable, sql) {
     run: async (...params) => {
       const result = await queryable.query(toPostgresSql(sqlWithReturningId(sql)), params);
       const id = result.rows[0]?.id;
-      return { lastInsertRowid: id, lastID: id, rowCount: result.rowCount };
+      return { lastInsertRowid: id, rowCount: result.rowCount };
     },
     all: async (...params) => {
       const result = await queryable.query(toPostgresSql(sql), params);

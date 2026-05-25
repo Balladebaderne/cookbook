@@ -82,20 +82,36 @@ cookbook/
 ├── docs/                          # authentication.md, sla.md, definition-of-done.md
 ├── scripts/security-check.sh      # pre-push security gate
 ├── docker-compose.yml             # local dev (Postgres + backend + frontend)
+├── .env.example                   # documented template for all env variables
 ├── openapi.yaml                   # API contract (source of truth)
 └── .github/workflows/ci-cd.yml
 ```
 
 ## Running Locally
 
+**Only prerequisite:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+(or Docker Engine + Compose v2). Node, PostgreSQL, and nginx all run in
+containers — nothing else to install.
+
 ```bash
-docker compose --profile dev up -d --build   # start (Postgres + backend + frontend)
-docker compose --profile dev down            # stop
+git clone https://github.com/Balladebaderne/cookbook.git
+cd cookbook
+docker compose --profile dev up -d --build   # Postgres + backend + frontend
 ```
 
+Then open **<http://localhost>**. The database is created and seeded
+automatically on first boot — no extra setup.
+
 - Frontend: <http://localhost>
-- API: <http://localhost/api> · Swagger: <http://localhost/apidocs> (via nginx)
-- Running the backend directly instead (`cd backend && npm run dev`) serves it on `:3000`.
+- API: <http://localhost/api> · Swagger UI: <http://localhost/apidocs> (via nginx)
+- Stop: `docker compose --profile dev down` (add `-v` to also wipe the database)
+
+**Configuration:** local dev works with the defaults baked into
+`docker-compose.yml`. To override anything (passwords, JWT secret, ports),
+copy [`.env.example`](./.env.example) to `.env` — every variable is
+documented there. Running the backend directly instead
+(`cd backend && npm run dev`) serves it on `:3000` and needs a reachable
+Postgres (see `.env.example`).
 
 ## Testing & Linting
 

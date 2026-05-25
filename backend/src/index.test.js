@@ -229,7 +229,7 @@ describe("backend HTTP server", () => {
     const missing = await request(`/api/recipes/${recipeId}/`);
     expect(missing.response.status).toBe(404);
     expect(missing.json).toEqual({
-      error: "Opskriften blev ikke fundet.",
+      error: "Recipe not found.",
     });
   });
 
@@ -245,7 +245,7 @@ describe("backend HTTP server", () => {
     });
     expect(missingTitle.response.status).toBe(400);
     expect(missingTitle.json).toEqual({
-      error: "Opskriften skal have et navn.",
+      error: "A recipe must have a title.",
     });
 
     const invalidJson = await request("/api/recipes/", {
@@ -373,7 +373,7 @@ describe("backend HTTP server", () => {
     const missing = await request("/missing");
     expect(missing.response.status).toBe(404);
     expect(missing.json).toEqual({
-      error: "Ikke fundet.",
+      error: "Not found.",
     });
   });
 

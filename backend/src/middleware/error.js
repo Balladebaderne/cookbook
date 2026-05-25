@@ -6,7 +6,7 @@ export class HttpError extends Error {
 }
 
 export function notFound() {
-  return new HttpError(404, "Ikke fundet.");
+  return new HttpError(404, "Not found.");
 }
 
 export function errorHandler(err, req, res) {
@@ -15,7 +15,7 @@ export function errorHandler(err, req, res) {
     console.error(`${req.method} ${req.url} →`, err);
   }
 
-  const message = status >= 500 ? "Der opstod en serverfejl." : err.message;
+  const message = status >= 500 ? "An internal server error occurred." : err.message;
 
   if (res.headersSent) {
     res.end();

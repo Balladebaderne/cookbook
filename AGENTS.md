@@ -52,7 +52,7 @@ docker compose --profile dev logs -f          # tail
 docker compose --profile dev down             # stop
 ```
 
-Frontend: <http://localhost> · API: <http://localhost:3000/api> · Swagger: <http://localhost:3000/apidocs>
+Frontend: <http://localhost> · API: <http://localhost/api> · Swagger: <http://localhost/apidocs> (all via nginx)
 
 If you change a `Dockerfile`, `package.json`, or any compose file, rebuild with `--build` and verify the stack still comes up clean. If you change the database schema in `backend/src/db/schema.js`, flag that local volumes may need wiping (`docker compose --profile dev down -v`).
 

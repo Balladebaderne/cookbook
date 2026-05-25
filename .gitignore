@@ -1,42 +1,25 @@
 # Dependencies
 node_modules/
-npm-debug.log*
-pip-log.txt
-pip-delete-this-directory.txt
 
-# Environment variables
+# Environment variables (the committed template .env.example is kept)
 .env
 .env.local
 .env.*.local
 .env.prod
 .env.test
+!.env.example
 
-# IDE and Editor
+# IDE and editor
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
-.DS_Store
-.project
-.pydevproject
-.settings/
-*.sublime-project
-*.sublime-workspace
-.netbeans
 *.iml
-
-# Claude Code — shared settings.json is tracked; local overrides are not
-.claude/settings.local.json
-
-# OS
-Thumbs.db
-.DS_Store
 
 # Build and dist
 dist/
 build/
-*.build/
 .cache/
 .next/
 out/
@@ -46,49 +29,18 @@ out/
 *.sqlite3
 *.db
 *.db-journal
-data/cookbook.db
 
 # Logs
 logs/
 *.log
 npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
 
 # Testing
 coverage/
 .nyc_output/
-.jest/
-.mocha/
 
 # Docker
 docker-compose.override.yml
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
 
 # Uploads and temp files
 data/uploads/
@@ -96,18 +48,16 @@ temp/
 tmp/
 *.tmp
 
-# Sensitive files
+# Secrets / keys
 secrets/
 credentials/
 *.pem
 *.key
 *.pub
 
-# System
-.Spotlight-V100
-.Trashes
-ehthumbs.db
+# OS
+.DS_Store
+Thumbs.db
 
-# Node modules lock file (optional - usually kept)
-# package-lock.json
-# yarn.lock
+# Claude Code — shared settings.json is tracked; local overrides are not
+.claude/settings.local.json
