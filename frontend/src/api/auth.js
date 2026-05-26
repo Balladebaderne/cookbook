@@ -53,11 +53,3 @@ export function getMe(token) {
     token,
   });
 }
-
-export function updateMe(token, payload) {
-  return request("/me/", {
-    method: "PUT",
-    token,
-    body: JSON.stringify(payload),
-  });
-}

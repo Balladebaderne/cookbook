@@ -8,8 +8,8 @@ info:
     url: https://github.com/Balladebaderne/cookbook
 
 servers:
-  - url: http://localhost:3000
-    description: Local development server
+  - url: /
+    description: Same origin — via nginx (/ → frontend, /api → backend, /apidocs → Swagger UI)
 
 tags:
   - name: Health
@@ -61,7 +61,7 @@ paths:
                   endpoints:
                     type: object
 
-  /api/recipes/:
+  /api/recipes:
     get:
       summary: Get all recipes
       operationId: getAllRecipes
@@ -102,7 +102,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/recipes/country/{country}/:
+  /api/recipes/country/{country}:
     get:
       summary: Get recipes by country
       operationId: getRecipesByCountry
@@ -127,7 +127,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/recipes/{id}/:
+  /api/recipes/{id}:
     get:
       summary: Get a recipe by ID
       operationId: getRecipeById
@@ -190,7 +190,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/ingredients/:
+  /api/ingredients:
     get:
       summary: Get all ingredients
       operationId: getAllIngredients
@@ -207,7 +207,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/tags/:
+  /api/tags:
     get:
       summary: Get all tags
       operationId: getAllTags
@@ -224,7 +224,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/user/create/:
+  /api/user/create:
     post:
       summary: Create a user account
       operationId: createUser
@@ -249,7 +249,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/user/token/:
+  /api/user/token:
     post:
       summary: Log in and get an authentication token
       operationId: createUserToken
@@ -274,7 +274,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServerError'
 
-  /api/user/me/:
+  /api/user/me:
     get:
       summary: Get the authenticated user
       operationId: getCurrentUser
@@ -560,6 +560,3 @@ components:
         error:
           type: string
           example: Not found
-        detail:
-          type: string
-          example: Recipe with id 99 not found

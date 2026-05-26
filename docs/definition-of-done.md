@@ -24,6 +24,7 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 - [x] Ingen secrets i repo.
 - [x] Konventionelle commits bruges.
 - [x] Koden er læsbar og organiseret.
+- [ ] Statisk kodeanalyse med SonarQube Cloud kører på pushes og pull requests, og Quality Gate dekorerer PR'er. _(Workflow + config på plads i `.github/workflows/sonarqube.yml` og `sonar-project.properties`; afventer oprettelse af SonarCloud-projekt + `SONAR_TOKEN`-secret.)_
 
 ---
 
@@ -47,7 +48,7 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 ## 6. Infrastruktur & Drift
 - [x] Systemet kører på Azure VMs.
 - [ ] Netværk og firewall er korrekt konfigureret.
-- [ ] Monitoring er aktivt: logs, metrics og alerts.
+- [ ] Monitoring er aktivt: logs, metrics og alerts. _(Prometheus/Grafana-stakken kører lokalt og i prod; prod-scrapet af app-metrics er endnu ikke på plads — se #108.)_
 - [x] Health endpoint `/health` fungerer.
 - [x] Systemet er live og tilgængeligt.
 
@@ -55,6 +56,6 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 
 ## 7. Projektdokumentation
 - [x] README er opdateret med setup, run og deploy.
-- [ ] Arkitekturdiagrammer er inkluderet.
-- [ ] Database migration er dokumenteret.
+- [x] Arkitekturdiagrammer er inkluderet (ASCII-topologidiagram i `README.md`).
+- [x] Database migration er dokumenteret (`docs/exam_features.md`).
 - [x] CI/CD pipeline er dokumenteret.

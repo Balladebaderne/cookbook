@@ -1,0 +1,82 @@
+name: SonarQube Cloud
+
+# Static analysis runs independently of the deploy pipeline (ci-cd.yml) so it
+# can never affect a deploy, and so it can decorate ordinary feature -> dev PRs
+# (ci-cd.yml only runs on PRs targeting master).
+on:
+  push:
+    branches:
+      - master
+      - dev
+  pull_request:
+    branches:
+      - master
+      - dev
+  workflow_dispatch:
+
+# A newer commit on the same ref supersedes an in-flight scan — no value in
+# finishing analysis of stale code.
+concurrency:
+  group: sonarqube-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sonarqube:
+    name: Analyze (backend + frontend)
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    # Backend tests run against a real Postgres to produce coverage.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: cookbook
+          POSTGRES_USER: cookbook
+          POSTGRES_PASSWORD: cookbook
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U cookbook -d cookbook"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Sonar needs full history for accurate new-code detection and blame.
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Backend — install and generate coverage
+        working-directory: backend
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: cookbook
+          POSTGRES_USER: cookbook
+          POSTGRES_PASSWORD: cookbook
+        run: |
+          npm ci
+          npm run test:coverage
+
+      - name: Frontend — install and generate coverage
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run test:coverage
+
+      - name: SonarQube Cloud scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io

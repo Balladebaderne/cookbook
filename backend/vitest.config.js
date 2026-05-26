@@ -15,7 +15,8 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reportsDirectory: "./coverage",
-      reporter: ["text-summary", "html"],
+      // lcov is consumed by SonarQube Cloud; the others are for humans locally.
+      reporter: ["text-summary", "html", "lcov"],
       include: ["src/**/*.js"],
       exclude: ["**/*.test.js"],
       thresholds: {
