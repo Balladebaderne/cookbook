@@ -22,7 +22,7 @@ export default function LandingPage() {
 
   // Hide intro text after animation completes (3 s)
   useEffect(() => {
-    const t = setTimeout(() => setShowIntro(false), 3100);
+    const t = setTimeout(() => setShowIntro(false), 6000);
     return () => clearTimeout(t);
   }, []);
 
@@ -34,7 +34,7 @@ export default function LandingPage() {
       {/* Intro animation */}
       {showIntro && (
         <div className="intro-overlay">
-          <p className="intro-text">Which country shall we eat in today?</p>
+          <p className="intro-text">Where will dinner take you today?</p>
         </div>
       )}
 
