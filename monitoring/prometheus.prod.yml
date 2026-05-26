@@ -1,0 +1,32 @@
+# Production Prometheus config — backend lives on a separate VM, so the scrape
+# target is the backend VM's private IP (substituted in by the CI deploy job
+# via envsubst). Both blue (3001) and green (3002) ports are listed; the
+# inactive color is always down and that's expected.
+#
+# Local dev uses monitoring/prometheus.yml instead, where "backend:3000"
+# resolves via Docker DNS on the shared cookbook-network.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: cookbook-backend
+    static_configs:
+      - targets:
+          - "${BACKEND_PRIVATE_IP}:3001"
+          - "${BACKEND_PRIVATE_IP}:3002"
+    metrics_path: /metrics
+
+  # Container metrics on the nginx VM (where this Prometheus runs).
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["cadvisor:8080"]
+
+  # Host metrics for the nginx VM itself.
+  - job_name: node-exporter
+    static_configs:
+      - targets: ["node-exporter:9100"]

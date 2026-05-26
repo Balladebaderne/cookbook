@@ -7,3 +7,10 @@ services:
       - "80:80"
     env_file:
       - active-color.env
+    networks:
+      - cookbook-network
+
+networks:
+  cookbook-network:
+    external: true
+    name: cookbook-network
