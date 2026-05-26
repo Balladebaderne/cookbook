@@ -426,7 +426,8 @@ jobs:
 
           ssh -i ~/.ssh/id_rsa \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
-            "cd ~/app/blue-green && \
+            "sudo docker network create cookbook-network >/dev/null 2>&1 || true && \
+             cd ~/app/blue-green && \
              sudo env ${remote_env[*]} docker compose --env-file active-color.env -f nginx-blue-green.yml pull frontend && \
              sudo env ${remote_env[*]} docker compose --env-file active-color.env -f nginx-blue-green.yml up -d frontend"
 
@@ -443,3 +444,83 @@ jobs:
           echo "$body" | head -c 200; echo
           echo "$body" | grep -q '"title"' || { echo "API smoke test failed (no recipes returned)"; exit 1; }
           echo "Smoke test passed: frontend 200 + API serving recipes"
+
+  deploy-three-vms-monitoring:
+    name: Deploy monitoring to Azure VM
+    runs-on: ubuntu-latest
+    needs: [deploy-three-vms-nginx]
+    if: |
+      vars.DEPLOY_MODE == 'three-vms' &&
+      (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch')
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.SSH_HOST_NGINX }} >> ~/.ssh/known_hosts
+
+      - name: Copy monitoring files to nginx VM
+        run: |
+          ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
+            "mkdir -p ~/app/monitoring/grafana/provisioning ~/app/monitoring/dashboards"
+
+          scp -i ~/.ssh/id_rsa \
+            monitoring/docker-compose.yml \
+            monitoring/prometheus.prod.yml \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/monitoring/
+
+          scp -r -i ~/.ssh/id_rsa \
+            monitoring/grafana/provisioning \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/monitoring/grafana/
+
+          scp -r -i ~/.ssh/id_rsa \
+            monitoring/dashboards \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/monitoring/
+
+      - name: Render prometheus.yml and start monitoring stack
+        env:
+          BACKEND_PRIVATE_IP: ${{ secrets.BACKEND_PRIVATE_IP }}
+          GF_ADMIN_USER: ${{ secrets.GF_ADMIN_USER }}
+          GF_ADMIN_PASSWORD: ${{ secrets.GF_ADMIN_PASSWORD }}
+        run: |
+          if [ -z "$BACKEND_PRIVATE_IP" ]; then
+            echo "Missing required secret BACKEND_PRIVATE_IP" >&2
+            exit 1
+          fi
+
+          quote() { printf "%q" "$1"; }
+          remote_env=(
+            "GF_ADMIN_USER=$(quote "${GF_ADMIN_USER:-admin}")"
+            "GF_ADMIN_PASSWORD=$(quote "${GF_ADMIN_PASSWORD:-admin}")"
+          )
+
+          ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
+            "sudo docker network create cookbook-network >/dev/null 2>&1 || true && \
+             cd ~/app/monitoring && \
+             BACKEND_PRIVATE_IP=$(quote "$BACKEND_PRIVATE_IP") envsubst '\$BACKEND_PRIVATE_IP' < prometheus.prod.yml > prometheus.yml && \
+             sudo env ${remote_env[*]} docker compose -f docker-compose.yml pull && \
+             sudo env ${remote_env[*]} docker compose -f docker-compose.yml up -d"
+
+      - name: Smoke test Grafana endpoint
+        env:
+          NGINX_HOST: ${{ secrets.SSH_HOST_NGINX }}
+        run: |
+          BASE="http://$NGINX_HOST"
+          echo "Smoke testing $BASE/grafana/login ..."
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 30 --retry 10 --retry-delay 3 --retry-all-errors "$BASE/grafana/login")
+          echo "Grafana login returned HTTP $code"
+          # Grafana redirects unauthenticated users; 200 (login page) or 302 (redirect to login) both mean it's up.
+          case "$code" in
+            200|302) echo "Grafana smoke test passed";;
+            *) echo "Grafana smoke test failed"; exit 1;;
+          esac
