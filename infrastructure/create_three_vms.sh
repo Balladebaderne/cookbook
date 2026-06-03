@@ -20,6 +20,7 @@ DATABASE_VM="${DATABASE_VM:-cookbook-database}"
 VM_SIZE="${VM_SIZE:-Standard_B1s}"
 VM_IMAGE="Canonical:0001-com-ubuntu-server-jammy:22_04-lts:latest"
 ADMIN_USER="${ADMIN_USER:-azureuser}"
+PUBLIC_IP_NAME="${PUBLIC_IP_NAME:-cookbook-nginx-ip}"
 
 # Which repo to deploy against. Auto-detected from the checked-out clone after
 # gh auth is confirmed (below); export GITHUB_REPO to override.
@@ -193,6 +194,7 @@ About to provision a three-VM deployment:
   VNet / subnet      : $VNET_NAME ($VNET_CIDR) / $SUBNET_NAME ($SUBNET_CIDR)
   VMs                : $NGINX_VM (public) + $BACKEND_VM (private) + $DATABASE_VM (private)
   VM size            : $VM_SIZE, Ubuntu 22.04
+  Static public IP   : $PUBLIC_IP_NAME (Standard, reused across teardowns)
 
   GitHub repo        : $GITHUB_REPO
   GitHub user        : $GH_USER
@@ -221,8 +223,29 @@ az network vnet create \
   --subnet-prefixes "$SUBNET_CIDR" \
   --output none
 
+# Creates the named static public IP if absent; reused if it already exists so
+# it survives teardown + re-provision, keeping the report/demo link stable.
+create_public_ip() {
+  local name="$1"
+  log "Ensuring static public IP '$name'..."
+  if az network public-ip show -g "$RESOURCE_GROUP" -n "$name" >/dev/null 2>&1; then
+    log "Public IP '$name' already exists, reusing."
+    return
+  fi
+  az network public-ip create \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$name" \
+    --sku Standard \
+    --allocation-method Static \
+    --output none
+}
+
 create_vm() {
   local name="$1"
+  # Public IP behaviour for arg 2:
+  #   "no-public-ip"     → private VM, no public IP
+  #   "with-public-ip"   → Azure auto-creates a Standard public IP (default)
+  #   "<public-ip-name>" → attach this pre-created (static) public IP
   local public_ip_mode="${2:-with-public-ip}"
   log "Creating VM '$name'..."
   if az vm show -g "$RESOURCE_GROUP" -n "$name" >/dev/null 2>&1; then
@@ -233,6 +256,8 @@ create_vm() {
   local pip_args=(--public-ip-sku Standard)
   if [[ "$public_ip_mode" == "no-public-ip" ]]; then
     pip_args=(--public-ip-address "")
+  elif [[ "$public_ip_mode" != "with-public-ip" ]]; then
+    pip_args=(--public-ip-address "$public_ip_mode")
   fi
 
   az vm create \
@@ -292,7 +317,8 @@ allow_tcp_from_source() {
     --output none
 }
 
-create_vm "$NGINX_VM"
+create_public_ip "$PUBLIC_IP_NAME"
+create_vm "$NGINX_VM" "$PUBLIC_IP_NAME"
 create_vm "$BACKEND_VM" "no-public-ip"
 create_vm "$DATABASE_VM" "no-public-ip"
 
@@ -324,7 +350,8 @@ az network nsg rule delete \
   --output none 2>/dev/null || true
 allow_tcp_from_source "$DATABASE_VM" "allow-postgres-from-backend" 1100 "$BACKEND_PRIVATE_IP" "$DATABASE_PORT"
 
-NGINX_IP=$(az vm show -d -g "$RESOURCE_GROUP" -n "$NGINX_VM" --query publicIps -o tsv)
+NGINX_IP=$(az network public-ip show -g "$RESOURCE_GROUP" -n "$PUBLIC_IP_NAME" --query ipAddress -o tsv)
+[[ -n "$NGINX_IP" ]] || die "Could not resolve the static public IP '$PUBLIC_IP_NAME'."
 
 log "  nginx    public IP:  $NGINX_IP"
 log "  backend  private IP: $BACKEND_PRIVATE_IP"
