@@ -13,10 +13,10 @@ and deploys to Azure with a three-VM blue/green pipeline.
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
 - [Project Structure](#project-structure)
+- [Deploying to Azure](#deploying-to-azure)
 - [Running Locally](#running-locally)
 - [Testing & Linting](#testing--linting)
 - [Authentication](#authentication)
-- [Deploying to Azure](#deploying-to-azure)
 - [CI/CD Pipeline](#cicd-pipeline)
 - [Monitoring](#monitoring)
 - [Contributing](#contributing)
@@ -87,6 +87,21 @@ cookbook/
 └── .github/workflows/ci-cd.yml
 ```
 
+## Deploying to Azure
+
+Two ways in — full guide (prerequisites, steps, teardown) in
+[`infrastructure/README.md`](./infrastructure/README.md):
+
+- **Option A — See the running app:** the group's live deployment behind a static
+  nginx public IP (frontend, `/api/recipes/`, `/apidocs`, `/grafana/`).
+- **Option B — Deploy your own instance:** fork the repo, enable Actions, run
+  `az login`, then `bash infrastructure/create_three_vms.sh`. It provisions three
+  Azure VMs (nginx public, backend + database private), pins a static public IP,
+  and triggers the CI/CD pipeline.
+
+Group members deploy from the shared repo; outsiders (read-only) fork and deploy
+from their own fork.
+
 ## Running Locally
 
 **Only prerequisite:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
@@ -133,17 +148,6 @@ SonarQube Cloud in CI — see [CI/CD Pipeline](#cicd-pipeline).
 Browsing is open; creating/editing/deleting recipes needs a JWT
 (`Authorization: Bearer <jwt>`). Full flow in
 [`docs/authentication.md`](./docs/authentication.md).
-
-## Deploying to Azure
-
-**Live app:** see Option A in
-[`infrastructure/README.md`](./infrastructure/README.md).
-
-One script provisions three Azure VMs (nginx public, backend + database private),
-pins nginx to a static public IP, and triggers the CI/CD pipeline. Group members
-deploy from the shared repo; outsiders (read-only) fork and deploy from their own
-fork. Full guide — prerequisites, Option A / Option B, and teardown — in
-[`infrastructure/README.md`](./infrastructure/README.md).
 
 ## CI/CD Pipeline
 

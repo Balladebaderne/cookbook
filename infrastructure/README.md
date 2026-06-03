@@ -78,8 +78,9 @@ pipeline to deploy the app onto them.
 - **Admin on the target repo.** Group members have it on the shared repo;
   outsiders get it automatically on their own fork (Option B).
 
-See the [root README](../README.md#deploying-to-azure) for OS-specific install
-commands (`brew` / `winget` / `apt`).
+Install the CLIs from their official docs:
+[Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) ·
+[GitHub CLI](https://github.com/cli/cli#installation).
 
 ### Operating systems
 
@@ -108,9 +109,8 @@ script).
 | ----------- | --------------------- | ----------------------------------------------------- | ------------- |
 | `three-vms` | `create_three_vms.sh` | 3 (public nginx + private backend + private database) | [`deploy/blue-green/`](../deploy/blue-green/) |
 
-There is **no single-owner lock**: group members coordinate manually on the
-shared repo, and outsiders deploy from their own fork (isolated state), so
-concurrent deployments can't clash on shared GitHub state.
+There is **no single-owner deploy lock** — forks keep their state isolated and
+group members coordinate on the shared repo, so concurrent deploys don't clash.
 
 ---
 
