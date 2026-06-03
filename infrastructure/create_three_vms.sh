@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Provisions the three-VM cookbook deployment in Azure and wires up
-# GitHub repo secrets for the future three-host deployment path.
+# the GitHub repo secrets/variables used by the deploy workflow.
 #
 # Run interactively the first time:   bash infrastructure/create_three_vms.sh
 # Safe to re-run: resource creation is idempotent; existing resources are reused.
@@ -26,12 +26,34 @@ GITHUB_REPO="${GITHUB_REPO:-Balladebaderne/cookbook}"
 BACKEND_PORT=3000
 DATABASE_PORT=5432
 
+# Trigger the CI/CD deploy automatically once provisioning is done.
+# Set DEPLOY_AFTER_PROVISION=0 to provision only and deploy manually later.
+DEPLOY_AFTER_PROVISION="${DEPLOY_AFTER_PROVISION:-1}"
+DEPLOY_WORKFLOW="${DEPLOY_WORKFLOW:-ci-cd.yml}"
+DEPLOY_BRANCH="${DEPLOY_BRANCH:-master}"
+
+POSTGRES_DB_PROVIDED=0
+POSTGRES_USER_PROVIDED=0
+POSTGRES_PORT_PROVIDED=0
+POSTGRES_PASSWORD_PROVIDED=0
+[[ -n "${POSTGRES_DB+x}" ]] && POSTGRES_DB_PROVIDED=1
+[[ -n "${POSTGRES_USER+x}" ]] && POSTGRES_USER_PROVIDED=1
+[[ -n "${POSTGRES_PORT+x}" ]] && POSTGRES_PORT_PROVIDED=1
+[[ -n "${POSTGRES_PASSWORD:-}" ]] && POSTGRES_PASSWORD_PROVIDED=1
+
+POSTGRES_DB_VALUE="${POSTGRES_DB:-cookbook}"
+POSTGRES_USER_VALUE="${POSTGRES_USER:-cookbook}"
+POSTGRES_PORT_VALUE="${POSTGRES_PORT:-5432}"
+POSTGRES_PASSWORD_VALUE="${POSTGRES_PASSWORD:-}"
+
 log() { printf '\n\033[1;34m[setup]\033[0m %s\n' "$*"; }
 die() { printf '\n\033[1;31m[error]\033[0m %s\n' "$*" >&2; exit 1; }
 
 command -v az >/dev/null || die "Azure CLI (az) not installed."
 command -v gh >/dev/null || die "GitHub CLI (gh) not installed."
 command -v ssh >/dev/null || die "ssh not installed."
+
+[[ "$POSTGRES_PORT_VALUE" =~ ^[0-9]+$ ]] || die "POSTGRES_PORT must be numeric."
 
 if [[ -z "${SSH_KEY_PATH:-}" ]]; then
   for candidate in id_rsa id_ed25519 id_ecdsa; do
@@ -64,6 +86,69 @@ if ! gh auth status >/dev/null 2>&1; then
   gh auth login || die "GitHub login failed."
 fi
 GH_USER=$(gh api user --jq .login)
+
+set_secret() {
+  printf '%s' "$2" | gh secret set "$1" -R "$GITHUB_REPO"
+}
+
+secret_exists() {
+  local name="$1"
+  gh secret list -R "$GITHUB_REPO" --json name -q '.[] | .name' | grep -qx "$name"
+}
+
+generate_secret() {
+  if command -v openssl >/dev/null 2>&1; then
+    openssl rand -hex 24
+    return
+  fi
+
+  if command -v uuidgen >/dev/null 2>&1; then
+    printf '%s%s\n' "$(uuidgen | tr -d '-')" "$(uuidgen | tr -d '-')" | cut -c 1-48
+    return
+  fi
+
+  die "Could not generate POSTGRES_PASSWORD. Install openssl or set POSTGRES_PASSWORD before running."
+}
+
+ensure_secret() {
+  local name="$1"
+  local value="$2"
+  local force="${3:-0}"
+
+  if [[ "$force" != "1" ]] && secret_exists "$name"; then
+    log "Secret $name already exists; leaving it unchanged."
+    return
+  fi
+
+  [[ -n "$value" ]] || die "No value available for GitHub secret $name."
+  set_secret "$name" "$value"
+}
+
+sync_deploy_secrets() {
+  log "Setting GitHub deploy secrets on $GITHUB_REPO..."
+
+  # These identify the current Azure VMs, so they are intentionally refreshed
+  # every run. That makes reruns repair stale/missing SSH host and IP secrets.
+  set_secret SSH_USER             "$ADMIN_USER"
+  set_secret SSH_HOST_NGINX       "$NGINX_IP"
+  set_secret BACKEND_PRIVATE_IP   "$BACKEND_PRIVATE_IP"
+  set_secret DATABASE_PRIVATE_IP  "$DATABASE_PRIVATE_IP"
+  gh secret set SSH_PRIVATE_KEY -R "$GITHUB_REPO" < "$SSH_KEY_PATH"
+
+  # Postgres data is stateful. Preserve existing credentials unless the caller
+  # explicitly passed POSTGRES_* env vars for this run.
+  ensure_secret POSTGRES_DB   "$POSTGRES_DB_VALUE"   "$POSTGRES_DB_PROVIDED"
+  ensure_secret POSTGRES_USER "$POSTGRES_USER_VALUE" "$POSTGRES_USER_PROVIDED"
+  ensure_secret POSTGRES_PORT "$POSTGRES_PORT_VALUE" "$POSTGRES_PORT_PROVIDED"
+
+  if [[ "$POSTGRES_PASSWORD_PROVIDED" != "1" ]] && ! secret_exists POSTGRES_PASSWORD; then
+    POSTGRES_PASSWORD_VALUE="$(generate_secret)"
+  fi
+  ensure_secret POSTGRES_PASSWORD "$POSTGRES_PASSWORD_VALUE" "$POSTGRES_PASSWORD_PROVIDED"
+
+  gh secret delete SSH_HOST_BACKEND  -R "$GITHUB_REPO" >/dev/null 2>&1 || true
+  gh secret delete SSH_HOST_DATABASE -R "$GITHUB_REPO" >/dev/null 2>&1 || true
+}
 
 CURRENT_OWNER=$(gh variable list -R "$GITHUB_REPO" --json name,value \
   -q '.[] | select(.name=="DEPLOY_OWNER") | .value' 2>/dev/null || true)
@@ -113,11 +198,14 @@ About to provision a three-VM deployment:
 
   GitHub repo        : $GITHUB_REPO
   GitHub user        : $GH_USER
-  Secrets to be set  : SSH_HOST_NGINX, BACKEND_PRIVATE_IP, DATABASE_PRIVATE_IP, SSH_USER, SSH_PRIVATE_KEY
+  Secrets to sync    : SSH_HOST_NGINX, BACKEND_PRIVATE_IP, DATABASE_PRIVATE_IP, SSH_USER, SSH_PRIVATE_KEY
+                       POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT
   Variable to be set : DEPLOY_MODE=three-vms
+  Postgres defaults  : db=$POSTGRES_DB_VALUE, user=$POSTGRES_USER_VALUE, port=$POSTGRES_PORT_VALUE
+                       password is generated only if POSTGRES_PASSWORD is missing
+  Auto-deploy        : $([[ "$DEPLOY_AFTER_PROVISION" == "1" ]] && echo "yes — dispatches $DEPLOY_WORKFLOW on $DEPLOY_BRANCH after provisioning" || echo "no — deploy manually later")
 
 This will consume Azure credits and overwrite the repo's deploy secrets.
-The current CI/CD workflow does not deploy the three-VM mode yet.
 CONFIRM
 
 read -rp "Continue? (y/N): " confirm
@@ -244,6 +332,8 @@ log "  nginx    public IP:  $NGINX_IP"
 log "  backend  private IP: $BACKEND_PRIVATE_IP"
 log "  database private IP: $DATABASE_PRIVATE_IP"
 
+sync_deploy_secrets
+
 SSH_OPTS=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=30 -i "$SSH_KEY_PATH")
 
 wait_for_ssh() {
@@ -252,7 +342,7 @@ wait_for_ssh() {
   local extra=()
   [[ -n "$jump_host" ]] && extra=(-o "ProxyJump=$ADMIN_USER@$jump_host")
   log "Waiting for SSH on $host${jump_host:+ (via $jump_host)}..."
-  for _ in $(seq 1 30); do
+  for _ in $(seq 1 60); do
     if ssh "${SSH_OPTS[@]}" ${extra[@]+"${extra[@]}"} "$ADMIN_USER@$host" 'true' 2>/dev/null; then
       return 0
     fi
@@ -293,25 +383,62 @@ provision "$NGINX_IP"            "nginx VM"
 provision "$BACKEND_PRIVATE_IP"  "backend VM"  "$NGINX_IP"
 provision "$DATABASE_PRIVATE_IP" "database VM" "$NGINX_IP"
 
-log "Setting GitHub secrets on $GITHUB_REPO..."
-set_secret() {
-  printf '%s' "$2" | gh secret set "$1" -R "$GITHUB_REPO"
-}
-
-set_secret SSH_USER             "$ADMIN_USER"
-set_secret SSH_HOST_NGINX       "$NGINX_IP"
-set_secret BACKEND_PRIVATE_IP   "$BACKEND_PRIVATE_IP"
-set_secret DATABASE_PRIVATE_IP  "$DATABASE_PRIVATE_IP"
-gh secret set SSH_PRIVATE_KEY -R "$GITHUB_REPO" < "$SSH_KEY_PATH"
-
-gh secret delete SSH_HOST_BACKEND  -R "$GITHUB_REPO" >/dev/null 2>&1 || true
-gh secret delete SSH_HOST_DATABASE -R "$GITHUB_REPO" >/dev/null 2>&1 || true
-
 log "Setting deploy-mode variable to 'three-vms' on $GITHUB_REPO..."
 gh variable set DEPLOY_MODE --body "three-vms" -R "$GITHUB_REPO"
 
 log "Claiming deployment ownership as '$GH_USER'..."
 gh variable set DEPLOY_OWNER --body "$GH_USER" -R "$GITHUB_REPO"
+
+# ── Auto-deploy: trigger and follow the CI/CD pipeline ───────────────────────
+# The three-vms deploy jobs are gated on (ref==master OR workflow_dispatch),
+# so dispatching on the deploy branch deploys the app onto the VMs just
+# provisioned above. Skip with DEPLOY_AFTER_PROVISION=0.
+trigger_deploy() {
+  log "Triggering CI/CD deploy: $DEPLOY_WORKFLOW on '$DEPLOY_BRANCH'..."
+  if ! gh workflow run "$DEPLOY_WORKFLOW" -R "$GITHUB_REPO" --ref "$DEPLOY_BRANCH"; then
+    log "Could not dispatch the workflow automatically."
+    log "Deploy manually with: gh workflow run $DEPLOY_WORKFLOW -R $GITHUB_REPO --ref $DEPLOY_BRANCH"
+    return 1
+  fi
+
+  # 'gh workflow run' returns no run id, so poll for the run it just started.
+  local run_id=""
+  for _ in $(seq 1 12); do
+    run_id=$(gh run list -R "$GITHUB_REPO" \
+      --workflow "$DEPLOY_WORKFLOW" --branch "$DEPLOY_BRANCH" --event workflow_dispatch \
+      --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null || true)
+    [[ -n "$run_id" ]] && break
+    sleep 5
+  done
+
+  if [[ -z "$run_id" ]]; then
+    log "Deploy dispatched, but could not locate the run id to watch."
+    log "Follow it in the Actions tab or: gh run list -R $GITHUB_REPO"
+    return 0
+  fi
+
+  log "Watching run $run_id"
+  log "  https://github.com/$GITHUB_REPO/actions/runs/$run_id"
+
+  # 'gh run watch --exit-status' streams job progress (database -> backend ->
+  # nginx -> monitoring) and exits non-zero if the run fails.
+  if gh run watch "$run_id" -R "$GITHUB_REPO" --exit-status; then
+    log "Deploy succeeded."
+    return 0
+  else
+    log "Deploy failed. Inspect logs: gh run view $run_id -R $GITHUB_REPO --log-failed"
+    return 1
+  fi
+}
+
+DEPLOY_RESULT="skipped"
+if [[ "$DEPLOY_AFTER_PROVISION" == "1" ]]; then
+  if trigger_deploy; then
+    DEPLOY_RESULT="succeeded"
+  else
+    DEPLOY_RESULT="failed (see logs above)"
+  fi
+fi
 
 log "Done."
 cat <<SUMMARY
@@ -324,12 +451,20 @@ Three-VM deployment provisioned:
 
 GitHub secrets set on $GITHUB_REPO:
   SSH_USER, SSH_HOST_NGINX, BACKEND_PRIVATE_IP, DATABASE_PRIVATE_IP, SSH_PRIVATE_KEY
+  POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_PORT
 
 Repo variable set:
   DEPLOY_MODE=three-vms
 
-The three-VM provisioning step is complete, but the current CI/CD workflow
-does not deploy DEPLOY_MODE=three-vms yet. This script prepares the infra
-for the later Postgres and deploy-pipeline phases.
+Auto-deploy: $DEPLOY_RESULT
+
+Once the deploy is green, verify on the nginx public IP:
+  http://$NGINX_IP/              frontend (active blue/green color)
+  http://$NGINX_IP/api/recipes/  backend API through nginx
+  http://$NGINX_IP/apidocs       Swagger UI
+  http://$NGINX_IP/grafana/      Grafana dashboards
+
+Postgres seeds itself on first boot (seed-on-empty), so /api/recipes/ returns
+the 20 seeded recipes once the backend is healthy.
 
 SUMMARY
