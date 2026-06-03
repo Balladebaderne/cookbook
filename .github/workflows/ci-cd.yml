@@ -357,7 +357,7 @@ jobs:
             "cd ~/app/blue-green && sudo env ${remote_env[*]} bash ./deploy-blue-green.sh"
 
   deploy-three-vms-nginx:
-    name: Deploy nginx to Azure VM
+    name: Deploy nginx + monitoring to Azure VM
     runs-on: ubuntu-latest
     needs: [build-and-push, deploy-three-vms-backend]
     if: |
@@ -444,28 +444,6 @@ jobs:
           echo "$body" | head -c 200; echo
           echo "$body" | grep -q '"title"' || { echo "API smoke test failed (no recipes returned)"; exit 1; }
           echo "Smoke test passed: frontend 200 + API serving recipes"
-
-  deploy-three-vms-monitoring:
-    name: Deploy monitoring stack to nginx VM
-    runs-on: ubuntu-latest
-    needs: [deploy-three-vms-nginx]
-    if: |
-      vars.DEPLOY_MODE == 'three-vms' &&
-      (github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch')
-
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_HOST_NGINX }} >> ~/.ssh/known_hosts
 
       - name: Copy monitoring files to nginx VM
         run: |
