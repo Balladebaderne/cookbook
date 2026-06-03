@@ -174,7 +174,9 @@ lock, and the `FORCE=1` override.
 
 1. **dependency-audit** — `npm audit`, lint, and tests (against a Postgres service) for both packages.
 2. **build-and-push** — builds backend + frontend images → `ghcr.io/balladebaderne/cookbook-*`.
-3. **deploy** — `master` only: deploys the inactive backend color, health-checks it, then switches nginx.
+3. **deploy** — `master` only. Runs in stages across the **three** VMs: database
+   → inactive backend color (health-checked, then nginx switches to it) → nginx,
+   which also brings up the monitoring stack on the same VM.
 
 ### Code quality — SonarQube Cloud
 
@@ -204,25 +206,25 @@ Add the badge once the project exists:
 
 ## Monitoring
 
-Prometheus + Grafana run as a separate stack on the shared `cookbook-network`.
-Start the app first, then:
+Prometheus + Grafana run as a separate stack on the shared `cookbook-network`
+and are **deployed to prod** alongside the app — Grafana is live at
+<http://20.216.171.163/grafana>. Prometheus stays internal.
+
+The provisioned **"Cookbook — Application Overview"** dashboard tracks request
+rate, p95 latency, 5xx error rate, and container up/down (from the backend's
+`/metrics`). cAdvisor (containers) and node_exporter (host) add the
+infrastructure view. Data is retained 15 days in Docker volumes. Grafana
+credentials come from `GF_ADMIN_USER` / `GF_ADMIN_PASSWORD` (self-sign-up off).
+
+To run the stack locally, start the app first, then bring monitoring up on top:
 
 ```bash
 docker compose --profile dev up -d                       # creates cookbook-network
 docker compose -f monitoring/docker-compose.yml up -d    # monitoring on top
 ```
 
-| | Grafana | Prometheus |
-|--|---------|------------|
-| Local | <http://localhost/grafana> (or `:3001`) | <http://localhost:9090> |
-| Prod | `http://<NGINX_IP>/grafana` | internal only |
-
-Grafana credentials come from `GF_ADMIN_USER` / `GF_ADMIN_PASSWORD` (default
-`admin`/`admin` — **change in prod**, self-sign-up is off). The provisioned
-**"Cookbook — Application Overview"** dashboard tracks request rate, p95 latency,
-5xx error rate, and container up/down (from the backend's `/metrics`). cAdvisor
-(containers) and node_exporter (host) add the infrastructure view. Data is
-retained 15 days in Docker volumes.
+Grafana is then at <http://localhost/grafana> (or `:3001`), Prometheus at
+<http://localhost:9090>.
 
 ## Contributing
 

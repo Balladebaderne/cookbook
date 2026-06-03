@@ -48,7 +48,7 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 ## 6. Infrastruktur & Drift
 - [x] Systemet kører på Azure VMs.
 - [ ] Netværk og firewall er korrekt konfigureret.
-- [x] Monitoring er aktivt: logs, metrics og alerts. _(Prometheus/Grafana-stakken deployes til nginx-VM'en via CI/CD (`deploy-three-vms-monitoring`); Grafana er nået via `/grafana`, backend scrapes via privat IP for blue+green. Beslutning om dedikeret monitoring-VM (#108, 12.6) afventer gruppe.)_
+- [x] Monitoring er aktivt: logs, metrics og alerts. _(Prometheus/Grafana-stakken deployes til nginx-VM'en som en del af nginx-deploy-jobbet i CI/CD; Grafana er nået via `/grafana`, backend scrapes via privat IP for blue+green. Beslutning om dedikeret monitoring-VM (#108, 12.6) afventer gruppe.)_
 - [x] Health endpoint `/health` fungerer.
 - [x] Systemet er live og tilgængeligt.
 
