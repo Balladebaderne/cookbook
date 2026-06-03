@@ -136,37 +136,14 @@ Browsing is open; creating/editing/deleting recipes needs a JWT
 
 ## Deploying to Azure
 
-One script provisions the three VMs, installs Docker, and writes the deploy
-secrets to GitHub; a push to `master` then deploys.
+**Live app:** see Option A in
+[`infrastructure/README.md`](./infrastructure/README.md).
 
-### Prerequisites
-
-**Azure CLI** (`az`), **GitHub CLI** (`gh`), and an SSH key in `~/.ssh/`.
-
-```bash
-# macOS
-brew install azure-cli gh
-# Windows (run from Git Bash / WSL, not PowerShell)
-winget install --id Microsoft.AzureCLI -e && winget install --id GitHub.cli -e
-# Linux (Debian/Ubuntu)
-curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash && sudo apt install gh
-# SSH key, if needed
-ssh-keygen -t ed25519 -C "you@example.com"
-```
-
-### Provision & deploy
-
-```bash
-git clone https://github.com/Balladebaderne/cookbook.git && cd cookbook
-bash infrastructure/create_three_vms.sh   # provisions VMs; sets DEPLOY_MODE=three-vms
-git push origin master                    # or merge a dev → master PR — this deploys
-bash infrastructure/azure-teardown.sh     # when done: deletes resources + clears the lock
-```
-
-The script logs you into Azure/GitHub if needed and prints the nginx public IP.
-Only one live deployment at a time (a `DEPLOY_OWNER` lock prevents clashes). See
-[`infrastructure/README.md`](./infrastructure/README.md) for the topology, the
-lock, and the `FORCE=1` override.
+One script provisions three Azure VMs (nginx public, backend + database private),
+pins nginx to a static public IP, and triggers the CI/CD pipeline. Group members
+deploy from the shared repo; outsiders (read-only) fork and deploy from their own
+fork. Full guide — prerequisites, Option A / Option B, and teardown — in
+[`infrastructure/README.md`](./infrastructure/README.md).
 
 ## CI/CD Pipeline
 
