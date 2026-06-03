@@ -26,6 +26,12 @@ GITHUB_REPO="${GITHUB_REPO:-Balladebaderne/cookbook}"
 BACKEND_PORT=3000
 DATABASE_PORT=5432
 
+# Trigger the CI/CD deploy automatically once provisioning is done.
+# Set DEPLOY_AFTER_PROVISION=0 to provision only and deploy manually later.
+DEPLOY_AFTER_PROVISION="${DEPLOY_AFTER_PROVISION:-1}"
+DEPLOY_WORKFLOW="${DEPLOY_WORKFLOW:-ci-cd.yml}"
+DEPLOY_BRANCH="${DEPLOY_BRANCH:-master}"
+
 POSTGRES_DB_PROVIDED=0
 POSTGRES_USER_PROVIDED=0
 POSTGRES_PORT_PROVIDED=0
@@ -197,6 +203,7 @@ About to provision a three-VM deployment:
   Variable to be set : DEPLOY_MODE=three-vms
   Postgres defaults  : db=$POSTGRES_DB_VALUE, user=$POSTGRES_USER_VALUE, port=$POSTGRES_PORT_VALUE
                        password is generated only if POSTGRES_PASSWORD is missing
+  Auto-deploy        : $([[ "$DEPLOY_AFTER_PROVISION" == "1" ]] && echo "yes — dispatches $DEPLOY_WORKFLOW on $DEPLOY_BRANCH after provisioning" || echo "no — deploy manually later")
 
 This will consume Azure credits and overwrite the repo's deploy secrets.
 CONFIRM
@@ -424,6 +431,15 @@ trigger_deploy() {
   fi
 }
 
+DEPLOY_RESULT="skipped"
+if [[ "$DEPLOY_AFTER_PROVISION" == "1" ]]; then
+  if trigger_deploy; then
+    DEPLOY_RESULT="succeeded"
+  else
+    DEPLOY_RESULT="failed (see logs above)"
+  fi
+fi
+
 log "Done."
 cat <<SUMMARY
 
@@ -440,7 +456,15 @@ GitHub secrets set on $GITHUB_REPO:
 Repo variable set:
   DEPLOY_MODE=three-vms
 
-The three-VM provisioning step is complete. Merge or push to master, or run
-the CI/CD workflow manually, to deploy the app to the provisioned VMs.
+Auto-deploy: $DEPLOY_RESULT
+
+Once the deploy is green, verify on the nginx public IP:
+  http://$NGINX_IP/              frontend (active blue/green color)
+  http://$NGINX_IP/api/recipes/  backend API through nginx
+  http://$NGINX_IP/apidocs       Swagger UI
+  http://$NGINX_IP/grafana/      Grafana dashboards
+
+Postgres seeds itself on first boot (seed-on-empty), so /api/recipes/ returns
+the 20 seeded recipes once the backend is healthy.
 
 SUMMARY
