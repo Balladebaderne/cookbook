@@ -21,7 +21,9 @@ VM_SIZE="${VM_SIZE:-Standard_B1s}"
 VM_IMAGE="Canonical:0001-com-ubuntu-server-jammy:22_04-lts:latest"
 ADMIN_USER="${ADMIN_USER:-azureuser}"
 
-GITHUB_REPO="${GITHUB_REPO:-Balladebaderne/cookbook}"
+# Which repo to deploy against. Auto-detected from the checked-out clone after
+# gh auth is confirmed (below); export GITHUB_REPO to override.
+GITHUB_REPO="${GITHUB_REPO:-}"
 
 BACKEND_PORT=3000
 DATABASE_PORT=5432
@@ -83,9 +85,35 @@ SIGNED_IN_USER=$(az account show --query user.name -o tsv)
 log "Verifying GitHub login..."
 if ! gh auth status >/dev/null 2>&1; then
   log "Not logged in to GitHub — starting interactive login flow..."
-  gh auth login || die "GitHub login failed."
+  gh auth login -s workflow || die "GitHub login failed."
 fi
 GH_USER=$(gh api user --jq .login)
+
+# Triggering the deploy uses 'gh workflow run', which needs the 'workflow' OAuth
+# scope. Add it if the current login is missing it.
+if ! gh auth status 2>&1 | grep -q "workflow"; then
+  log "Adding the 'workflow' scope to your gh login..."
+  gh auth refresh -s workflow || die "Could not add the 'workflow' scope. Run: gh auth refresh -s workflow"
+fi
+
+# Resolve the deploy target repo: an explicit GITHUB_REPO override wins, else
+# auto-detect from the checked-out clone, falling back to the canonical repo.
+if [[ -z "$GITHUB_REPO" ]]; then
+  GITHUB_REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)"
+  GITHUB_REPO="${GITHUB_REPO:-Balladebaderne/cookbook}"
+fi
+log "Deploy target repo: $GITHUB_REPO"
+
+# Setting Actions secrets/variables and dispatching the deploy workflow all
+# require admin on the target repo. An outsider (e.g. our censor) without admin
+# must fork first and deploy from their own fork instead.
+if [[ "$(gh api "repos/$GITHUB_REPO" --jq '.permissions.admin' 2>/dev/null || echo false)" != "true" ]]; then
+  die "You don't have admin on $GITHUB_REPO, so this script can't set deploy secrets or run the workflow there.
+       Fork it and deploy from your own fork instead:
+         gh repo fork Balladebaderne/cookbook --clone
+         cd cookbook
+         bash infrastructure/create_three_vms.sh"
+fi
 
 set_secret() {
   printf '%s' "$2" | gh secret set "$1" -R "$GITHUB_REPO"
