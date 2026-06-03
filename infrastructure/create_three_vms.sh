@@ -59,7 +59,7 @@ command -v ssh >/dev/null || die "ssh not installed."
 [[ "$POSTGRES_PORT_VALUE" =~ ^[0-9]+$ ]] || die "POSTGRES_PORT must be numeric."
 
 if [[ -z "${SSH_KEY_PATH:-}" ]]; then
-  for candidate in id_rsa id_ed25519 id_ecdsa; do
+  for candidate in id_ed25519 id_rsa id_ecdsa; do
     if [[ -f "$HOME/.ssh/$candidate" && -f "$HOME/.ssh/$candidate.pub" ]]; then
       SSH_KEY_PATH="$HOME/.ssh/$candidate"
       SSH_PUB_KEY_PATH="$HOME/.ssh/$candidate.pub"
@@ -68,10 +68,27 @@ if [[ -z "${SSH_KEY_PATH:-}" ]]; then
     fi
   done
 fi
+
+# No key found — offer to generate one (ed25519), mirroring the az/gh login
+# prompts. Only attempt this on an interactive terminal; in CI fall through to
+# the die() below so the failure is explicit rather than hanging on read.
+if [[ -z "${SSH_KEY_PATH:-}" && -t 0 ]]; then
+  log "No SSH key found in ~/.ssh (looked for id_ed25519, id_rsa, id_ecdsa)."
+  read -rp "Generate a new ed25519 key now? (y/N): " gen_key
+  if [[ "$gen_key" =~ ^[Yy]$ ]]; then
+    mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+    SSH_KEY_PATH="$HOME/.ssh/id_ed25519"
+    ssh-keygen -t ed25519 -N "" -C "cookbook-deploy" -f "$SSH_KEY_PATH" \
+      || die "ssh-keygen failed."
+    SSH_PUB_KEY_PATH="$SSH_KEY_PATH.pub"
+    log "Created new SSH key pair: $SSH_KEY_PATH"
+  fi
+fi
+
 SSH_KEY_PATH="${SSH_KEY_PATH:-}"
 SSH_PUB_KEY_PATH="${SSH_PUB_KEY_PATH:-${SSH_KEY_PATH}.pub}"
 
-[[ -n "$SSH_KEY_PATH" && -f "$SSH_KEY_PATH" ]] || die "No SSH private key found. Tried ~/.ssh/{id_rsa,id_ed25519,id_ecdsa}. Generate one (ssh-keygen -t ed25519) or set SSH_KEY_PATH."
+[[ -n "$SSH_KEY_PATH" && -f "$SSH_KEY_PATH" ]] || die "No SSH private key found. Tried ~/.ssh/{id_ed25519,id_rsa,id_ecdsa}. Re-run on a terminal and choose to generate one, run 'ssh-keygen -t ed25519' yourself, or set SSH_KEY_PATH."
 [[ -f "$SSH_PUB_KEY_PATH" ]] || die "SSH public key not found at $SSH_PUB_KEY_PATH"
 
 log "Verifying Azure login..."
