@@ -13,10 +13,10 @@ and deploys to Azure with a three-VM blue/green pipeline.
 - [Tech Stack](#tech-stack)
 - [Architecture](#architecture)
 - [Project Structure](#project-structure)
+- [Deploying to Azure](#deploying-to-azure)
 - [Running Locally](#running-locally)
 - [Testing & Linting](#testing--linting)
 - [Authentication](#authentication)
-- [Deploying to Azure](#deploying-to-azure)
 - [CI/CD Pipeline](#cicd-pipeline)
 - [Monitoring](#monitoring)
 - [Contributing](#contributing)
@@ -35,36 +35,17 @@ and deploys to Azure with a three-VM blue/green pipeline.
 | Cloud | Azure VMs (Ubuntu 22.04) |
 | Monitoring | Prometheus + Grafana (+ cAdvisor, node_exporter) |
 
-**Why:** the backend uses Node's built-in `node:http` — no Express — to keep the
-dependency surface small and the HTTP layer explicit. PostgreSQL is the single
-database across dev, test, and prod. Production runs a three-VM blue/green
-topology for zero-downtime deploys.
-
 ## Architecture
 
 Production runs across three Azure VMs in a private VNet; only nginx is public.
 
-```text
-                 Internet  ──►  http://<NGINX_IP>
-                    │
-          ┌─────────▼──────────┐
-          │  nginx VM (public) │  ports 80/443 — reverse proxy
-          │  / → frontend      │  /api → backend · /apidocs → Swagger
-          │  /grafana → Grafana│
-          └─────────┬──────────┘
-                    │  private VNet 10.0.1.0/24 (no public IPs)
-          ┌─────────┴───────────┐
-          ▼                     ▼
-  ┌──────────────────┐   ┌──────────────┐
-  │  backend VM      │   │ database VM  │
-  │  blue  :3001 ───────►│ PostgreSQL   │
-  │  green :3002 ───────►│   :5432      │
-  └──────────────────┘   └──────────────┘
-```
+<p align="center">
+  <img src="docs/architecture.png" alt="Cookbook Azure architecture — public nginx VM in front of private backend (blue/green) and database VMs, behind a static public IP" width="520" />
+</p>
 
 **Blue/green:** a deploy starts the inactive color, health-checks it, then nginx
 flips `BACKEND_HOST` to it — zero downtime, instant rollback. Monitoring runs as
-a separate stack, reached via nginx at `/grafana`. Full detail in
+a separate stack, reached via nginx at `/grafana/`. Full detail in
 [`infrastructure/README.md`](./infrastructure/README.md) and
 [`deploy/README-blue-green.md`](./deploy/README-blue-green.md).
 
@@ -79,12 +60,90 @@ cookbook/
 ├── infrastructure/                # Azure provisioning (create_three_vms.sh, teardown)
 ├── deploy/blue-green/             # prod compose + deploy/rollback scripts
 ├── monitoring/                    # Prometheus/Grafana config + compose
-├── docs/                          # authentication.md, sla.md, definition-of-done.md
+├── docs/                          # architecture.png, authentication.md, sla.md, definition-of-done.md
 ├── scripts/security-check.sh      # pre-push security gate
 ├── docker-compose.yml             # local dev (Postgres + backend + frontend)
 ├── .env.example                   # documented template for all env variables
 ├── openapi.yaml                   # API contract (source of truth)
 └── .github/workflows/ci-cd.yml
+```
+
+## Deploying to Azure
+
+Full prerequisites, steps, and teardown live in
+[`infrastructure/README.md`](./infrastructure/README.md). Two ways in:
+
+### Option A — View the live app
+
+The application is deployed and running at the static public IP below.
+
+| Status | Endpoint | URL |
+|---|---|---|
+| 200 | Web UI (React SPA) | `http://20.216.171.163/` |
+| 200 | Swagger UI | `http://20.216.171.163/apidocs` |
+| 200 | Grafana | `http://20.216.171.163/grafana/` |
+
+> The public IP (`20.216.171.163`) is a static Azure resource in the
+> `rg-balladebaderne` resource group and is preserved across teardown and
+> re-provision — as long as the same Azure account is used. Migrating the
+> infrastructure to a different account changes the IP, and this section should
+> be updated.
+
+> **Note:** HTTPS (port 443) is not configured yet — all traffic runs over HTTP.
+
+---
+
+### Option B — Deploy your own instance
+
+Spin up a private copy on your Azure subscription and your fork — the group's
+live instance is never touched. One script,
+[`create_three_vms.sh`](./infrastructure/create_three_vms.sh), does the heavy
+lifting; you handle three things it can't.
+
+#### What you need installed
+
+| Tool | Why | Install |
+|---|---|---|
+| **Azure CLI** (`az`) | provisions the VMs (needs room for 3× `Standard_B1s` + 1 static IP) | [install](https://learn.microsoft.com/cli/azure/install-azure-cli) |
+| **GitHub CLI** (`gh`) | sets the deploy secrets and triggers the build | [install](https://github.com/cli/cli#installation) |
+| **`ssh` + `ssh-keygen`** | connects to the VMs (preinstalled on macOS/Linux/WSL) | — |
+
+No need to log in or create an SSH key first — the script prompts for both.
+_Windows: run from **WSL** or **Git Bash**, never PowerShell or `cmd`._
+
+#### You do these three things
+
+1. **Fork & clone**, then step in:
+   ```bash
+   gh repo fork Balladebaderne/cookbook --clone && cd cookbook
+   ```
+2. **Turn on Actions** — your fork → **Actions** tab →
+   _"I understand my workflows, enable them"_. Fresh forks ship with Actions off,
+   and this is the one switch the script can't flip for you.
+3. **Run the script** and answer its prompts:
+   ```bash
+   bash infrastructure/create_three_vms.sh        # ~10–15 min
+   ```
+   Override the region with `LOCATION=westeurope` (default: `francecentral`).
+
+#### The script handles the rest
+
+- **Signs you in** — runs `az login` / `gh auth login` if needed, and adds the
+  missing `workflow` scope.
+- **Sorts the SSH key** — reuses one from `~/.ssh/`, or offers to generate an
+  `ed25519` key if you have none.
+- **Provisions** — three VMs (public nginx + private backend + private
+  database), Docker, locked-down networking, and the static public IP.
+- **Deploys** — writes the GitHub secrets and ships the first build, printing
+  the public IP + SSH commands when it's green.
+
+It shows a summary and waits for your `y` before creating anything. From then
+on, every push to `master` on your fork redeploys automatically.
+
+#### Tear it all down
+
+```bash
+bash infrastructure/azure-teardown.sh
 ```
 
 ## Running Locally
@@ -134,40 +193,6 @@ Browsing is open; creating/editing/deleting recipes needs a JWT
 (`Authorization: Bearer <jwt>`). Full flow in
 [`docs/authentication.md`](./docs/authentication.md).
 
-## Deploying to Azure
-
-One script provisions the three VMs, installs Docker, and writes the deploy
-secrets to GitHub; a push to `master` then deploys.
-
-### Prerequisites
-
-**Azure CLI** (`az`), **GitHub CLI** (`gh`), and an SSH key in `~/.ssh/`.
-
-```bash
-# macOS
-brew install azure-cli gh
-# Windows (run from Git Bash / WSL, not PowerShell)
-winget install --id Microsoft.AzureCLI -e && winget install --id GitHub.cli -e
-# Linux (Debian/Ubuntu)
-curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash && sudo apt install gh
-# SSH key, if needed
-ssh-keygen -t ed25519 -C "you@example.com"
-```
-
-### Provision & deploy
-
-```bash
-git clone https://github.com/Balladebaderne/cookbook.git && cd cookbook
-bash infrastructure/create_three_vms.sh   # provisions VMs; sets DEPLOY_MODE=three-vms
-git push origin master                    # or merge a dev → master PR — this deploys
-bash infrastructure/azure-teardown.sh     # when done: deletes resources + clears the lock
-```
-
-The script logs you into Azure/GitHub if needed and prints the nginx public IP.
-Only one live deployment at a time (a `DEPLOY_OWNER` lock prevents clashes). See
-[`infrastructure/README.md`](./infrastructure/README.md) for the topology, the
-lock, and the `FORCE=1` override.
-
 ## CI/CD Pipeline
 
 [`ci-cd.yml`](./.github/workflows/ci-cd.yml) runs on push to `master`/`dev`:
@@ -208,7 +233,7 @@ Add the badge once the project exists:
 
 Prometheus + Grafana run as a separate stack on the shared `cookbook-network`
 and are **deployed to prod** alongside the app — Grafana is live at
-<http://20.216.171.163/grafana>. Prometheus stays internal.
+<http://20.216.171.163/grafana/>. Prometheus stays internal.
 
 The provisioned **"Cookbook — Application Overview"** dashboard tracks request
 rate, p95 latency, 5xx error rate, and container up/down (from the backend's
