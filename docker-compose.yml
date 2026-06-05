@@ -48,6 +48,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    env_file:
+      - deploy/blue-green/active-color.env
+    environment:
+      BACKEND_HOST: backend:3000
     ports:
       - "80:80"
     depends_on:
