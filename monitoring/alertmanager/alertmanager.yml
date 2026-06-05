@@ -1,0 +1,28 @@
+# Alertmanager routing for the cookbook stack.
+#
+# Static and identical for dev/prod. Secrets are NEVER committed here:
+#   - Discord webhook URL is read from a file (webhook_url_file) — mounted at
+#     /etc/alertmanager/secrets/discord_url (bind from ./alertmanager/secrets/discord_url,
+#     which is gitignored). See discord_url.example for the format.
+#   - The GitHub token lives only as an env var on the github-receiver container.
+#
+# Routes every alert to two receivers:
+#   (a) Discord  → group is pinged immediately
+#   (b) webhook  → github-receiver opens/auto-closes a GitHub issue
+route:
+  receiver: cookbook
+  group_by: [alertname]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: cookbook
+    discord_configs:
+      - webhook_url_file: /etc/alertmanager/secrets/discord_url
+        send_resolved: true
+    webhook_configs:
+      # github-receiver: measurementlab/alertmanager-github-receiver, listens on
+      # :9393 with the receiver endpoint at /v1/receiver.
+      - url: http://github-receiver:9393/v1/receiver
+        send_resolved: true

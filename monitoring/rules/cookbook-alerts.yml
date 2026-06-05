@@ -1,0 +1,69 @@
+# Prometheus alert rules for the cookbook stack.
+#
+# These fire alerts that Alertmanager routes to Discord (group notification) and
+# the github-receiver (auto-opens/closes a GitHub issue). Only metrics we know
+# exist are used:
+#   - `up`                              (Prometheus target health)
+#   - `http_request_duration_seconds_*` (backend, prom-client — see backend/src/index.js)
+#   - `node_*`                          (node-exporter host metrics)
+#
+# Mounted into Prometheus at /etc/prometheus/rules/ (see docker-compose.yml).
+groups:
+  - name: cookbook
+    rules:
+      # Backend is unreachable. Aggregated with sum() so the always-down inactive
+      # blue/green color in prod (prometheus.prod.yml lists both 3001 and 3002)
+      # does NOT false-fire — we only alert when *no* backend target is up.
+      - alert: BackendDown
+        expr: sum(up{job="cookbook-backend"}) == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend is down"
+          description: "No cookbook-backend target has been scrapeable for 2m. The API is likely unreachable."
+
+      # A monitoring component itself went away (we lose visibility).
+      - alert: MonitoringTargetDown
+        expr: up{job=~"prometheus|cadvisor|node-exporter"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Monitoring target {{ $labels.job }} is down"
+          description: "Prometheus target {{ $labels.job }} ({{ $labels.instance }}) has been down for 5m."
+
+      # More than 5% of requests are returning 5xx.
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_request_duration_seconds_count{status_code=~"5.."}[5m]))
+            / sum(rate(http_request_duration_seconds_count[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 5xx error rate"
+          description: "More than 5% of backend requests have returned 5xx over the last 5m."
+
+      # Root filesystem is filling up.
+      - alert: DiskAlmostFull
+        expr: |
+          node_filesystem_avail_bytes{mountpoint="/"}
+            / node_filesystem_size_bytes{mountpoint="/"} < 0.15
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk almost full on {{ $labels.instance }}"
+          description: "Less than 15% free space on / for 10m."
+
+      # Host memory pressure.
+      - alert: HostMemoryPressure
+        expr: |
+          1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes > 0.9
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "More than 90% of host memory in use for 10m."
