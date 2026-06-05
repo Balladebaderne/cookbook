@@ -50,7 +50,7 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 - [ ] Netværk og firewall er korrekt konfigureret.
 - [x] Monitoring er aktivt: logs, metrics og alerts. _(Prometheus/Grafana-stakken deployes til nginx-VM'en som en del af nginx-deploy-jobbet i CI/CD; Grafana er nået via `/grafana`, backend scrapes via privat IP for blue+green. Beslutning om dedikeret monitoring-VM (#108, 12.6) afventer gruppe.)_
 - [x] Health endpoint `/health` fungerer.
-- [x] Systemet er live og tilgængeligt.
+- [x] Systemet er live og tilgængeligt. _(Fast offentlig IP `4.211.254.152` (Standard, statisk) i den delte team-subscription; `create_three_vms.sh` og `azure-teardown.sh` pinner subscriptionen, så IP'en overlever teardown/re-provision og ikke kan ende i en personlig subscription.)_
 
 ---
 

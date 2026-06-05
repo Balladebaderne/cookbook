@@ -8,6 +8,10 @@ set -euo pipefail
 # link survives a teardown + re-provision cycle (create_three_vms.sh reuses it).
 # Destructive and irreversible — requires explicit confirmation.
 
+# Pin to the SHARED team subscription (same as create_three_vms.sh) so a teardown
+# can never delete resources in the wrong subscription. Override: SUBSCRIPTION_ID=...
+SUBSCRIPTION_ID="${SUBSCRIPTION_ID:-f0b6692d-2ce5-450d-a954-741c7cad136c}"
+
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-balladebaderne}"
 GITHUB_REPO="${GITHUB_REPO:-Balladebaderne/cookbook}"
 PUBLIC_IP_NAME="${PUBLIC_IP_NAME:-cookbook-nginx-ip}"
@@ -17,8 +21,15 @@ die() { printf '\n\033[1;31m[error]\033[0m %s\n' "$*" >&2; exit 1; }
 
 command -v az >/dev/null || die "Azure CLI (az) not installed."
 az account show >/dev/null 2>&1 || die "Not logged in to Azure. Run 'az login' first."
+
+# Select the shared subscription and bail if it isn't active, so we never tear
+# down resources in the wrong subscription.
+az account set --subscription "$SUBSCRIPTION_ID" 2>/dev/null \
+  || die "Could not select subscription $SUBSCRIPTION_ID. Run 'az login' then 'az account list -o table'."
+ACTIVE_SUB=$(az account show --query id -o tsv)
+[[ "$ACTIVE_SUB" == "$SUBSCRIPTION_ID" ]] \
+  || die "Active subscription is $ACTIVE_SUB but expected $SUBSCRIPTION_ID. Aborting."
 ACCOUNT_NAME=$(az account show --query name -o tsv)
-SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 
 if ! az group show --name "$RESOURCE_GROUP" >/dev/null 2>&1; then
   log "Resource group '$RESOURCE_GROUP' does not exist in subscription '$ACCOUNT_NAME'. Nothing to do."
