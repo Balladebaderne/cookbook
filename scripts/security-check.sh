@@ -91,7 +91,9 @@ run_audit() {
     fail "$dir: missing package-lock.json (npm audit needs it)"
     return
   fi
-  ( cd "$dir" && npm audit --audit-level=high --omit=dev >/tmp/audit.$$ 2>&1 )
+  # Audit dev deps too, matching CI (.github/workflows/ci-cd.yml) so a high-sev
+  # dev-dependency vuln can't pass the local gate and then fail in CI (#116).
+  ( cd "$dir" && npm audit --audit-level=high >/tmp/audit.$$ 2>&1 )
   local rc=$?
   if [ $rc -eq 0 ]; then
     pass "$dir: npm audit clean at level=high"
