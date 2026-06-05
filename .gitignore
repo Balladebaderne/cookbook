@@ -55,6 +55,10 @@ credentials/
 *.key
 *.pub
 
+# Alertmanager Discord webhook URL (the .example template is tracked).
+# Also covered by the secrets/ rule above; listed explicitly for clarity.
+monitoring/alertmanager/secrets/discord_url
+
 # OS
 .DS_Store
 Thumbs.db
