@@ -42,15 +42,16 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 - [x] Automatisk deployment til Azure VMs.
 - [x] Blue/green deployment er understøttet.
 - [x] Health checks kører før deploy (blue/green sundhedstjek før nginx skifter farve).
+- [x] Frontend viser aktiv blue/green-backendfarve fra deployment-konfigurationen til demo.
 
 ---
 
 ## 6. Infrastruktur & Drift
 - [x] Systemet kører på Azure VMs.
 - [ ] Netværk og firewall er korrekt konfigureret.
-- [x] Monitoring er aktivt: logs, metrics og alerts. _(Prometheus/Grafana-stakken deployes til nginx-VM'en som en del af nginx-deploy-jobbet i CI/CD; Grafana er nået via `/grafana`, backend scrapes via privat IP for blue+green. Beslutning om dedikeret monitoring-VM (#108, 12.6) afventer gruppe.)_
+- [x] Monitoring er aktivt: logs, metrics og alerts. _(Prometheus/Grafana-stakken deployes til nginx-VM'en som en del af nginx-deploy-jobbet i CI/CD; Grafana er nået via `/grafana`, backend scrapes via privat IP for blue+green. Beslutning om dedikeret monitoring-VM (#108, 12.6) afventer gruppe. **Alerting (#132):** Prometheus alert-regler → Alertmanager → Discord-besked + auto-oprettet GitHub-issue; Phase 1 (regler + Alertmanager + github-receiver) bygget og **end-to-end-testet lokalt** (Discord-levering + GitHub-issue-oprettelse + auto-close ved resolve alle verificeret), og Phase 2 er wiret i CI: nginx-deploy-jobbet shipper nu `rules/` + `alertmanager.yml` til VM'en og skriver secret-filerne (`discord_url`, `gh_token`) fra repo-secrets `DISCORD_WEBHOOK_URL` + `GH_ISSUE_TOKEN`, så alerting kører i prod ved næste master-deploy.)_
 - [x] Health endpoint `/health` fungerer.
-- [x] Systemet er live og tilgængeligt.
+- [x] Systemet er live og tilgængeligt. _(Fast offentlig IP `4.211.254.152` (Standard, statisk) i den delte team-subscription; `create_three_vms.sh` og `azure-teardown.sh` pinner subscriptionen, så IP'en overlever teardown/re-provision og ikke kan ende i en personlig subscription.)_
 
 ---
 

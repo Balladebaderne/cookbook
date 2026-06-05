@@ -3,7 +3,8 @@ import YAML from "yamljs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { initDb } from "./db/schema.js";
-import client from "prom-client";
+import { register, httpRequestDuration } from "./metrics.js";
+import { assertAuthConfig } from "./services/users.js";
 
 import apiRoutes from "./routes/api.js";
 import recipeRoutes from "./routes/recipes.js";
@@ -16,18 +17,6 @@ import { errorHandler, notFound } from "./middleware/error.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PORT = process.env.PORT || 3000;
-
-// ── Prometheus metrics ────────────────────────────────────────────────────────
-const register = new client.Registry();
-client.collectDefaultMetrics({ register });
-
-const httpRequestDuration = new client.Histogram({
-  name: "http_request_duration_seconds",
-  help: "Duration of HTTP requests in seconds",
-  labelNames: ["method", "route", "status_code"],
-  registers: [register],
-});
-// ─────────────────────────────────────────────────────────────────────────────
 
 // Load OpenAPI spec
 const swaggerDocument = YAML.load(path.join(__dirname, "..", "..", "openapi.yaml"));
@@ -77,6 +66,7 @@ export function createApp() {
 }
 
 export async function createServer() {
+  assertAuthConfig();
   await initDb();
   return http.createServer(createApp());
 }

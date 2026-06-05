@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import App from "../App";
 
 // Canvas requires WebGL — replace it with a simple wrapper in jsdom
@@ -42,5 +42,30 @@ describe("App", () => {
   it("shows the \"World Cuisine\" subline on the landing page", () => {
     render(<App />);
     expect(screen.getByText("World Cuisine")).toBeInTheDocument();
+  });
+});
+
+describe("DeploymentBadge", () => {
+  // The badge reads a global injected by nginx at deploy time. Clean it up so
+  // it never leaks into other tests.
+  afterEach(() => {
+    delete window.__COOKBOOK_DEPLOYMENT__;
+  });
+
+  it("renders no badge when no deployment info is injected", () => {
+    render(<App />);
+    expect(screen.queryByText(/^Backend:/)).not.toBeInTheDocument();
+  });
+
+  it("renders the active backend deployment badge (color normalised to upper-case)", () => {
+    window.__COOKBOOK_DEPLOYMENT__ = { activeColor: "Green" };
+    render(<App />);
+    expect(screen.getByText(/^Backend:\s*GREEN$/)).toBeInTheDocument();
+  });
+
+  it("ignores an unknown active color", () => {
+    window.__COOKBOOK_DEPLOYMENT__ = { activeColor: "purple" };
+    render(<App />);
+    expect(screen.queryByText(/^Backend:/)).not.toBeInTheDocument();
   });
 });

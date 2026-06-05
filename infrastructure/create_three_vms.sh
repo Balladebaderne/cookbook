@@ -7,6 +7,13 @@ set -euo pipefail
 # Run interactively the first time:   bash infrastructure/create_three_vms.sh
 # Safe to re-run: resource creation is idempotent; existing resources are reused.
 
+# Pin the Azure subscription so the deploy can never silently land in the wrong
+# one (e.g. a member's personal "Azure for Students" sub). This is the SHARED
+# team subscription that owns the static public IP — keeping every run here is
+# what makes the public IP stable across teardown/re-provision cycles.
+# Override only if the team's shared subscription changes: SUBSCRIPTION_ID=...
+SUBSCRIPTION_ID="${SUBSCRIPTION_ID:-f0b6692d-2ce5-450d-a954-741c7cad136c}"
+
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-balladebaderne}"
 LOCATION="${LOCATION:-francecentral}"
 VNET_NAME="${VNET_NAME:-cookbook-vnet}"
@@ -96,8 +103,16 @@ if ! az account show >/dev/null 2>&1; then
   log "Not logged in to Azure — opening browser to sign in..."
   az login || die "Azure login failed."
 fi
+
+# Select the shared subscription and refuse to continue if it isn't active, so a
+# stale 'az' default (e.g. a personal sub) can't redirect the whole deployment.
+log "Selecting shared subscription $SUBSCRIPTION_ID..."
+az account set --subscription "$SUBSCRIPTION_ID" 2>/dev/null \
+  || die "Could not select subscription $SUBSCRIPTION_ID. Confirm you are a member: run 'az login' then 'az account list -o table'."
+ACTIVE_SUB=$(az account show --query id -o tsv)
+[[ "$ACTIVE_SUB" == "$SUBSCRIPTION_ID" ]] \
+  || die "Active subscription is $ACTIVE_SUB but expected $SUBSCRIPTION_ID. Aborting to avoid deploying to the wrong subscription."
 ACCOUNT_NAME=$(az account show --query name -o tsv)
-SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 SIGNED_IN_USER=$(az account show --query user.name -o tsv)
 
 log "Verifying GitHub login..."

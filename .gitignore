@@ -55,6 +55,11 @@ credentials/
 *.key
 *.pub
 
+# Alertmanager Discord webhook URL + github-receiver auth token.
+# Also covered by the secrets/ rule above; listed explicitly for clarity.
+monitoring/alertmanager/secrets/discord_url
+monitoring/github-receiver/secrets/gh_token
+
 # OS
 .DS_Store
 Thumbs.db

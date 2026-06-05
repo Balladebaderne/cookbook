@@ -6,6 +6,29 @@ import RecipeList   from "./pages/RecipeList";
 import RecipeDetail from "./pages/RecipeDetail";
 import RecipeForm   from "./pages/RecipeForm";
 
+function getActiveDeploymentColor() {
+  const activeColor = window.__COOKBOOK_DEPLOYMENT__?.activeColor?.toLowerCase();
+  return activeColor === "blue" || activeColor === "green" ? activeColor : null;
+}
+
+function DeploymentBadge() {
+  const activeColor = getActiveDeploymentColor();
+
+  if (!activeColor) {
+    return null;
+  }
+
+  return (
+    <div
+      className={`deployment-badge deployment-badge--${activeColor}`}
+      aria-label={`Active backend deployment: ${activeColor.toUpperCase()}`}
+    >
+      <span className="deployment-badge-dot" aria-hidden="true" />
+      Backend: {activeColor.toUpperCase()}
+    </div>
+  );
+}
+
 function RecipeLayout({ children }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -66,6 +89,7 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
+        <DeploymentBadge />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />

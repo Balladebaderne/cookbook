@@ -12,6 +12,12 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
+    location = /deployment-config.js {
+        default_type application/javascript;
+        add_header Cache-Control "no-store";
+        return 200 'window.__COOKBOOK_DEPLOYMENT__ = { activeColor: "${ACTIVE_COLOR}" };';
+    }
+
     location /api {
         proxy_pass http://${BACKEND_HOST};
         proxy_set_header Host $host;
