@@ -1,4 +1,4 @@
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { db } from "../db/index.js";
 import { HttpError } from "../middleware/error.js";
@@ -12,7 +12,25 @@ function normalizeEmail(email) {
 }
 
 function tokenSecret() {
-  return process.env.JWT_SECRET || DEFAULT_JWT_SECRET;
+  const secret = process.env.JWT_SECRET;
+  if (secret) return secret;
+  // In production we must never sign/verify JWTs with a value committed to the
+  // repo — anyone reading the source could forge a valid token. Fail loudly
+  // instead of silently falling back to DEFAULT_JWT_SECRET. The fallback stays
+  // for local dev/test convenience (NODE_ENV !== "production").
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "JWT_SECRET must be set in production; refusing to fall back to the committed default secret."
+    );
+  }
+  return DEFAULT_JWT_SECRET;
+}
+
+// Surfaces a missing production JWT_SECRET at boot (see createServer) so a
+// misconfigured deploy fails its health check immediately, instead of booting
+// fine and then 500-ing on the first auth request.
+export function assertAuthConfig() {
+  tokenSecret();
 }
 
 function publicUser(row) {

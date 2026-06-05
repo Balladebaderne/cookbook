@@ -88,6 +88,10 @@ BLUE_BACKEND_HOST="$BACKEND_PRIVATE_IP:3001"
 GREEN_BACKEND_HOST="$BACKEND_PRIVATE_IP:3002"
 
 export GITHUB_OWNER BACKEND_IMAGE_TAG
+# JWT_SECRET is passed in via the CI deploy env (never written to active-color.env,
+# which is world-readable and synced between VMs). The backend fails to boot in
+# production if it is empty — see backend/src/services/users.js.
+export JWT_SECRET="${JWT_SECRET:-}"
 export DATABASE_URL="${DATABASE_URL:-}"
 export POSTGRES_HOST="${POSTGRES_HOST:-}"
 export POSTGRES_PORT="${POSTGRES_PORT:-5432}"
