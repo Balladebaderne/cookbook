@@ -79,15 +79,17 @@ The application is deployed and running at the static public IP below.
 
 | Status | Endpoint | URL |
 |---|---|---|
-| 200 | Web UI (React SPA) | `http://20.216.171.163/` |
-| 200 | Swagger UI | `http://20.216.171.163/apidocs` |
-| 200 | Grafana | `http://20.216.171.163/grafana/` |
+| 200 | Web UI (React SPA) | `http://4.211.254.152/` |
+| 200 | Swagger UI | `http://4.211.254.152/apidocs` |
+| 200 | Grafana | `http://4.211.254.152/grafana/` |
 
-> The public IP (`20.216.171.163`) is a static Azure resource in the
-> `rg-balladebaderne` resource group and is preserved across teardown and
-> re-provision — as long as the same Azure account is used. Migrating the
-> infrastructure to a different account changes the IP, and this section should
-> be updated.
+> The public IP (`4.211.254.152`) is a static Azure resource in the
+> `rg-balladebaderne` resource group of the **shared team subscription**, and is
+> preserved across teardown and re-provision: `azure-teardown.sh` keeps the IP,
+> and both infra scripts pin that subscription so a stale `az` default can't
+> redirect the deploy elsewhere. The IP only changes if the shared subscription
+> itself changes — in which case update `SUBSCRIPTION_ID` in the infra scripts
+> and this section.
 
 > **Note:** HTTPS (port 443) is not configured yet — all traffic runs over HTTP.
 
@@ -233,7 +235,7 @@ Add the badge once the project exists:
 
 Prometheus + Grafana run as a separate stack on the shared `cookbook-network`
 and are **deployed to prod** alongside the app — Grafana is live at
-<http://20.216.171.163/grafana/>. Prometheus stays internal.
+<http://4.211.254.152/grafana/>. Prometheus stays internal.
 
 The provisioned **"Cookbook — Application Overview"** dashboard tracks request
 rate, p95 latency, 5xx error rate, and container up/down (from the backend's
