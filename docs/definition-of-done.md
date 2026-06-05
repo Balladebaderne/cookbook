@@ -42,6 +42,7 @@ Cookbook-projektet er *Done*, når alle relevante krav er opfyldt.
 - [x] Automatisk deployment til Azure VMs.
 - [x] Blue/green deployment er understøttet.
 - [x] Health checks kører før deploy (blue/green sundhedstjek før nginx skifter farve).
+- [x] Frontend viser aktiv blue/green-backendfarve fra deployment-konfigurationen til demo.
 
 ---
 
