@@ -449,11 +449,22 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
-            "mkdir -p ~/app/monitoring/grafana/provisioning ~/app/monitoring/dashboards"
+            "mkdir -p ~/app/monitoring/grafana/provisioning ~/app/monitoring/dashboards \
+                     ~/app/monitoring/rules \
+                     ~/app/monitoring/alertmanager/secrets \
+                     ~/app/monitoring/github-receiver/secrets"
 
           scp -i ~/.ssh/id_rsa \
             monitoring/docker-compose.yml \
             monitoring/prometheus.prod.yml \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/monitoring/
+
+          scp -i ~/.ssh/id_rsa \
+            monitoring/alertmanager/alertmanager.yml \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/monitoring/alertmanager/
+
+          scp -r -i ~/.ssh/id_rsa \
+            monitoring/rules \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/monitoring/
 
           scp -r -i ~/.ssh/id_rsa \
@@ -469,11 +480,29 @@ jobs:
           BACKEND_PRIVATE_IP: ${{ secrets.BACKEND_PRIVATE_IP }}
           GF_ADMIN_USER: ${{ secrets.GF_ADMIN_USER }}
           GF_ADMIN_PASSWORD: ${{ secrets.GF_ADMIN_PASSWORD }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GH_ISSUE_TOKEN: ${{ secrets.GH_ISSUE_TOKEN }}
         run: |
           if [ -z "$BACKEND_PRIVATE_IP" ]; then
             echo "Missing required secret BACKEND_PRIVATE_IP" >&2
             exit 1
           fi
+          if [ -z "$DISCORD_WEBHOOK_URL" ] || [ -z "$GH_ISSUE_TOKEN" ]; then
+            echo "Missing required alerting secret DISCORD_WEBHOOK_URL and/or GH_ISSUE_TOKEN" >&2
+            exit 1
+          fi
+
+          # Write the alerting secrets into the gitignored bind-mount files on the
+          # VM. printf '%s' => no trailing newline (the github-receiver sends the
+          # token verbatim; a trailing \n yields a 401). Piped over ssh stdin and
+          # written with umask 077 so the secret never appears in any process
+          # argument list and the file is 600.
+          printf '%s' "$DISCORD_WEBHOOK_URL" | ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
+            "umask 077 && cat > ~/app/monitoring/alertmanager/secrets/discord_url"
+          printf '%s' "$GH_ISSUE_TOKEN" | ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
+            "umask 077 && cat > ~/app/monitoring/github-receiver/secrets/gh_token"
 
           quote() { printf "%q" "$1"; }
           remote_env=(
