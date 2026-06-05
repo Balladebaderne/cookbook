@@ -449,11 +449,20 @@ jobs:
         run: |
           ssh -i ~/.ssh/id_rsa \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
-            "mkdir -p ~/app/monitoring/grafana/provisioning ~/app/monitoring/dashboards"
+            "mkdir -p ~/app/monitoring/grafana/provisioning ~/app/monitoring/dashboards \
+                      ~/app/monitoring/alertmanager/secrets ~/app/monitoring/github-receiver/secrets"
 
           scp -i ~/.ssh/id_rsa \
             monitoring/docker-compose.yml \
             monitoring/prometheus.prod.yml \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/monitoring/
+
+          scp -i ~/.ssh/id_rsa \
+            monitoring/alertmanager/alertmanager.yml \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/monitoring/alertmanager/
+
+          scp -r -i ~/.ssh/id_rsa \
+            monitoring/rules \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/monitoring/
 
           scp -r -i ~/.ssh/id_rsa \
@@ -463,6 +472,28 @@ jobs:
           scp -r -i ~/.ssh/id_rsa \
             monitoring/dashboards \
             ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }}:~/app/monitoring/
+
+      - name: Write alerting secrets to nginx VM
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GH_ISSUE_TOKEN: ${{ secrets.GH_ISSUE_TOKEN }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ] || [ -z "$GH_ISSUE_TOKEN" ]; then
+            echo "Missing required alerting secrets DISCORD_WEBHOOK_URL and/or GH_ISSUE_TOKEN" >&2
+            exit 1
+          fi
+
+          # Pipe via stdin so the secret values never appear in process args or logs.
+          # Files are bind-mounted by docker-compose (alertmanager/github-receiver).
+          printf '%s' "$DISCORD_WEBHOOK_URL" | ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
+            "cat > ~/app/monitoring/alertmanager/secrets/discord_url && \
+             chmod 600 ~/app/monitoring/alertmanager/secrets/discord_url"
+
+          printf '%s' "$GH_ISSUE_TOKEN" | ssh -i ~/.ssh/id_rsa \
+            ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST_NGINX }} \
+            "cat > ~/app/monitoring/github-receiver/secrets/gh_token && \
+             chmod 600 ~/app/monitoring/github-receiver/secrets/gh_token"
 
       - name: Render prometheus.yml and start monitoring stack
         env:
