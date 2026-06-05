@@ -3,9 +3,11 @@ import {
   postgresConfig,
   postgresStatement,
   PostgresDatabase,
+  queryOperation,
   sqlWithReturningId,
   toPostgresSql,
 } from "./index.js";
+import { register } from "../metrics.js";
 
 describe("db/index Postgres configuration", () => {
   it("uses DATABASE_URL as a connection string when present", () => {
@@ -86,6 +88,56 @@ describe("db/index Postgres SQL adapter", () => {
         params: [],
       },
     ]);
+  });
+
+  it("classifies the SQL operation for the db metric label", () => {
+    expect(queryOperation("SELECT * FROM recipes")).toBe("select");
+    expect(queryOperation("  insert into users (email) values (?)")).toBe("insert");
+    expect(queryOperation("UPDATE recipes SET title = ?")).toBe("update");
+    expect(queryOperation("DELETE FROM tags WHERE id = ?")).toBe("delete");
+    expect(queryOperation("")).toBe("other");
+  });
+
+  it("records db_query_duration_seconds for executed statements", async () => {
+    const queryable = {
+      async query() {
+        return { rows: [{ id: 1 }], rowCount: 1 };
+      },
+    };
+
+    await postgresStatement(queryable, "SELECT id FROM recipes WHERE id = ?").get(1);
+
+    const metrics = await register.getMetricsAsJSON();
+    const metric = metrics.find((m) => m.name === "db_query_duration_seconds");
+    expect(metric).toBeTruthy();
+
+    const count = metric.values.find(
+      (v) =>
+        v.metricName === "db_query_duration_seconds_count" &&
+        v.labels.operation === "select" &&
+        v.labels.status === "success"
+    );
+    expect(count?.value).toBeGreaterThanOrEqual(1);
+  });
+
+  it("records a failed db query with status=error and still rejects", async () => {
+    const queryable = {
+      async query() {
+        throw new Error("db down");
+      },
+    };
+
+    await expect(postgresStatement(queryable, "SELECT 1").all()).rejects.toThrow("db down");
+
+    const metrics = await register.getMetricsAsJSON();
+    const metric = metrics.find((m) => m.name === "db_query_duration_seconds");
+    const errorCount = metric.values.find(
+      (v) =>
+        v.metricName === "db_query_duration_seconds_count" &&
+        v.labels.operation === "select" &&
+        v.labels.status === "error"
+    );
+    expect(errorCount?.value).toBeGreaterThanOrEqual(1);
   });
 
   it("runs Postgres transactions on a single client and releases it", async () => {

@@ -1,6 +1,29 @@
 import pg from "pg";
+import { dbQueryDuration } from "../metrics.js";
 
 const POSTGRES_REQUIRED_ENV = ["POSTGRES_HOST", "POSTGRES_DB", "POSTGRES_USER", "POSTGRES_PASSWORD"];
+
+// First SQL keyword (select/insert/update/delete/…) — the metric label, so DB
+// latency can be sliced by operation in Prometheus/Grafana without recording
+// the full (high-cardinality) query text.
+export function queryOperation(sql) {
+  const match = /^\s*([a-z]+)/i.exec(sql);
+  return match ? match[1].toLowerCase() : "other";
+}
+
+// Times a single query and records db_query_duration_seconds, labelled by
+// operation + success/error, regardless of whether the query throws.
+async function timedQuery(queryable, text, params, originalSql) {
+  const end = dbQueryDuration.startTimer({ operation: queryOperation(originalSql) });
+  try {
+    const result = await queryable.query(text, params);
+    end({ status: "success" });
+    return result;
+  } catch (err) {
+    end({ status: "error" });
+    throw err;
+  }
+}
 
 export function postgresConfig(env = process.env) {
   if (env.DATABASE_URL) {
@@ -93,16 +116,16 @@ class PostgresTransaction {
 export function postgresStatement(queryable, sql) {
   return {
     run: async (...params) => {
-      const result = await queryable.query(toPostgresSql(sqlWithReturningId(sql)), params);
+      const result = await timedQuery(queryable, toPostgresSql(sqlWithReturningId(sql)), params, sql);
       const id = result.rows[0]?.id;
       return { lastInsertRowid: id, rowCount: result.rowCount };
     },
     all: async (...params) => {
-      const result = await queryable.query(toPostgresSql(sql), params);
+      const result = await timedQuery(queryable, toPostgresSql(sql), params, sql);
       return result.rows || [];
     },
     get: async (...params) => {
-      const result = await queryable.query(toPostgresSql(sql), params);
+      const result = await timedQuery(queryable, toPostgresSql(sql), params, sql);
       return result.rows[0];
     },
   };

@@ -91,13 +91,97 @@ jobs:
         working-directory: frontend
         run: npm test
 
+  # Course checklist 5.2: lint both Dockerfiles on every push + PR.
+  dockerfile-lint:
+    name: Lint Dockerfiles (hadolint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Lint backend Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: backend/Dockerfile
+
+      - name: Lint frontend Dockerfile
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: frontend/Dockerfile
+
+  # Course checklist 5.4 + 9.6: build both images and scan them with Trivy on
+  # every push + PR. Images are loaded locally only — never pushed or deployed
+  # here (build-and-push owns that, and gates on this job).
+  #
+  # Split policy (fixable CVEs only, --ignore-unfixed):
+  #   * HIGH/CRITICAL in our own application deps (library class) -> fail build
+  #   * HIGH/CRITICAL in the OS/base image (alpine)              -> report only
+  # We block on what we control (app dependencies) and only report base-image OS
+  # CVEs: those are upstream's to patch and churn constantly (alpine ships new
+  # ones weekly, criticals included), so we remediate them by bumping the pinned
+  # base image rather than blocking every PR on them.
+  image-scan:
+    name: Build & scan images (Trivy)
+    runs-on: ubuntu-latest
+    needs: dependency-audit
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: backend
+            context: .
+            dockerfile: ./backend/Dockerfile
+          - service: frontend
+            context: ./frontend
+            dockerfile: ./frontend/Dockerfile
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.service }} image (load locally, no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: false
+          load: true
+          tags: cookbook-${{ matrix.service }}:scan
+
+      - name: Trivy ${{ matrix.service }} — block HIGH/CRITICAL in app dependencies
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: cookbook-${{ matrix.service }}:scan
+          format: table
+          scanners: vuln
+          ignore-unfixed: true
+          vuln-type: library
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+
+      - name: Trivy ${{ matrix.service }} — report OS/base-image CVEs (no fail)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: cookbook-${{ matrix.service }}:scan
+          format: table
+          scanners: vuln
+          ignore-unfixed: true
+          vuln-type: os
+          severity: CRITICAL,HIGH
+          exit-code: '0'
+
   build-and-push:
     name: Build & Push Docker Images
     runs-on: ubuntu-latest
-    needs: dependency-audit
-    # On pull requests we only want the dependency-audit gate to report — not
-    # build/push images or deploy. Skipping this job also skips the deploy-*
-    # jobs that need it (they're additionally gated on master/dispatch).
+    needs: [dependency-audit, dockerfile-lint, image-scan]
+    # On pull requests we only want the gate jobs to report — not build/push
+    # images or deploy. Skipping this job also skips the deploy-* jobs that need
+    # it (they're additionally gated on master/dispatch).
     if: github.event_name != 'pull_request'
 
     permissions:
@@ -324,14 +408,17 @@ jobs:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
           POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           OWNER_LC=$(echo "$OWNER_LC" | tr '[:upper:]' '[:lower:]')
           IMAGE_TAG="sha-${GITHUB_SHA}"
           POSTGRES_PORT="${POSTGRES_PORT:-5432}"
 
-          for value in "$BACKEND_PRIVATE_IP" "$DATABASE_PRIVATE_IP" "$POSTGRES_DB" "$POSTGRES_USER" "$POSTGRES_PASSWORD"; do
+          # JWT_SECRET is required: the production backend refuses the committed
+          # default and would fail its health check, aborting the blue/green swap.
+          for value in "$BACKEND_PRIVATE_IP" "$DATABASE_PRIVATE_IP" "$POSTGRES_DB" "$POSTGRES_USER" "$POSTGRES_PASSWORD" "$JWT_SECRET"; do
             if [ -z "$value" ]; then
-              echo "Missing required three-vms deploy secret" >&2
+              echo "Missing required three-vms deploy secret (one of BACKEND_PRIVATE_IP, DATABASE_PRIVATE_IP, POSTGRES_DB/USER/PASSWORD, JWT_SECRET)" >&2
               exit 1
             fi
           done
@@ -347,6 +434,7 @@ jobs:
             "POSTGRES_DB=$(quote "$POSTGRES_DB")"
             "POSTGRES_USER=$(quote "$POSTGRES_USER")"
             "POSTGRES_PASSWORD=$(quote "$POSTGRES_PASSWORD")"
+            "JWT_SECRET=$(quote "$JWT_SECRET")"
           )
 
           ssh -i ~/.ssh/id_rsa \
