@@ -1,31 +1,86 @@
 # Infrastructure
 
-Scripts that provision (and tear down) the Azure VMs used to run the
-cookbook app. Every group member should be able to run through a full
-cycle independently:
+Scripts that provision (and tear down) the Azure VMs that run the cookbook app.
 
+There are two ways to interact with the deployment, depending on who you are:
+
+- **Group members** develop and deploy from the shared `Balladebaderne/cookbook`
+  repo. They have admin, so the script can set Actions secrets/variables and run
+  the CI/CD pipeline directly.
+- **Outsiders** (e.g. our censor) have only read access, so they **fork** the
+  repo and deploy from their own fork onto their own Azure subscription — fully
+  isolated, no admin on our repo required.
+
+The create script figures out which case you're in automatically: it resolves
+the target repo from your checked-out clone and refuses early (with fork
+instructions) if you don't have admin on it.
+
+---
+
+## Option A — See the running app
+
+The group keeps a live deployment behind a **static** nginx public IP that
+survives teardown + re-provision, so this link stays stable across rebuilds:
+
+| What        | URL                              |
+| ----------- | -------------------------------- |
+| Frontend    | `http://<NGINX_IP>/`             |
+| Recipes API | `http://<NGINX_IP>/api/recipes/` |
+| Swagger UI  | `http://<NGINX_IP>/apidocs`      |
+| Grafana     | `http://<NGINX_IP>/grafana/`     |
+
+> Replace `<NGINX_IP>` with the current static IP (pinned in the report). The
+> backend and database have **no** public IP — everything is reached through
+> nginx as a reverse proxy / SSH jump host.
+
+---
+
+## Option B — Deploy your own instance (fork flow)
+
+For anyone **without admin** on `Balladebaderne/cookbook`. You deploy onto your
+own Azure subscription from your own fork — nothing touches our repo.
+
+```bash
+# 1. Fork + clone
+gh repo fork Balladebaderne/cookbook --clone
+cd cookbook
+
+# 2. Enable Actions on the fork — REQUIRED on fresh forks:
+#    GitHub → your fork → the "Actions" tab → "I understand my workflows,
+#    enable them". Without this the deploy workflow cannot run.
+
+# 3. Log in to your own Azure subscription
+az login
+
+# 4. Provision + deploy. The script auto-detects your fork as the target.
+bash infrastructure/create_three_vms.sh
 ```
-create_three_vms.sh  → push to master  → app live  → azure-teardown.sh
-```
+
+What happens: the script detects your fork via `gh repo view`, confirms you have
+admin on it (you do — it's yours), sets the deploy secrets/variables on the
+fork, provisions 3 VMs in your Azure subscription, and triggers your fork's
+pipeline to deploy the app onto them.
+
+---
 
 ## Prerequisites
 
-Install on your local machine — login is handled by the create script
-itself (it calls `az login` / `gh auth login` for you on first run):
-
-- **Azure CLI** (`az`)
-- **GitHub CLI** (`gh`)
+- **Azure CLI** (`az`) with a logged-in session (`az login`). Bring your **own
+  Azure subscription** with quota for **3× `Standard_B1s` VMs + 1 Standard
+  public IP** in the chosen region (default `francecentral`).
+- **GitHub CLI** (`gh`) with a login that carries the **`workflow`** scope
+  (`gh auth login -s workflow`; the script adds it via `gh auth refresh -s
+  workflow` if it's missing) — required so `gh workflow run` can trigger the
+  deploy.
 - **SSH key pair** in `~/.ssh/` — `id_rsa`, `id_ed25519`, or `id_ecdsa`
   (auto-detected in that order; override with `SSH_KEY_PATH` /
-  `SSH_PUB_KEY_PATH` env vars). If you don't have one yet:
-  `ssh-keygen -t ed25519 -C "you@example.com"`
-- Access to the `Balladebaderne/cookbook` GitHub repo
-- A **Personal Access Token** with `read:packages` scope available as
-  `CR_PAT` (only needed if you pull images on the VM manually; the
-  pipeline uses the ephemeral `GITHUB_TOKEN`)
+  `SSH_PUB_KEY_PATH`). If you don't have one: `ssh-keygen -t ed25519`.
+- **Admin on the target repo.** Group members have it on the shared repo;
+  outsiders get it automatically on their own fork (Option B).
 
-See the [root README](../README.md#prerequisites)
-for OS-specific install commands (`brew` / `winget` / `apt`).
+Install the CLIs from their official docs:
+[Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) ·
+[GitHub CLI](https://github.com/cli/cli#installation).
 
 ### Operating systems
 
@@ -40,39 +95,12 @@ for OS-specific install commands (`brew` / `winget` / `apt`).
   konvertering (Git's default `core.autocrlf=true` på Windows) ikke
   bryder scripts med fejl som `'\r': command not found`.
 
-## One active deployment at a time
-
-The repo's deploy secrets (`SSH_HOST_NGINX`, `BACKEND_PRIVATE_IP`,
-`DATABASE_PRIVATE_IP`, `SSH_PRIVATE_KEY`) and the `DEPLOY_MODE` variable are
-**shared team state**.
-Only one teammate can have a live deployment at any moment — the last person
-to run `create_three_vms.sh` owns the deploy target until they (or someone
-else) tear down.
-
-To make this visible and prevent accidents, the create script records the
-current owner in a repo variable `DEPLOY_OWNER` (= the GitHub username of
-whoever ran the script). If a classmate tries to run it while someone else
-owns the deployment, the script refuses with:
-
-```
-[error] Another teammate already has an active deployment on this repo.
-  Current owner  : alice
-  Deploy mode    : three-vms
-  ...
-```
-
-To release ownership, the current owner runs `bash infrastructure/azure-teardown.sh`
-— that deletes their Azure resources *and* clears `DEPLOY_OWNER` /
-`DEPLOY_MODE` / the deploy secrets from the repo, so the next teammate can
-run the create script without conflict.
-
-If the lock is genuinely stale (VMs already gone but state wasn't cleaned up),
-override with `FORCE=1 bash infrastructure/create_three_vms.sh`.
+---
 
 ## Deployment topology
 
-The cookbook runs on a single canonical topology: **three VMs with a
-blue/green backend and PostgreSQL**. The pipeline in
+The cookbook runs on a single canonical topology: **three VMs with a blue/green
+backend and PostgreSQL**, only nginx is public. The pipeline in
 [`.github/workflows/ci-cd.yml`](../.github/workflows/ci-cd.yml) deploys it when
 the `DEPLOY_MODE` repo variable is `three-vms` (set for you by the create
 script).
@@ -80,6 +108,11 @@ script).
 | Mode        | Script                | VMs                                                   | Compose files |
 | ----------- | --------------------- | ----------------------------------------------------- | ------------- |
 | `three-vms` | `create_three_vms.sh` | 3 (public nginx + private backend + private database) | [`deploy/blue-green/`](../deploy/blue-green/) |
+
+There is **no single-owner deploy lock** — forks keep their state isolated and
+group members coordinate on the shared repo, so concurrent deploys don't clash.
+
+---
 
 ## Provisioning
 
@@ -89,26 +122,34 @@ bash infrastructure/create_three_vms.sh
 
 What it does:
 
-1. Creates resource group `rg-balladebaderne` in `francecentral`.
-2. Creates a VNet `10.0.0.0/16` with subnet `10.0.1.0/24`.
-3. Creates three `Standard_B1s` VMs:
-   - `cookbook-nginx` (public IP)
+1. Resolves the **target repo** (explicit `GITHUB_REPO` override → auto-detect
+   from the clone → fallback `Balladebaderne/cookbook`) and **requires admin**
+   on it, otherwise stops with fork instructions.
+2. Creates resource group `rg-balladebaderne` in `francecentral`.
+3. Creates a VNet `10.0.0.0/16` with subnet `10.0.1.0/24`.
+4. Ensures a **static** Standard public IP (`cookbook-nginx-ip`) — created if
+   absent, **reused** if it already exists.
+5. Creates three `Standard_B1s` VMs:
+   - `cookbook-nginx` (attached to the static public IP)
    - `cookbook-backend` (**no public IP**)
    - `cookbook-database` (**no public IP**)
-4. Opens **80 / 443** on nginx.
-5. Restricts backend port **3000** to the nginx VM's private IP only.
-6. Restricts PostgreSQL port **5432** to the backend VM's private IP only.
-7. Installs Docker + Compose on all three hosts. Backend and database are
-   provisioned over SSH via nginx as a jump host.
-8. Sets repo secrets `SSH_HOST_NGINX`, `BACKEND_PRIVATE_IP`,
-   `DATABASE_PRIVATE_IP`, `SSH_USER`, `SSH_PRIVATE_KEY`.
-9. Sets repo variable `DEPLOY_MODE=three-vms`.
+6. Opens **80 / 443** on nginx.
+7. Restricts backend port **3000** to the nginx VM's private IP only.
+8. Restricts PostgreSQL port **5432** to the backend VM's private IP only.
+9. Installs Docker + Compose on all three hosts (backend and database are
+   reached over SSH via nginx as a jump host).
+10. Sets repo secrets (`SSH_HOST_NGINX`, `BACKEND_PRIVATE_IP`,
+    `DATABASE_PRIVATE_IP`, `SSH_USER`, `SSH_PRIVATE_KEY`) and the repo variable
+    `DEPLOY_MODE=three-vms`.
+11. Triggers the CI/CD pipeline and follows it to completion, so the app is
+    deployed onto the VMs it just provisioned.
 
-Then push to `master` (or run the workflow manually) and the app goes live at
-`http://<NGINX_IP>`. The backend and database have no public IP — the pipeline
-reaches them through nginx as an SSH jump host. See
+The app then goes live at `http://<NGINX_IP>` (the static IP from step 4). To
+provision only and deploy later, run with `DEPLOY_AFTER_PROVISION=0`. See
 [`deploy/README-blue-green.md`](../deploy/README-blue-green.md) for the
 blue/green deploy and rollback flow.
+
+---
 
 ## Teardown
 
@@ -116,8 +157,9 @@ blue/green deploy and rollback flow.
 bash infrastructure/azure-teardown.sh
 ```
 
-Lists every resource in `rg-balladebaderne` and asks you to type the
-resource group name to confirm. On confirmation it issues
-`az group delete --yes --no-wait` — the whole RG and everything in it
-is removed. It also clears `DEPLOY_OWNER` / `DEPLOY_MODE` / the deploy
-secrets so the next teammate can provision cleanly.
+Lists every resource in `rg-balladebaderne` and asks you to type the resource
+group name to confirm. On confirmation it deletes the VMs, NICs, NSGs, VNet and
+managed disks **individually** — but **deliberately keeps the static public IP**
+(`cookbook-nginx-ip`) so the report/demo link survives a teardown +
+re-provision. It also clears `DEPLOY_MODE` and the deploy secrets so the next
+deploy starts clean.

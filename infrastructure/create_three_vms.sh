@@ -20,8 +20,11 @@ DATABASE_VM="${DATABASE_VM:-cookbook-database}"
 VM_SIZE="${VM_SIZE:-Standard_B1s}"
 VM_IMAGE="Canonical:0001-com-ubuntu-server-jammy:22_04-lts:latest"
 ADMIN_USER="${ADMIN_USER:-azureuser}"
+PUBLIC_IP_NAME="${PUBLIC_IP_NAME:-cookbook-nginx-ip}"
 
-GITHUB_REPO="${GITHUB_REPO:-Balladebaderne/cookbook}"
+# Which repo to deploy against. Auto-detected from the checked-out clone after
+# gh auth is confirmed (below); export GITHUB_REPO to override.
+GITHUB_REPO="${GITHUB_REPO:-}"
 
 BACKEND_PORT=3000
 DATABASE_PORT=5432
@@ -56,7 +59,7 @@ command -v ssh >/dev/null || die "ssh not installed."
 [[ "$POSTGRES_PORT_VALUE" =~ ^[0-9]+$ ]] || die "POSTGRES_PORT must be numeric."
 
 if [[ -z "${SSH_KEY_PATH:-}" ]]; then
-  for candidate in id_rsa id_ed25519 id_ecdsa; do
+  for candidate in id_ed25519 id_rsa id_ecdsa; do
     if [[ -f "$HOME/.ssh/$candidate" && -f "$HOME/.ssh/$candidate.pub" ]]; then
       SSH_KEY_PATH="$HOME/.ssh/$candidate"
       SSH_PUB_KEY_PATH="$HOME/.ssh/$candidate.pub"
@@ -65,10 +68,27 @@ if [[ -z "${SSH_KEY_PATH:-}" ]]; then
     fi
   done
 fi
+
+# No key found — offer to generate one (ed25519), mirroring the az/gh login
+# prompts. Only attempt this on an interactive terminal; in CI fall through to
+# the die() below so the failure is explicit rather than hanging on read.
+if [[ -z "${SSH_KEY_PATH:-}" && -t 0 ]]; then
+  log "No SSH key found in ~/.ssh (looked for id_ed25519, id_rsa, id_ecdsa)."
+  read -rp "Generate a new ed25519 key now? (y/N): " gen_key
+  if [[ "$gen_key" =~ ^[Yy]$ ]]; then
+    mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+    SSH_KEY_PATH="$HOME/.ssh/id_ed25519"
+    ssh-keygen -t ed25519 -N "" -C "cookbook-deploy" -f "$SSH_KEY_PATH" \
+      || die "ssh-keygen failed."
+    SSH_PUB_KEY_PATH="$SSH_KEY_PATH.pub"
+    log "Created new SSH key pair: $SSH_KEY_PATH"
+  fi
+fi
+
 SSH_KEY_PATH="${SSH_KEY_PATH:-}"
 SSH_PUB_KEY_PATH="${SSH_PUB_KEY_PATH:-${SSH_KEY_PATH}.pub}"
 
-[[ -n "$SSH_KEY_PATH" && -f "$SSH_KEY_PATH" ]] || die "No SSH private key found. Tried ~/.ssh/{id_rsa,id_ed25519,id_ecdsa}. Generate one (ssh-keygen -t ed25519) or set SSH_KEY_PATH."
+[[ -n "$SSH_KEY_PATH" && -f "$SSH_KEY_PATH" ]] || die "No SSH private key found. Tried ~/.ssh/{id_ed25519,id_rsa,id_ecdsa}. Re-run on a terminal and choose to generate one, run 'ssh-keygen -t ed25519' yourself, or set SSH_KEY_PATH."
 [[ -f "$SSH_PUB_KEY_PATH" ]] || die "SSH public key not found at $SSH_PUB_KEY_PATH"
 
 log "Verifying Azure login..."
@@ -83,9 +103,35 @@ SIGNED_IN_USER=$(az account show --query user.name -o tsv)
 log "Verifying GitHub login..."
 if ! gh auth status >/dev/null 2>&1; then
   log "Not logged in to GitHub — starting interactive login flow..."
-  gh auth login || die "GitHub login failed."
+  gh auth login -s workflow || die "GitHub login failed."
 fi
 GH_USER=$(gh api user --jq .login)
+
+# Triggering the deploy uses 'gh workflow run', which needs the 'workflow' OAuth
+# scope. Add it if the current login is missing it.
+if ! gh auth status 2>&1 | grep -q "workflow"; then
+  log "Adding the 'workflow' scope to your gh login..."
+  gh auth refresh -s workflow || die "Could not add the 'workflow' scope. Run: gh auth refresh -s workflow"
+fi
+
+# Resolve the deploy target repo: an explicit GITHUB_REPO override wins, else
+# auto-detect from the checked-out clone, falling back to the canonical repo.
+if [[ -z "$GITHUB_REPO" ]]; then
+  GITHUB_REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || true)"
+  GITHUB_REPO="${GITHUB_REPO:-Balladebaderne/cookbook}"
+fi
+log "Deploy target repo: $GITHUB_REPO"
+
+# Setting Actions secrets/variables and dispatching the deploy workflow all
+# require admin on the target repo. An outsider (e.g. our censor) without admin
+# must fork first and deploy from their own fork instead.
+if [[ "$(gh api "repos/$GITHUB_REPO" --jq '.permissions.admin' 2>/dev/null || echo false)" != "true" ]]; then
+  die "You don't have admin on $GITHUB_REPO, so this script can't set deploy secrets or run the workflow there.
+       Fork it and deploy from your own fork instead:
+         gh repo fork Balladebaderne/cookbook --clone
+         cd cookbook
+         bash infrastructure/create_three_vms.sh"
+fi
 
 set_secret() {
   printf '%s' "$2" | gh secret set "$1" -R "$GITHUB_REPO"
@@ -150,39 +196,9 @@ sync_deploy_secrets() {
   gh secret delete SSH_HOST_DATABASE -R "$GITHUB_REPO" >/dev/null 2>&1 || true
 }
 
-CURRENT_OWNER=$(gh variable list -R "$GITHUB_REPO" --json name,value \
-  -q '.[] | select(.name=="DEPLOY_OWNER") | .value' 2>/dev/null || true)
-CURRENT_MODE=$(gh variable list -R "$GITHUB_REPO" --json name,value \
-  -q '.[] | select(.name=="DEPLOY_MODE") | .value' 2>/dev/null || true)
-
-if [[ -n "$CURRENT_OWNER" && "$CURRENT_OWNER" != "$GH_USER" && "${FORCE:-0}" != "1" ]]; then
-  cat >&2 <<ERR
-
-[error] Another teammate already has an active deployment on this repo.
-
-  Current owner  : $CURRENT_OWNER
-  Deploy mode    : ${CURRENT_MODE:-unknown}
-  Repo           : $GITHUB_REPO
-
-Running this script now would overwrite the repo's deploy secrets and
-orphan $CURRENT_OWNER's VMs (still running in their Azure subscription,
-still burning credits, but no longer receiving deploys).
-
-What to do:
-  1. Ask $CURRENT_OWNER to run on their machine:
-       bash infrastructure/azure-teardown.sh
-     That deletes their Azure resources and clears the lock.
-  2. Or, if you know the lock is stale (VMs already gone), override:
-       FORCE=1 bash infrastructure/create_three_vms.sh
-
-ERR
-  exit 1
-fi
-
-if [[ -z "$CURRENT_OWNER" && -n "$CURRENT_MODE" ]]; then
-  log "Note: DEPLOY_MODE=$CURRENT_MODE is set but no DEPLOY_OWNER recorded."
-  log "      Claiming ownership. If a teammate still has VMs up, ask them to tear down."
-fi
+# No deploy-owner lock: each person either deploys from their own fork (fully
+# isolated state) or coordinates manually on the shared repo. DEPLOY_MODE is
+# still set after provisioning so the pipeline knows the topology.
 
 cat <<CONFIRM
 
@@ -195,6 +211,7 @@ About to provision a three-VM deployment:
   VNet / subnet      : $VNET_NAME ($VNET_CIDR) / $SUBNET_NAME ($SUBNET_CIDR)
   VMs                : $NGINX_VM (public) + $BACKEND_VM (private) + $DATABASE_VM (private)
   VM size            : $VM_SIZE, Ubuntu 22.04
+  Static public IP   : $PUBLIC_IP_NAME (Standard, reused across teardowns)
 
   GitHub repo        : $GITHUB_REPO
   GitHub user        : $GH_USER
@@ -223,8 +240,29 @@ az network vnet create \
   --subnet-prefixes "$SUBNET_CIDR" \
   --output none
 
+# Creates the named static public IP if absent; reused if it already exists so
+# it survives teardown + re-provision, keeping the report/demo link stable.
+create_public_ip() {
+  local name="$1"
+  log "Ensuring static public IP '$name'..."
+  if az network public-ip show -g "$RESOURCE_GROUP" -n "$name" >/dev/null 2>&1; then
+    log "Public IP '$name' already exists, reusing."
+    return
+  fi
+  az network public-ip create \
+    --resource-group "$RESOURCE_GROUP" \
+    --name "$name" \
+    --sku Standard \
+    --allocation-method Static \
+    --output none
+}
+
 create_vm() {
   local name="$1"
+  # Public IP behaviour for arg 2:
+  #   "no-public-ip"     → private VM, no public IP
+  #   "with-public-ip"   → Azure auto-creates a Standard public IP (default)
+  #   "<public-ip-name>" → attach this pre-created (static) public IP
   local public_ip_mode="${2:-with-public-ip}"
   log "Creating VM '$name'..."
   if az vm show -g "$RESOURCE_GROUP" -n "$name" >/dev/null 2>&1; then
@@ -235,6 +273,8 @@ create_vm() {
   local pip_args=(--public-ip-sku Standard)
   if [[ "$public_ip_mode" == "no-public-ip" ]]; then
     pip_args=(--public-ip-address "")
+  elif [[ "$public_ip_mode" != "with-public-ip" ]]; then
+    pip_args=(--public-ip-address "$public_ip_mode")
   fi
 
   az vm create \
@@ -294,7 +334,8 @@ allow_tcp_from_source() {
     --output none
 }
 
-create_vm "$NGINX_VM"
+create_public_ip "$PUBLIC_IP_NAME"
+create_vm "$NGINX_VM" "$PUBLIC_IP_NAME"
 create_vm "$BACKEND_VM" "no-public-ip"
 create_vm "$DATABASE_VM" "no-public-ip"
 
@@ -326,7 +367,8 @@ az network nsg rule delete \
   --output none 2>/dev/null || true
 allow_tcp_from_source "$DATABASE_VM" "allow-postgres-from-backend" 1100 "$BACKEND_PRIVATE_IP" "$DATABASE_PORT"
 
-NGINX_IP=$(az vm show -d -g "$RESOURCE_GROUP" -n "$NGINX_VM" --query publicIps -o tsv)
+NGINX_IP=$(az network public-ip show -g "$RESOURCE_GROUP" -n "$PUBLIC_IP_NAME" --query ipAddress -o tsv)
+[[ -n "$NGINX_IP" ]] || die "Could not resolve the static public IP '$PUBLIC_IP_NAME'."
 
 log "  nginx    public IP:  $NGINX_IP"
 log "  backend  private IP: $BACKEND_PRIVATE_IP"
@@ -385,9 +427,6 @@ provision "$DATABASE_PRIVATE_IP" "database VM" "$NGINX_IP"
 
 log "Setting deploy-mode variable to 'three-vms' on $GITHUB_REPO..."
 gh variable set DEPLOY_MODE --body "three-vms" -R "$GITHUB_REPO"
-
-log "Claiming deployment ownership as '$GH_USER'..."
-gh variable set DEPLOY_OWNER --body "$GH_USER" -R "$GITHUB_REPO"
 
 # ── Auto-deploy: trigger and follow the CI/CD pipeline ───────────────────────
 # The three-vms deploy jobs are gated on (ref==master OR workflow_dispatch),
