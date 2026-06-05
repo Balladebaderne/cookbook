@@ -2,6 +2,13 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
+    // All test files share one Postgres and each calls initDb() on startup. Run
+    // in parallel they race on schema creation — CREATE TABLE IF NOT EXISTS isn't
+    // atomic in Postgres, so concurrent callers collide on the pg_type catalog
+    // ("duplicate key ... pg_type_typname_nsp_index") and intermittently fail CI.
+    // Run files serially to make the suite deterministic; runtime is ~1s anyway.
+    fileParallelism: false,
+
     // Tests run against a real Postgres. CI provides one via a `services: postgres`
     // block; locally, `docker compose --profile dev up -d` brings one up on
     // 127.0.0.1:5432. Override via POSTGRES_* env if your setup differs.
