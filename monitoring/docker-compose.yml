@@ -111,18 +111,22 @@ services:
       - cookbook-network
 
   # Opens (and, with -enable-auto-close, closes) a GitHub issue per firing alert.
-  # GH_ISSUE_TOKEN is a fine-grained PAT (Issues: write on Balladebaderne/cookbook)
-  # supplied via the shell env in dev and via CI secrets in prod — never committed.
+  # Auth token is read from a gitignored secret file (same pattern as the Discord
+  # webhook): mounted at /etc/github-receiver/secrets/gh_token. The token is a
+  # fine-grained PAT (Issues: write on Balladebaderne/cookbook); in dev it can be
+  # the gh CLI token, in prod CI writes secrets.GH_ISSUE_TOKEN to the file. Never
+  # committed, never passed as a process arg.
   github-receiver:
-    image: measurementlab/alertmanager-github-receiver:latest
+    image: measurementlab/alertmanager-github-receiver:v0.11
     container_name: github-receiver
     restart: unless-stopped
     command:
       - "-org=Balladebaderne"
       - "-repo=cookbook"
       - "-enable-auto-close"
-    environment:
-      - GITHUB_AUTH_TOKEN=${GH_ISSUE_TOKEN:-}
+      - "-authtoken-file=/etc/github-receiver/secrets/gh_token"
+    volumes:
+      - ./github-receiver/secrets/gh_token:/etc/github-receiver/secrets/gh_token:ro
     expose:
       - "9393"
     networks:
