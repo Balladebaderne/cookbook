@@ -27,4 +27,4 @@ We aim to acknowledge reports within 7 days. As a coursework project, we cannot 
 
 - `npm audit --audit-level=high` runs on every push (CI) and is part of the local pre-push gate ([`scripts/security-check.sh`](./scripts/security-check.sh)).
 - Secret-pattern scanning and forbidden-file checks run in the same pre-push gate.
-- `master` is PR-only; no direct pushes. See [`AGENTS.md`](./AGENTS.md) for the full guardrails.
+- `master` is PR-only; no direct pushes. See [`AGENTS.md`](./AGENTS.md) for the full guardrails...
