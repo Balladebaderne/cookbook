@@ -58,12 +58,16 @@ groups:
           description: "Less than 15% free space on / for 10m."
 
       # Host memory pressure.
+      # Threshold is 95% (not 90%): the VM baseline averages ~87% RAM and pokes
+      # above 90% roughly a third of the time, which made the alert flap and spam
+      # Discord. Over a ~52h sample it crossed 95% exactly once (for ~1m), so 95%
+      # with for:10m removes the noise while still catching a genuine runaway.
       - alert: HostMemoryPressure
         expr: |
-          1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes > 0.9
+          1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes > 0.95
         for: 10m
         labels:
           severity: warning
         annotations:
           summary: "High memory usage on {{ $labels.instance }}"
-          description: "More than 90% of host memory in use for 10m."
+          description: "More than 95% of host memory in use for 10m."
