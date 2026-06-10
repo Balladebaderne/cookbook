@@ -12,3 +12,5 @@ It is intentionally docs-only and has no runtime effect.
 ## Demo log
 
 - 2026-06-08 — Trigger full pipeline through to production (dev → master).
+- 2026-06-10 — Exam demonstration: open a fresh `dev → master` PR to show the
+  CI/CD pipeline (test → build → deploy) and PR decoration live in GitHub Actions.
